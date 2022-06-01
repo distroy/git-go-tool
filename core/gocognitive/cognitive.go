@@ -22,13 +22,14 @@ func SetDebug(enable bool) { _debug = enable }
 type Complexity struct {
 	PkgName    string
 	FuncName   string
+	Filename   string
 	Complexity int
-	BeginPos   token.Position
-	EndPos     token.Position
+	BeginLine  int
+	EndLine    int
 }
 
 func (s Complexity) String() string {
-	filePos := fmt.Sprintf("%s:%d,%d", s.BeginPos.Filename, s.BeginPos.Line, s.EndPos.Line)
+	filePos := fmt.Sprintf("%s:%d,%d", s.Filename, s.BeginLine, s.EndLine)
 	return fmt.Sprintf("%d %s %s %s", s.Complexity, s.PkgName, s.FuncName, filePos)
 }
 
@@ -102,11 +103,13 @@ func AnalyzeFunction(fset *token.FileSet, f *ast.File, fn *ast.FuncDecl) Complex
 	v.log.Printf("***** %s end *****", v.name)
 	v.log.Print("")
 
+	pos, end := fset.Position(fn.Pos()), fset.Position(fn.End())
 	return Complexity{
 		PkgName:    f.Name.Name,
 		FuncName:   funcName(fn),
+		Filename:   pos.Filename,
 		Complexity: v.complexity,
-		BeginPos:   fset.Position(fn.Pos()),
-		EndPos:     fset.Position(fn.End()),
+		BeginLine:  pos.Line,
+		EndLine:    end.Line,
 	}
 }

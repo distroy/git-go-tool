@@ -208,8 +208,8 @@ func (s complexites) Less(i, j int) bool {
 	if a.Complexity != b.Complexity {
 		return a.Complexity > b.Complexity
 	}
-	if a.BeginPos.Filename != b.BeginPos.Filename {
-		return a.BeginPos.Filename < b.BeginPos.Filename
+	if a.Filename != b.Filename {
+		return a.Filename < b.Filename
 	}
-	return a.BeginPos.Line <= b.BeginPos.Line
+	return a.BeginLine <= b.BeginLine
 }
