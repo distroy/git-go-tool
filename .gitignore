@@ -12,3 +12,6 @@ log unit test-journal
 log unit test
 unit_test.db-journal
 unit_test.db
+
+# commands
+/cmd/go-cognitive/go-cognitive
