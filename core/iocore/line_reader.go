@@ -151,7 +151,7 @@ func (r *lineReader) indexToken(pos int) int {
 func (r *lineReader) copyToken(pos int) {
 	copy(r.token[:pos], r.buffer[:pos])
 	r.tokenPos = pos
-	if r.token[pos-1] == '\r' {
+	if r.tokenPos > 1 && r.token[r.tokenPos-1] == '\r' {
 		r.tokenPos--
 	}
 

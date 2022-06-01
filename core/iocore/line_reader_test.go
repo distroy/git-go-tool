@@ -29,11 +29,12 @@ func testLineReader(t *testing.T, f func() (string, error), tests []testLineRead
 }
 
 func TestLineReader_Peek(t *testing.T) {
-	text := "1111\r\n2222\n3333\r\n"
+	text := "1111\r\n\n2222\n3333\r\n"
 	r := NewLineReader(strings.NewReader(text))
 
 	tests := []struct{ want string }{
 		{want: "1111"},
+		{want: ""},
 		{want: "2222"},
 		{want: "3333"},
 	}
@@ -47,7 +48,14 @@ func TestLineReader_Peek(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("LineReader.PeekString() = %v, want:%s", got, tt.want)
 		}
-		r.ReadString()
+		got, err = r.ReadString()
+		if err != nil {
+			t.Errorf("LineReader.ReadString() error = %v", err)
+			return
+		}
+		if got != tt.want {
+			t.Errorf("LineReader.ReadString() = %v, want:%s", got, tt.want)
+		}
 	}
 
 	if got, err := r.PeekString(); err != io.EOF {
