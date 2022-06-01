@@ -1,0 +1,14 @@
+# git ignore
+.*
+!.gitignore
+!.gitlab-ci.yml
+
+# python
+*.pyc
+__pycache__/
+
+# unit test
+log unit test-journal
+log unit test
+unit_test.db-journal
+unit_test.db
