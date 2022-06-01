@@ -1,0 +1,29 @@
+name: go
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  go-check:
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+      TZ: Asia/Shanghai
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-go@v2
+      # name: go-setup
+      with:
+        go-version: "1.12.17"
+
+    - run: |
+        go mod download
+    - run: make complexity
+    - run: make go-test
