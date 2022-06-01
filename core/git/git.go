@@ -22,6 +22,10 @@ type Different struct {
 
 func ParesNewLinesByCommand(branch string) ([]Different, error) {
 	cmd := exec.Command("git", "diff", "--unified", branch)
+	return parseNewLinesByCommand(cmd)
+}
+
+func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
 	cmd.Stderr = os.Stderr
 
 	stdout, err := cmd.StdoutPipe()
@@ -38,6 +42,10 @@ func ParesNewLinesByCommand(branch string) ([]Different, error) {
 	}
 
 	if err := cmd.Wait(); err != nil {
+		switch v := err.(type) {
+		case *exec.ExitError:
+			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%s", cmd.String(), v.ExitCode(), v.Error())
+		}
 		return nil, err
 	}
 
@@ -45,61 +53,55 @@ func ParesNewLinesByCommand(branch string) ([]Different, error) {
 }
 
 func ParesNewLinesByReader(r io.Reader) ([]Different, error) {
-
 	res := make([]Different, 0, 1024)
 
-	buffer := make([]string, 0, 32)
 	reader := iocore.NewLineReader(r)
 	for {
-		line, err := reader.ReadString()
+		fileLines, err := readFileLines(reader)
 		if err != nil {
 			if err == io.EOF {
-				break
+				return res, io.EOF
 			}
+			return nil, err
 		}
 
-		if !strings.HasPrefix(line, "diff ") {
-			log.Fatalf("unexpected line prefix for file begin. line:%s", line)
+		news, err := parseNewLinesFromFileLines(fileLines)
+		if err != nil {
+			return nil, err
 		}
 
-		buffer = append(buffer, line)
-		for {
-			line, err = reader.PeekString()
-			if strings.HasPrefix(line, "diff ") {
-				break
-			}
-			buffer = append(buffer, line)
-		}
+		res = append(res, news...)
 	}
-
-	return res, nil
 }
 
-func parseFileNewLines(lines []string) ([]Different, error) {
-	i, l := 0, len(lines)
-
-	var file string
-	for i < l {
-		line := lines[i]
-		prefix := "+++ "
-		if !strings.HasPrefix(line, prefix) {
-			i++
-			continue
-		}
-
-		file = line[len(prefix):]
-
-		if file != "/dev/null" {
-			if !strings.HasPrefix(file, "b/") {
-				log.Fatalf("invalid git different content. content:\n%s", strings.Join(lines, "\n"))
-			}
-			file = file[2:]
-		}
+func readFileLines(r iocore.LineReader) ([]string, error) {
+	line, err := r.ReadString()
+	if err != nil {
+		// if err == io.EOF {
+		// 	return nil, io.EOF
+		// }
+		return nil, err
 	}
-	// diff --git a/script/complexity/core/__init__.py b/script/git-tool/core/__init__.py
-	// similarity index 100%
-	// rename from script/complexity/core/__init__.py
-	// rename to script/git-tool/core/__init__.py
-	// diff --git a/script/complexity/core/exec.py b/script/git-tool/core/exec.py
-	// ...
+
+	if !strings.HasPrefix(line, "diff ") {
+		log.Fatalf("unexpected line prefix for file begin. line:%s", line)
+	}
+
+	buffer := make([]string, 0, 32)
+	buffer = append(buffer, line)
+	for {
+		line, err = r.PeekString()
+		if err == io.EOF {
+			return buffer, nil
+
+		} else if err != nil {
+			return nil, err
+
+		} else if strings.HasPrefix(line, "diff ") {
+			return buffer, nil
+		}
+
+		r.Read()
+		buffer = append(buffer, line)
+	}
 }
