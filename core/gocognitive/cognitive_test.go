@@ -47,10 +47,10 @@ func TestExample(t *testing.T) {
 		want := complexityFromFuncName(stat.FuncName)
 		if stat.Complexity == want {
 			t.Logf("check func complexity succ. func:%s, complexity:%d, file:%s",
-				stat.FuncName, stat.Complexity, stat.BeginPos.Filename)
+				stat.FuncName, stat.Complexity, stat.Filename)
 		} else {
 			t.Errorf("check func complexity fail. func:%s, complexity:%d, want:%d, file:%s",
-				stat.FuncName, stat.Complexity, want, stat.BeginPos.Filename)
+				stat.FuncName, stat.Complexity, want, stat.Filename)
 		}
 	}
 }
