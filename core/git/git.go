@@ -30,6 +30,7 @@ func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		log.Fatalf("start pipe for exec fail. cmd:%s, err:%v", getCommandString(cmd), err)
 	}
 
 	defer func() {
@@ -43,8 +44,12 @@ func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
 
 	if err := cmd.Wait(); err != nil {
 		switch v := err.(type) {
+		default:
+			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v.Error())
+
 		case *exec.ExitError:
-			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%s", cmd.String(), v.ExitCode(), v.Error())
+			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%v",
+				getCommandString(cmd), v.ExitCode(), v.Error())
 		}
 		return nil, err
 	}
@@ -104,4 +109,15 @@ func readFileLines(r iocore.LineReader) ([]string, error) {
 		r.Read()
 		buffer = append(buffer, line)
 	}
+}
+
+func getCommandString(c *exec.Cmd) string {
+	// report the exact executable path (plus args)
+	b := &strings.Builder{}
+	b.WriteString(c.Path)
+	for _, a := range c.Args[1:] {
+		b.WriteByte(' ')
+		b.WriteString(a)
+	}
+	return b.String()
 }
