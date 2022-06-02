@@ -46,7 +46,7 @@ func parsePositionFromSummaryLine(summary string) (begin int, end int, err error
 		if err != nil {
 			log.Fatalf("pasre line fail. line:%s, err:%v", summary, err.Error())
 		}
-		end = begin + n + 1
+		end = begin + n - 1
 	}
 
 	return begin, end, nil
@@ -122,21 +122,31 @@ func parseNewLinesFromStatmentLines(filename string, lines []string) ([]Differen
 		EndLine:   end,
 	}
 
+	blankLineNos := parseBlankLineNosFromStatmentLines(lines, diff)
+
+	return removeLineNoFromDifferent(diff, blankLineNos), nil
+}
+
+func parseBlankLineNosFromStatmentLines(lines []string, diff Different) []int {
+	begin := diff.BeginLine
+
 	blankLineNos := make([]int, 0, 32)
-	for i, line := range lines {
+	i := 0
+	for _, line := range lines {
 		if !strings.HasPrefix(line, "+") {
 			continue
 		}
+		i++
 
 		line = line[1:]
 		line = strings.TrimSpace(line)
 
 		if len(line) == 0 {
-			blankLineNos = append(blankLineNos, begin+i)
+			blankLineNos = append(blankLineNos, begin+i-1)
 		}
 	}
 
-	return removeLineNoFromDifferent(diff, blankLineNos), nil
+	return blankLineNos
 }
 
 func removeLineNoFromDifferent(diff Different, lineNos []int) []Different {
