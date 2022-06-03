@@ -94,13 +94,14 @@ func main() {
 
 	res := analyzePathes(f.Pathes, f.Filter)
 
-	writeResult(os.Stdout, res, f)
+	sort.Sort(complexites(res))
+	written := writeResult(os.Stdout, res, f)
 
 	if f.Avg {
 		showAverage(res)
 	}
 
-	if f.Over > 0 && len(res) > f.Over {
+	if f.Over > 0 && written > f.Over {
 		os.Exit(1)
 	}
 }
@@ -159,24 +160,23 @@ func analyzeDir(dirPath string, filter *filter.Filter, res []gocognitive.Complex
 	return res
 }
 
-func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) {
+func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
 	top := flags.Top
 	over := flags.Over
 	if top < 0 {
 		top = math.MaxInt64
 	}
 
-	sort.Sort(complexites(res))
-
 	for i, stat := range res {
 		if i >= top {
-			break
+			return i
 		}
 		if stat.Complexity <= over {
-			break
+			return i
 		}
 		fmt.Fprintln(w, stat)
 	}
+	return len(res)
 }
 
 func showAverage(cplxes []gocognitive.Complexity) {
