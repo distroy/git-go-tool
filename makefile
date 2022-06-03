@@ -93,8 +93,8 @@ go-test:
 setup:
 	git config core.hooksPath "script/git-hook"
 	type go-cognitive \
-		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive@latest \
-		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive
+		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive \
+		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive@latest
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: complexity
