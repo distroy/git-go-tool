@@ -14,6 +14,9 @@ log unit test
 unit_test.db-journal
 unit_test.db
 
+# log
+/log/
+
 # commands
 /cmd/go-cognitive/go-cognitive
 /cmd/git-diff-go-cognitive/git-diff-go-cognitive
