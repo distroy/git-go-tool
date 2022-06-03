@@ -5,6 +5,7 @@
 package git
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
@@ -14,6 +15,10 @@ type Different struct {
 	Filename  string
 	BeginLine int
 	EndLine   int
+}
+
+func (d Different) String() string {
+	return fmt.Sprintf("%s:%d,%d", d.Filename, d.BeginLine, d.EndLine)
 }
 
 func GetBranch() string {

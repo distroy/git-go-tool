@@ -7,7 +7,9 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/distroy/git-go-tool/core/iocore"
 )
@@ -42,6 +44,21 @@ func AnalyzeFileByPath(filePath string) ([]Complexity, error) {
 	}
 
 	return AnalyzeFile(fset, f), nil
+}
+
+// AnalyzeDirByPath builds the complexity statistics.
+func AnalyzeDirByPath(dirPath string) ([]Complexity, error) {
+	complexites := make([]Complexity, 0, 32)
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() && strings.HasSuffix(path, ".go") {
+			var res []Complexity
+			res, err = AnalyzeFileByPath(path)
+			complexites = append(complexites, res...)
+		}
+		return err
+	})
+
+	return complexites, err
 }
 
 // AnalyzeFile builds the complexity statistics.

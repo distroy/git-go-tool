@@ -90,7 +90,8 @@ func parseNewLinesFromFileLines(lines []string) ([]Different, error) {
 
 	res := make([]Different, 0, 32)
 	for i < l {
-		j := indexLines(lines[i:], func(line string) bool { return strings.HasPrefix(line, "@@ ") })
+		j := indexLines(lines[i+1:], func(line string) bool { return strings.HasPrefix(line, "@@ ") })
+		j = i + 1 + j
 
 		statment := lines[i:j]
 		news, err := parseNewLinesFromStatmentLines(file, statment)

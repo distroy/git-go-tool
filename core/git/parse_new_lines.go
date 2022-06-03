@@ -14,12 +14,12 @@ import (
 	"github.com/distroy/git-go-tool/core/iocore"
 )
 
-func ParesNewLinesByCommand(branch string) ([]Different, error) {
+func ParseNewLines(branch string) ([]Different, error) {
 	cmd := exec.Command("git", "diff", "--unified", branch)
-	return parseNewLinesByCommand(cmd)
+	return parseNewLinesFromCommand(cmd)
 }
 
-func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
+func parseNewLinesFromCommand(cmd *exec.Cmd) ([]Different, error) {
 	cmd.Stderr = os.Stderr
 
 	stdout, err := cmd.StdoutPipe()
@@ -27,11 +27,15 @@ func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
 		log.Fatalf("start pipe for exec fail. cmd:%s, err:%v", getCommandString(cmd), err)
 	}
 
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err)
+	}
+
 	defer func() {
 		cmd.Wait()
 	}()
 
-	res, err := ParesNewLinesByReader(stdout)
+	res, err := ParseNewLinesFromReader(stdout)
 	if err != nil {
 		return nil, err
 	}
@@ -39,11 +43,11 @@ func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
 	if err := cmd.Wait(); err != nil {
 		switch v := err.(type) {
 		default:
-			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v.Error())
+			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v)
 
 		case *exec.ExitError:
 			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%v",
-				getCommandString(cmd), v.ExitCode(), v.Error())
+				getCommandString(cmd), v.ExitCode(), v)
 		}
 		return nil, err
 	}
@@ -51,7 +55,7 @@ func parseNewLinesByCommand(cmd *exec.Cmd) ([]Different, error) {
 	return res, nil
 }
 
-func ParesNewLinesByReader(r io.Reader) ([]Different, error) {
+func ParseNewLinesFromReader(r io.Reader) ([]Different, error) {
 	res := make([]Different, 0, 1024)
 
 	reader := iocore.NewLineReader(r)
@@ -59,8 +63,9 @@ func ParesNewLinesByReader(r io.Reader) ([]Different, error) {
 		fileLines, err := readFileLines(reader)
 		if err != nil {
 			if err == io.EOF {
-				return res, io.EOF
+				return res, nil
 			}
+			// log.Fatalf("parse new lines from reader fail. err:%v", err)
 			return nil, err
 		}
 

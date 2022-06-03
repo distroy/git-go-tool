@@ -224,3 +224,45 @@ func Test_parseBlankLineNosFromStatmentLines(t *testing.T) {
 		})
 	}
 }
+
+func Test_parseNewLinesFromFileLines(t *testing.T) {
+	type args struct {
+		lines []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []Different
+		wantErr bool
+	}{
+		{
+			name: "",
+			args: args{
+				lines: []string{
+					`diff --git a/.gitignore b/.gitignore`,
+					`index 3d37341..2fb5f78 100644`,
+					`--- a/.gitignore`,
+					`+++ b/.gitignore`,
+					`@@ -18,0 +19 @@ unit_test.db`,
+					`+/cmd/git-diff-go-cognitive/git-diff-go-cognitive`,
+				},
+			},
+			want: []Different{
+				{Filename: ".gitignore", BeginLine: 19, EndLine: 19},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseNewLinesFromFileLines(tt.args.lines)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseNewLinesFromFileLines() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseNewLinesFromFileLines() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
