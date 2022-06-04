@@ -23,14 +23,13 @@ type LineReader interface {
 }
 
 type lineReader struct {
-	reader      io.Reader
-	token       []byte
-	buffer      []byte
-	maxSize     int
-	tokenPos    int
-	bufferPos   int
-	lastLineEnd byte
-	err         error
+	reader    io.Reader
+	token     []byte
+	buffer    []byte
+	maxSize   int
+	tokenPos  int
+	bufferPos int
+	err       error
 }
 
 func NewLineReader(r io.Reader) *lineReader {
@@ -145,17 +144,20 @@ func (r *lineReader) readLineLoop() error {
 
 func (r *lineReader) indexToken(pos int) int {
 	end := r.bufferPos
-	return bytes.IndexByte(r.buffer[pos:end], '\n')
+	return bytes.IndexByte(r.buffer[pos:end], '\n') + pos
 }
 
 func (r *lineReader) copyToken(pos int) {
 	copy(r.token[:pos], r.buffer[:pos])
 	r.tokenPos = pos
+	// log.Printf(" === token 1:\n%s", r.token[:r.tokenPos])
 	if r.tokenPos > 1 && r.token[r.tokenPos-1] == '\r' {
 		r.tokenPos--
+		// log.Printf(" === token 2:\n%s", r.token[:r.tokenPos])
 	}
 
-	r.lastLineEnd = r.buffer[pos]
+	// log.Printf(" === before:\n%s", r.buffer[:r.bufferPos])
+	// defer func() { log.Printf(" === after:\n%s", r.buffer[:r.bufferPos]) }()
 
 	pos++
 	if pos >= r.bufferPos {

@@ -5,7 +5,6 @@
 package gocoverage
 
 import (
-	"math"
 	"sort"
 
 	"github.com/distroy/git-go-tool/core/mathcore"
@@ -121,21 +120,28 @@ type FileCoverages struct {
 	NonCoverages Coverages
 }
 
+func (f *FileCoverages) GetCount() Count {
+	return Count{
+		Coverages:    f.Coverages.GetLineCount(),
+		NonCoverages: f.NonCoverages.GetLineCount(),
+	}
+}
+
 func (f *FileCoverages) Add(c Coverage, filters ...filter) {
 	if c.Count > 0 {
 		f.Coverages = f.addToCoverages(f.Coverages, c, filters)
 		return
 	}
 
-	filters = append(filters, func(file string, begin, end int) bool {
-		return f.Coverages.IsIn(begin, end)
+	filters = append(filters, func(file string, lineNo int) bool {
+		return f.Coverages.IsIn(lineNo, lineNo)
 	})
 	f.NonCoverages = f.addToCoverages(f.NonCoverages, c, filters)
 }
 
 func (f *FileCoverages) addToCoverages(s Coverages, c Coverage, filters []filter) Coverages {
 	for i := c.BeginLine; i <= c.EndLine; i++ {
-		if !doFilters(c.Filename, i, i, filters) {
+		if !doFilters(c.Filename, i, filters) {
 			continue
 		}
 
@@ -173,17 +179,23 @@ func NewFileCoverages(coverages []Coverage, filters ...filter) Files {
 }
 
 func (f Files) Add(c Coverage, filters ...filter) *FileCoverages {
-	if !doFilters(c.Filename, 1, math.MaxInt32, filters) {
-		return nil
-	}
-
 	v := f[c.Filename]
 	if v == nil {
 		v = &FileCoverages{
-			Filename: v.Filename,
+			Filename: c.Filename,
 		}
 		f[c.Filename] = v
 	}
 	v.Add(c, filters...)
 	return v
+}
+
+func (f Files) GetCount() Count {
+	count := Count{}
+	for _, f := range f {
+		res := f.GetCount()
+		count.Coverages += res.Coverages
+		count.NonCoverages += res.NonCoverages
+	}
+	return count
 }

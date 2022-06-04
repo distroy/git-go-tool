@@ -4,11 +4,11 @@
 
 package gocoverage
 
-type filter = func(file string, begin, end int) bool
+type filter = func(file string, lineNo int) bool
 
-func doFilters(file string, begin, end int, filters []filter) bool {
+func doFilters(file string, lineNo int, filters []filter) bool {
 	for _, filter := range filters {
-		if !filter(file, begin, end) {
+		if !filter(file, lineNo) {
 			return false
 		}
 	}
