@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/git"
@@ -99,6 +100,7 @@ func main() {
 }
 
 func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
+	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) > flags.Top {
 		cplxes = cplxes[:flags.Top]
 	}
@@ -115,6 +117,7 @@ func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity)
 }
 
 func printOldOvers(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
+	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) == 0 {
 		return
 	}

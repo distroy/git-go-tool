@@ -72,5 +72,5 @@ func filterSlice(slice, filter reflect.Value) int {
 			vj.Set(reflect.ValueOf(tmp))
 		}
 	}
-	return j
+	return i
 }
