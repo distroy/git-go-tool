@@ -164,7 +164,7 @@ func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
 	top := flags.Top
 	over := flags.Over
 	if top < 0 {
-		top = math.MaxInt64
+		top = math.MaxInt32
 	}
 
 	for i, stat := range res {
