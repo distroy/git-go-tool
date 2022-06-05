@@ -148,4 +148,5 @@ func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
 		fmt.Fprintf(w, "\n")
 	}
 	fmt.Fprint(w, termcolor.Reset)
+	os.Exit(1)
 }
