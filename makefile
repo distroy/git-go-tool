@@ -97,7 +97,7 @@ setup:
 		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
-.PHONY: complexity
-complexity: setup
+.PHONY: cognitive
+cognitive: setup
 	go-cognitive -over 15 .
 	go-cognitive -top 10 .

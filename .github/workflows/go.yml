@@ -9,21 +9,38 @@ on:
       - master
 
 jobs:
-  go-check:
+  echo-env-job:
+    runs-on: ubuntu-latest
+  steps:
+    - run: |
+      echo "$GITHUB_BASE_REF"
+      echo "$GITHUB_HEAD_REF"
+
+
+  go-cognitive-job:
     runs-on: ubuntu-latest
     env:
       GO111MODULE: on
       TZ: Asia/Shanghai
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        # name: go-setup
+        with:
+          go-version: "1.12.17"
+      - run: make cognitive
 
-    - uses: actions/setup-go@v2
-      # name: go-setup
-      with:
-        go-version: "1.12.17"
+  go-test-job:
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+      TZ: Asia/Shanghai
 
-    - run: |
-        go mod download
-    - run: make complexity
-    - run: make go-test
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.12.17"
+      - run: go mod download
+      - run: make go-test
