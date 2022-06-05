@@ -18,7 +18,12 @@ import (
 	"github.com/distroy/git-go-tool/core/termcolor"
 )
 
+const (
+	ModeAll = "all"
+)
+
 type Flags struct {
+	Mode   string
 	Branch string
 	Rate   float64
 	Top    int
@@ -33,6 +38,8 @@ func parseFlags() *Flags {
 			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
 		},
 	}
+
+	flag.StringVar(&f.Mode, "mode", "", "coverage mode: default=show the coverage with git diff; all=show all the coverage")
 
 	flag.StringVar(&f.Branch, "branch", "", "view the changes you have in your working tree relative to the named <branch>")
 
@@ -74,21 +81,34 @@ func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool
 	return gocoverage.NewFileCoverages(coverages, filters...)
 }
 
+func getFilters(flags *Flags) []func(file string, lineNo int) bool {
+	filters := make([]func(file string, lineNo int) bool, 0, 2)
+	filters = append(filters, func(file string, lineNo int) bool {
+		return flags.Filter.Check(file)
+	})
+
+	if flags.Mode == ModeAll {
+		return filters
+	}
+
+	differents := analyzeGitNews(flags.Branch)
+	filters = append(filters, func(file string, lineNo int) bool {
+		return differents.IsIn(file, lineNo, lineNo)
+	})
+
+	return filters
+}
+
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	f := parseFlags()
+	flags := parseFlags()
 
-	differents := analyzeGitNews(f.Branch)
+	filters := getFilters(flags)
 
-	filters := make([]func(file string, lineNo int) bool, 0, 1)
-	filters = append(filters, func(file string, lineNo int) bool {
-		return f.Filter.Check(file) && differents.IsIn(file, lineNo, lineNo)
-	})
+	coverages := analyzeCoverages(flags.File, filters...)
 
-	coverages := analyzeCoverages(f.File, filters...)
-
-	printResult(os.Stderr, f, coverages)
+	printResult(os.Stderr, flags, coverages)
 }
 
 func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {

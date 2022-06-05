@@ -60,14 +60,14 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "1.12.17"
-      - run: |
-          cd "$WORKSPACE/.."
-          rm -rf "$WORKSPACE"
-          git clone "$PROJECT_URL" "$(basename "$WORKSPACE")"
-          cd "$WORKSPACE"
-          git checkout "$GITHUB_BASE_REF"
-          git checkout "$GITHUB_HEAD_REF"
+      # - run: |
+      #     cd "$WORKSPACE/.."
+      #     rm -rf "$WORKSPACE"
+      #     git clone "$PROJECT_URL" "$(basename "$WORKSPACE")"
+      #     cd "$WORKSPACE"
+      #     git checkout "$GITHUB_BASE_REF"
+      #     git checkout "$GITHUB_HEAD_REF"
       - run: make setup
       - run: go mod download
       - run: make go-test-coverage
-      - run: git-diff-go-coverage -rate 0.65 -branch "$GITHUB_BASE_REF" -file log/coverage.out
+      - run: git-diff-go-coverage -mode all -rate 0.65 -file log/coverage.out
