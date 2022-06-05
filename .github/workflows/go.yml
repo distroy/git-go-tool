@@ -8,22 +8,69 @@ on:
     branches:
       - master
 
+env:
+  GO111MODULE: on
+  TZ: Asia/Shanghai
+  PROJECT_URL: "${{ github.repositoryUrl }}"
+  WORKSPACE: "${{ github.workspace }}"
+
 jobs:
-  go-check:
+  echo-env-job:
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
-      TZ: Asia/Shanghai
-
     steps:
-    - uses: actions/checkout@v2
+      - run: |
+          echo "$PWD"
+      - run: |
+          echo "$GITHUB_BASE_REF"
+          echo "$GITHUB_HEAD_REF"
+          echo "$GITHUB_EVENT_NAME"
+      - run: |
+          echo "$PROJECT_URL"
+          echo "$WORKSPACE"
+      # - run: echo '${{ toJSON(github) }}'
+      - run: |
+          echo "${{ github.event_name }}"
 
-    - uses: actions/setup-go@v2
-      # name: go-setup
-      with:
-        go-version: "1.12.17"
+  go-cognitive-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        # name: go-setup
+        with:
+          go-version: "1.12.17"
+      - run: make cognitive
 
-    - run: |
-        go mod download
-    - run: make complexity
-    - run: make go-test
+  go-test-job:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.12.17"
+      - run: go mod download
+      - run: make go-test
+
+  go-test-coverage-job:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.12.17"
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: |
+          git checkout "$GITHUB_BASE_REF"
+          git checkout "$GITHUB_HEAD_REF"
+      - run: make setup
+      - run: go mod download
+      - run: make go-test-coverage
+      # - run: git-diff-go-coverage -mode all -rate 0.65 -file log/coverage.out
+      - run: |
+          merge_base=$(git merge-base "$GITHUB_BASE_REF" "$GITHUB_HEAD_REF")
+          echo "merge base: $merge_base"
+          git-diff-go-coverage -branch $merge_base -rate 0.65 -file log/coverage.out

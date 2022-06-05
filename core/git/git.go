@@ -62,7 +62,7 @@ func GetRootDir() string {
 		return ""
 	}
 
-	return string(out)
+	return strings.TrimSpace(string(out))
 }
 
 func getCommandString(c *exec.Cmd) string {

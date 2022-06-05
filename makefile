@@ -47,6 +47,9 @@ mk_command = ( \
 rm_command = \
 	rm -f $(PROJECT_ROOT)/cmd/$(1)/$(1);
 
+go_install =  \
+	go install $(1) || go install $(1)@latest
+
 .PHONY: all
 all: setup $(COMMANDS)
 
@@ -92,12 +95,11 @@ go-test:
 .PHONY: setup
 setup:
 	git config core.hooksPath "script/git-hook"
-	type go-cognitive \
-		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive@latest \
-		|| go install github.com/distroy/git-go-tool/cmd/go-cognitive
+	$(call go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
+	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
-.PHONY: complexity
-complexity: setup
+.PHONY: cognitive
+cognitive: setup
 	go-cognitive -over 15 .
 	go-cognitive -top 10 .

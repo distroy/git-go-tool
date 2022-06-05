@@ -20,21 +20,6 @@ var (
 
 func SetDebug(enable bool) { _debug = enable }
 
-// Complexity is statistic of the complexity.
-type Complexity struct {
-	PkgName    string
-	FuncName   string
-	Filename   string
-	Complexity int
-	BeginLine  int
-	EndLine    int
-}
-
-func (s Complexity) String() string {
-	filePos := fmt.Sprintf("%s:%d,%d", s.Filename, s.BeginLine, s.EndLine)
-	return fmt.Sprintf("%d %s %s %s", s.Complexity, s.PkgName, s.FuncName, filePos)
-}
-
 // AnalyzeFileByPath builds the complexity statistics.
 func AnalyzeFileByPath(filePath string) ([]Complexity, error) {
 	fset := token.NewFileSet()

@@ -94,7 +94,7 @@ func main() {
 
 	res := analyzePathes(f.Pathes, f.Filter)
 
-	sort.Sort(complexites(res))
+	sort.Sort(gocognitive.Complexites(res))
 	written := writeResult(os.Stdout, res, f)
 
 	if f.Avg {
@@ -164,7 +164,7 @@ func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
 	top := flags.Top
 	over := flags.Over
 	if top < 0 {
-		top = math.MaxInt64
+		top = math.MaxInt32
 	}
 
 	for i, stat := range res {
@@ -189,19 +189,4 @@ func average(arr []gocognitive.Complexity) float64 {
 		total += s.Complexity
 	}
 	return float64(total) / float64(len(arr))
-}
-
-type complexites []gocognitive.Complexity
-
-func (s complexites) Len() int      { return len(s) }
-func (s complexites) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s complexites) Less(i, j int) bool {
-	a, b := s[i], s[j]
-	if a.Complexity != b.Complexity {
-		return a.Complexity > b.Complexity
-	}
-	if a.Filename != b.Filename {
-		return a.Filename < b.Filename
-	}
-	return a.BeginLine <= b.BeginLine
 }

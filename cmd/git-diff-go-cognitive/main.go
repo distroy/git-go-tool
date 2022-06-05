@@ -53,75 +53,18 @@ func parseFlags() *Flags {
 	return f
 }
 
-type differents []git.Different
-
-func (s differents) Len() int      { return len(s) }
-func (s differents) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s differents) Less(i, j int) bool {
-	a, b := s[i], s[j]
-	if a.Filename != b.Filename {
-		return a.Filename < b.Filename
-	}
-	return a.BeginLine <= b.BeginLine
-}
-
-func (s differents) toMap() map[string][]git.Different {
-	sort.Sort(s)
-
-	m := make(map[string][]git.Different)
-	lastIdx := 0
-	for i, v1 := range s {
-		if v1.Filename == s[lastIdx].Filename {
-			continue
-		}
-
-		v0 := s[lastIdx]
-		m[v0.Filename] = s[lastIdx:i]
-		lastIdx = i
-	}
-
-	if lastIdx < len(s) {
-		v0 := s[lastIdx]
-		m[v0.Filename] = s[lastIdx:]
-	}
-
-	return m
-}
-
-func analyzeGitNews(branch string) map[string][]git.Different {
+func analyzeGitNews(branch string) git.Files {
 	s, err := git.ParseNewLines(branch)
 	if err != nil {
 		log.Fatalf("parse the git different relative to the branch:%s. err:%v", branch, err)
 	}
 
-	return differents(s).toMap()
+	return git.NewFileDifferents(s)
 }
 
 func filterComplexities(array []gocognitive.Complexity, f func(gocognitive.Complexity) bool) []gocognitive.Complexity {
-	i := 0
-	l := len(array)
-	for i < l {
-		var vl, vr *gocognitive.Complexity
-
-		for i < l {
-			vl = &array[i]
-			if !f(*vl) {
-				break
-			}
-			i++
-		}
-
-		for i < l {
-			vr = &array[l-1]
-			if f(*vr) {
-				break
-			}
-			l--
-		}
-
-		*vl, *vr = *vr, *vl
-	}
-	return array[:l]
+	n := filter.FilterSlice(array, f)
+	return array[:n]
 }
 
 func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity {
@@ -135,27 +78,6 @@ func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity 
 	})
 }
 
-func isComplexityInGitNews(c gocognitive.Complexity, diffMap map[string][]git.Different) bool {
-	ds := diffMap[c.Filename]
-	if len(ds) == 0 {
-		return false
-	}
-
-	idx := sort.Search(len(ds), func(i int) bool {
-		return ds[i].BeginLine >= c.BeginLine
-	})
-	if idx >= len(ds) {
-		return false
-	}
-
-	d := ds[idx]
-	if d.BeginLine > c.EndLine || d.EndLine < c.BeginLine {
-		return false
-	}
-
-	return true
-}
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
@@ -166,7 +88,7 @@ func main() {
 	complexities := analyzeCognitive(f.Over, f.Filter)
 
 	newCplxes := filterComplexities(complexities, func(c gocognitive.Complexity) bool {
-		return f.Filter.Check(c.Filename) && isComplexityInGitNews(c, differents)
+		return f.Filter.Check(c.Filename) && differents.IsIn(c.Filename, c.BeginLine, c.EndLine)
 	})
 
 	if len(newCplxes) > 0 {
@@ -178,6 +100,7 @@ func main() {
 }
 
 func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
+	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) > flags.Top {
 		cplxes = cplxes[:flags.Top]
 	}
@@ -194,6 +117,7 @@ func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity)
 }
 
 func printOldOvers(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
+	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) == 0 {
 		return
 	}
