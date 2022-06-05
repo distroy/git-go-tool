@@ -7,7 +7,9 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/distroy/git-go-tool/core/iocore"
 )
@@ -22,13 +24,14 @@ func SetDebug(enable bool) { _debug = enable }
 type Complexity struct {
 	PkgName    string
 	FuncName   string
+	Filename   string
 	Complexity int
-	BeginPos   token.Position
-	EndPos     token.Position
+	BeginLine  int
+	EndLine    int
 }
 
 func (s Complexity) String() string {
-	filePos := fmt.Sprintf("%s:%d,%d", s.BeginPos.Filename, s.BeginPos.Line, s.EndPos.Line)
+	filePos := fmt.Sprintf("%s:%d,%d", s.Filename, s.BeginLine, s.EndLine)
 	return fmt.Sprintf("%d %s %s %s", s.Complexity, s.PkgName, s.FuncName, filePos)
 }
 
@@ -41,6 +44,21 @@ func AnalyzeFileByPath(filePath string) ([]Complexity, error) {
 	}
 
 	return AnalyzeFile(fset, f), nil
+}
+
+// AnalyzeDirByPath builds the complexity statistics.
+func AnalyzeDirByPath(dirPath string) ([]Complexity, error) {
+	complexites := make([]Complexity, 0, 32)
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() && strings.HasSuffix(path, ".go") {
+			var res []Complexity
+			res, err = AnalyzeFileByPath(path)
+			complexites = append(complexites, res...)
+		}
+		return err
+	})
+
+	return complexites, err
 }
 
 // AnalyzeFile builds the complexity statistics.
@@ -102,11 +120,13 @@ func AnalyzeFunction(fset *token.FileSet, f *ast.File, fn *ast.FuncDecl) Complex
 	v.log.Printf("***** %s end *****", v.name)
 	v.log.Print("")
 
+	pos, end := fset.Position(fn.Pos()), fset.Position(fn.End())
 	return Complexity{
 		PkgName:    f.Name.Name,
 		FuncName:   funcName(fn),
+		Filename:   pos.Filename,
 		Complexity: v.complexity,
-		BeginPos:   fset.Position(fn.Pos()),
-		EndPos:     fset.Position(fn.End()),
+		BeginLine:  pos.Line,
+		EndLine:    end.Line,
 	}
 }

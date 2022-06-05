@@ -38,19 +38,18 @@ func complexityFromFuncName(funcName string) int {
 func TestExample(t *testing.T) {
 	file, _ := getFileLine()
 	file = fmt.Sprintf("%s/%s", path.Dir(file), "example_for_test.go")
+	t.Logf("example file: %s", file)
 
 	res, err := AnalyzeFileByPath(file)
 	if err != nil {
 		t.Fatalf("analyze file fail. err:%s", err)
 	}
-	for _, stat := range res {
-		want := complexityFromFuncName(stat.FuncName)
-		if stat.Complexity == want {
-			t.Logf("check func complexity succ. func:%s, complexity:%d, file:%s",
-				stat.FuncName, stat.Complexity, stat.BeginPos.Filename)
-		} else {
-			t.Errorf("check func complexity fail. func:%s, complexity:%d, want:%d, file:%s",
-				stat.FuncName, stat.Complexity, want, stat.BeginPos.Filename)
-		}
+	for _, v := range res {
+		t.Run(v.FuncName, func(t *testing.T) {
+			want := complexityFromFuncName(v.FuncName)
+			if v.Complexity != want {
+				t.Errorf("check func complexity fail. got:%d, want:%d", v.Complexity, want)
+			}
+		})
 	}
 }

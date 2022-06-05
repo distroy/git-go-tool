@@ -2,6 +2,7 @@
 .*
 !.gitignore
 !.gitlab-ci.yml
+!.github
 
 # python
 *.pyc
@@ -15,3 +16,4 @@ unit_test.db
 
 # commands
 /cmd/go-cognitive/go-cognitive
+/cmd/git-diff-go-cognitive/git-diff-go-cognitive

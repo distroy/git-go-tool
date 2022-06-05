@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
-	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/gocognitive"
+	"github.com/distroy/git-go-tool/core/regexpcore"
 )
 
 const usageDoc = `Calculate cognitive complexities of Go functions.
@@ -41,100 +42,68 @@ The document of cognitive complexity:
 https://sonarsource.com/docs/CognitiveComplexity.pdf
 `
 
-func usage() {
-	fmt.Fprint(os.Stderr, usageDoc)
-	os.Exit(2)
+type Flags struct {
+	Over  int
+	Top   int
+	Avg   bool
+	Debug bool
+
+	Filter *filter.Filter
+	Pathes []string
 }
 
-var (
-	_defaultExcludes = []*regexp.Regexp{
-		regexp.MustCompile(`^vendor/`),
-		regexp.MustCompile(`/vendor/`),
-		regexp.MustCompile(`\.pb\.go$`),
+func parseFlags() *Flags {
+	f := &Flags{
+		Filter: &filter.Filter{
+			Includes: regexpcore.MustNewRegExps(nil),
+			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
+		},
 	}
 
-	over = flag.Int("over", 0, "show functions with complexity > N only")
-	top  = flag.Int("top", -1, "show the top N most complex functions only")
-	avg  = flag.Bool("avg", false, "show the average complexity")
+	flag.IntVar(&f.Over, "over", 0, "show functions with complexity > N only")
+	flag.IntVar(&f.Top, "top", -1, "show the top N most complex functions only")
+	flag.BoolVar(&f.Avg, "avg", false, "show the average complexity")
 
-	includes = flagRegexps("include", nil, "the regexp for include pathes")
-	excludes = flagRegexps("exclude", _defaultExcludes, "the regexp for exclude pathes")
+	flag.BoolVar(&f.Debug, "debug", false, "show the debug message")
 
-	debug = flag.Bool("debug", false, "show the debug message")
-)
+	flag.Var(f.Filter.Includes, "include", "the regexp for include pathes")
+	flag.Var(f.Filter.Excludes, "exclude", "the regexp for exclude pathes")
 
-func flagRegexps(name string, def []*regexp.Regexp, usage string) *flagRegexpsValue {
-	val := flagRegexpsValue(def)
-	flag.Var(&val, name, usage)
-	return &val
-}
-
-type flagRegexpsValue []*regexp.Regexp
-
-func (p *flagRegexpsValue) Set(s string) error {
-	re, err := regexp.Compile(s)
-	if err == nil {
-		*p = append(*p, re)
+	flag.Usage = func() {
+		fmt.Fprint(os.Stderr, usageDoc)
+		os.Exit(2)
 	}
-	return nil
-}
 
-func (p *flagRegexpsValue) String() string { return "" }
+	flag.Parse()
+
+	f.Pathes = flag.Args()
+	if len(f.Pathes) == 0 {
+		f.Pathes = []string{"."}
+	}
+
+	return f
+}
 
 func main() {
-	// log.SetFlags(log.Flags() | log.Lshortfile)
-	log.SetFlags(0)
-	log.SetPrefix("go-cognitive: ")
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	// log.SetPrefix("go-cognitive: ")
 
-	flag.Usage = usage
-	flag.Parse()
-	args := flag.Args()
-	if len(args) == 0 {
-		args = []string{"."}
-	}
+	f := parseFlags()
 
-	gocognitive.SetDebug(*debug)
+	gocognitive.SetDebug(f.Debug)
 
-	res := analyze(args)
+	res := analyzePathes(f.Pathes, f.Filter)
+
 	sort.Sort(complexites(res))
-	written := writeStats(os.Stdout, res)
+	written := writeResult(os.Stdout, res, f)
 
-	if *avg {
+	if f.Avg {
 		showAverage(res)
 	}
 
-	if *over > 0 && written > 0 {
+	if f.Over > 0 && written > f.Over {
 		os.Exit(1)
 	}
-}
-
-func isPathIgnored(path string) bool {
-	for _, re := range *includes {
-		loc := re.FindStringIndex(path)
-		if len(loc) == 2 {
-			return false
-		}
-	}
-	for _, re := range *excludes {
-		loc := re.FindStringIndex(path)
-		if len(loc) == 2 {
-			return true
-		}
-	}
-	return false
-}
-
-func analyze(paths []string) []gocognitive.Complexity {
-	var res []gocognitive.Complexity
-	for _, path := range paths {
-		if isDir(path) {
-			res = analyzeDir(path, res)
-		} else {
-			res = analyzeFile(path, res)
-		}
-	}
-
-	return res
 }
 
 func isDir(filename string) bool {
@@ -142,61 +111,84 @@ func isDir(filename string) bool {
 	return err == nil && fi.IsDir()
 }
 
-func analyzeFile(filePath string, cplxes []gocognitive.Complexity) []gocognitive.Complexity {
-	if isPathIgnored(filePath) {
-		return nil
+func analyzePathes(pathes []string, filter *filter.Filter) []gocognitive.Complexity {
+	var res []gocognitive.Complexity
+	for _, path := range pathes {
+		if isDir(path) {
+			res = analyzeDir(path, filter, res)
+		} else {
+			res = analyzeFile(path, filter, res)
+		}
+	}
+	return res
+}
+
+func analyzeFile(filePath string, filter *filter.Filter, res []gocognitive.Complexity) []gocognitive.Complexity {
+	if !strings.HasSuffix(filePath, ".go") {
+		return res
+	}
+	if !filter.Check(filePath) {
+		return res
 	}
 
-	res, err := gocognitive.AnalyzeFileByPath(filePath)
+	r, err := gocognitive.AnalyzeFileByPath(filePath)
 	if err != nil {
 		log.Fatalf("analyze file fail. err:%s", err)
 	}
 
-	cplxes = append(cplxes, res...)
-	return cplxes
+	res = append(res, r...)
+	return res
 }
 
-func analyzeDir(dirname string, cplxes []gocognitive.Complexity) []gocognitive.Complexity {
-	if isPathIgnored(dirname) {
-		return cplxes
+func analyzeDir(dirPath string, filter *filter.Filter, res []gocognitive.Complexity) []gocognitive.Complexity {
+	if !filter.Check(dirPath) {
+		return res
 	}
 
-	err := filepath.Walk(dirname, func(path string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() && strings.HasSuffix(path, ".go") {
-			cplxes = analyzeFile(path, cplxes)
-		}
-		return err
-	})
+	tmpRes, err := gocognitive.AnalyzeDirByPath(dirPath)
 	if err != nil {
-		log.Fatalf("average directory fail. err:%s", err)
+		log.Fatalf("analyze directory fail. err:%s", err)
 	}
 
-	return cplxes
+	for _, v := range tmpRes {
+		if !filter.Check(v.Filename) {
+			continue
+		}
+		res = append(res, v)
+	}
+
+	return res
 }
 
-func writeStats(w io.Writer, sortedStats []gocognitive.Complexity) int {
-	for i, stat := range sortedStats {
-		if i == *top {
+func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
+	top := flags.Top
+	over := flags.Over
+	if top < 0 {
+		top = math.MaxInt64
+	}
+
+	for i, stat := range res {
+		if i >= top {
 			return i
 		}
-		if stat.Complexity <= *over {
+		if stat.Complexity <= over {
 			return i
 		}
 		fmt.Fprintln(w, stat)
 	}
-	return len(sortedStats)
+	return len(res)
 }
 
 func showAverage(cplxes []gocognitive.Complexity) {
 	fmt.Printf("Average: %.3g\n", average(cplxes))
 }
 
-func average(cplxes []gocognitive.Complexity) float64 {
+func average(arr []gocognitive.Complexity) float64 {
 	total := 0
-	for _, s := range cplxes {
+	for _, s := range arr {
 		total += s.Complexity
 	}
-	return float64(total) / float64(len(cplxes))
+	return float64(total) / float64(len(arr))
 }
 
 type complexites []gocognitive.Complexity
@@ -208,8 +200,8 @@ func (s complexites) Less(i, j int) bool {
 	if a.Complexity != b.Complexity {
 		return a.Complexity > b.Complexity
 	}
-	if a.BeginPos.Filename != b.BeginPos.Filename {
-		return a.BeginPos.Filename < b.BeginPos.Filename
+	if a.Filename != b.Filename {
+		return a.Filename < b.Filename
 	}
-	return a.BeginPos.Line <= b.BeginPos.Line
+	return a.BeginLine <= b.BeginLine
 }
