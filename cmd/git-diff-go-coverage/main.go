@@ -19,9 +19,9 @@ import (
 )
 
 type Flags struct {
+	Branch string
 	Rate   float64
 	Top    int
-	Branch string
 	File   string
 	Filter *filter.Filter
 }
@@ -34,9 +34,10 @@ func parseFlags() *Flags {
 		},
 	}
 
+	flag.StringVar(&f.Branch, "branch", "", "view the changes you have in your working tree relative to the named <branch>")
+
 	flag.Float64Var(&f.Rate, "rate", 0.65, "the lowest coverage rate")
 	flag.IntVar(&f.Top, "top", 10, "show the top N most complex functions only")
-	flag.StringVar(&f.Branch, "branch", "", "view the changes you have in your working tree relative to the named <branch>")
 	flag.StringVar(&f.File, "file", "", "the coverage file path, cannot be empty")
 
 	flag.Var(f.Filter.Includes, "include", "the regexp for include pathes")
@@ -48,14 +49,14 @@ func parseFlags() *Flags {
 		flag.Usage()
 		log.Fatalf("-file must be empty")
 	}
-	if f.Branch == "" {
-		f.Branch = git.GetBranch()
-	}
 
 	return f
 }
 
 func analyzeGitNews(branch string) git.Files {
+	if branch == "" {
+		branch = git.GetBranch()
+	}
 	s, err := git.ParseNewLines(branch)
 	if err != nil {
 		log.Fatalf("parse the git different relative to the branch:%s. err:%v", branch, err)
