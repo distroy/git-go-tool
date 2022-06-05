@@ -8,21 +8,31 @@ on:
     branches:
       - master
 
+env:
+  GO111MODULE: on
+  TZ: Asia/Shanghai
+  PROJECT_URL: "${{ github.repositoryUrl }}"
+  WORKSPACE: "${{ github.workspace }}"
+
 jobs:
   echo-env-job:
     runs-on: ubuntu-latest
-  steps:
-    - run: |
-      echo "$GITHUB_BASE_REF"
-      echo "$GITHUB_HEAD_REF"
-
+    steps:
+      - run: |
+          echo "$PWD"
+      - run: |
+          echo "$GITHUB_BASE_REF"
+          echo "$GITHUB_HEAD_REF"
+          echo "$GITHUB_EVENT_NAME"
+      - run: |
+          echo "$PROJECT_URL"
+          echo "$WORKSPACE"
+      # - run: echo '${{ toJSON(github) }}'
+      - run: |
+          echo "${{ github.event_name }}"
 
   go-cognitive-job:
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
-      TZ: Asia/Shanghai
-
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -33,10 +43,7 @@ jobs:
 
   go-test-job:
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
-      TZ: Asia/Shanghai
-
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -44,3 +51,23 @@ jobs:
           go-version: "1.12.17"
       - run: go mod download
       - run: make go-test
+
+  go-test-coverage-job:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.12.17"
+      - run: |
+          cd "$WORKSPACE/.."
+          rm -rf "$WORKSPACE"
+          git clone "$PROJECT_URL" "$(basename "$WORKSPACE")"
+          cd "$WORKSPACE"
+          git checkout "$GITHUB_BASE_REF"
+          git checkout "$GITHUB_HEAD_REF"
+      - run: make setup
+      - run: go mod download
+      - run: make go-test-coverage
+      - run: git-diff-go-coverage -rate 0.65 -branch "$GITHUB_BASE_REF" -file log/coverage.out
