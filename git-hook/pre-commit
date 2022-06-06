@@ -22,6 +22,6 @@ if [[ "$GO_COGNITIVE_OVER" == "" ]]; then
 fi
 
 git-diff-go-cognitive \
-    -over 20 \
+    -over $GO_COGNITIVE_OVER \
     ${GO_EXCLUDE_OPTIONS} \
     -branch "$against" || exit $?
