@@ -119,8 +119,12 @@ func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity)
 func printOldOvers(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
 	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) == 0 {
+		fmt.Fprint(w, termcolor.Green)
+		fmt.Fprintf(w, "there is no function's cogntive complexity over %d\n", flags.Over)
+		fmt.Fprint(w, termcolor.Reset)
 		return
 	}
+
 	if len(cplxes) > flags.Top {
 		cplxes = cplxes[:flags.Top]
 	}
