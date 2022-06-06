@@ -117,7 +117,7 @@
     - !reference [.checkout-all-commits, before_script]
   script:
     # 检查单元测试是否都可以通过
-    - mkdir -pv "$(dir name "$GO_COVERAGE_FILE")"
+    - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
     - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
   after_script:
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
