@@ -47,7 +47,7 @@ func FilterSlice(slice interface{}, filter interface{}) int {
 
 func filterSlice(slice, filter reflect.Value) int {
 	i := 0
-	j := slice.Len() - 1
+	j := slice.Len()
 
 	for i < j {
 		var vi, vj reflect.Value
@@ -60,17 +60,19 @@ func filterSlice(slice, filter reflect.Value) int {
 		}
 
 		for ; i < j; j-- {
-			vj = slice.Index(j)
+			vj = slice.Index(j - 1)
 			if filter.Call([]reflect.Value{vj})[0].Bool() {
 				break
 			}
 		}
 
-		if i != j {
+		if i < j-1 {
 			tmp := vi.Interface()
 			vi.Set(vj)
 			vj.Set(reflect.ValueOf(tmp))
+			i++
 		}
 	}
+
 	return i
 }

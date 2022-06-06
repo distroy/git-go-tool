@@ -12,6 +12,9 @@ variables:
   # 用来运行的镜像
   GO_CHECK_IMAGE: 'harbor.shopeemobile.com/shopee/golang-base'
 
+  # git flags
+  GIT_COMPARE_MODE: "diff"
+
   # go flags
   GO_FLAGS: "-mod=vendor"
   GO_TEST_FLAGS: '-gcflags="all=-l"'

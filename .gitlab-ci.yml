@@ -10,6 +10,9 @@ stages:
 variables:
   _GO_INSTALL_DIR: "$CI_PROJECT_DIR"
 
+  # git flags
+  GIT_COMPARE_MODE: "all"
+
   # go flags
   GO_FLAGS: ""
   GO_TEST_FLAGS: '-gcflags="all=-l"'

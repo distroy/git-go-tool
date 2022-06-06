@@ -26,6 +26,13 @@ func TestFilterSlice(t *testing.T) {
 			},
 			want: []int{0, 2, 8, 4, 6},
 		},
+		{
+			args: args{
+				slice:  []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0},
+				filter: func(n int) bool { return true },
+			},
+			want: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
