@@ -74,13 +74,18 @@
     - !reference [.go-install-tools, before_script]
     - !reference [.checkout-all-commits, before_script]
   script:
+    - |
+      if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]];
+        GO_COGNITIVE_EXCLUDES=GO_EXCLUDE_OPTIONS
+      fi
+    # 检查单元测试是否都可以通过
     # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
     - |
       echo "merge base: $merge_base"
     # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
-    - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" ${GO_EXCLUDE_OPTIONS}
+    - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" ${GO_COGNITIVE_EXCLUDES}
 
 .go-test:
   # 相同stage的job并行执行
@@ -116,6 +121,10 @@
     - !reference [.go-install-tools, before_script]
     - !reference [.checkout-all-commits, before_script]
   script:
+    - |
+      if [[ "$GO_COVERAGE_EXCLUDES" == "" ]];
+        GO_COVERAGE_EXCLUDES=GO_EXCLUDE_OPTIONS
+      fi
     # 检查单元测试是否都可以通过
     - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
     - go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
@@ -124,4 +133,4 @@
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
     - |
       echo "merge base: $merge_base"
-    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
+    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_COVERAGE_EXCLUDES}
