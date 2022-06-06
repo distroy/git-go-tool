@@ -1,4 +1,3 @@
-
 .go-install-tools:
   before_script:
     # 输出一些信息
@@ -74,9 +73,6 @@
   except:
     variables:
       - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
-  before_script:
-    - echo "before_script"
-    - !reference [.go-install-tools, before_script]
   script:
     - echo "script"
     # 检查单元测试是否都可以通过
@@ -116,9 +112,6 @@
       - merge_requests
     changes:
       - "**/**.go"
-  before_script:
-    - echo "before_script"
-    - !reference [.go-install-tools, before_script]
   script:
     - echo "script"
     # 检查服务 build 是否都可以成功

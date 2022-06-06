@@ -43,6 +43,6 @@ go-cognitive-job:
   extends:
     - .go-cognitive
 
-build-test-job:
+go-build-job:
   extends:
     - .go-build
