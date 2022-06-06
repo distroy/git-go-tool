@@ -75,7 +75,7 @@
     - !reference [.checkout-all-commits, before_script]
   script:
     - |
-      if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]];
+      if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
         GO_COGNITIVE_EXCLUDES=GO_EXCLUDE_OPTIONS
       fi
     # 检查单元测试是否都可以通过
@@ -122,7 +122,7 @@
     - !reference [.checkout-all-commits, before_script]
   script:
     - |
-      if [[ "$GO_COVERAGE_EXCLUDES" == "" ]];
+      if [[ "$GO_COVERAGE_EXCLUDES" == "" ]]; then
         GO_COVERAGE_EXCLUDES=GO_EXCLUDE_OPTIONS
       fi
     # 检查单元测试是否都可以通过
