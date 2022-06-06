@@ -31,78 +31,8 @@
     - git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
     - cd "$CI_PROJECT_DIR/"
     # checkout 2 个分支
-    - git checkout $GIT_MERGE_TARGET
-    - git checkout $GIT_MERGE_SOURCE
-
-.go-test-coverage:
-  # 相同stage的job并行执行
-  stage: go-check-stage
-  image: "$GO_CHECK_IMAGE"
-  variables:
-    GIT_MERGE_TARGET: $GO_COVERAGE_DIFF_TARGET
-    GIT_MERGE_SOURCE: $GO_COVERAGE_DIFF_SOURCE
-  only:
-    refs:
-      - merge_requests
-    variables:
-      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
-    changes:
-      - "**/**.go"
-  before_script:
-    - !reference [.go-install-tools, before_script]
-    - !reference [.checkout-all-commits, before_script]
-  script:
-    # 检查单元测试是否都可以通过
-    - mkdir -pv "$(dir name "$GO_COVERAGE_FILE")"
-    - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
-  after_script:
-    # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
-    - |
-      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
-    - |
-      echo "merge base: $merge_base"
-    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
-
-.go-test:
-  # 相同stage的job并行执行
-  stage: go-check-stage
-  image: "$GO_CHECK_IMAGE"
-  only:
-    refs:
-      - merge_requests
-    changes:
-      - "**/**.go"
-  except:
-    variables:
-      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
-  script:
-    # 检查单元测试是否都可以通过
-    - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./...
-
-.go-cognitive:
-  # 相同stage的job并行执行
-  stage: go-check-stage
-  image: "$GO_CHECK_IMAGE"
-  variables:
-    GIT_MERGE_TARGET: $GO_COGNITIVE_DIFF_TARGET
-    GIT_MERGE_SOURCE: $GO_COGNITIVE_DIFF_SOURCE
-  stage: go-check-stage
-  only:
-    refs:
-      - merge_requests
-    # changes:
-    #   - "**/**.go"
-  before_script:
-    - !reference [.go-install-tools, before_script]
-    - !reference [.checkout-all-commits, before_script]
-  script:
-    # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
-    - |
-      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
-    - |
-      echo "merge base: $merge_base"
-    # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
-    - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -branch "$merge_base" ${GO_EXCLUDE_OPTIONS}
+    - git checkout "$GIT_MERGE_TARGET"
+    - git checkout "$GIT_MERGE_SOURCE"
 
 .go-build:
   # 相同stage的job并行执行
@@ -126,3 +56,73 @@
           go build ${GO_FLAGS} -o "$_service_name" || exit $?
         done
       fi
+
+.go-cognitive:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  stage: go-check-stage
+  only:
+    refs:
+      - merge_requests
+    # changes:
+    #   - "**/**.go"
+  before_script:
+    - |
+      GIT_MERGE_TARGET="$GO_COGNITIVE_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_COGNITIVE_DIFF_SOURCE"
+    - !reference [.go-install-tools, before_script]
+    - !reference [.checkout-all-commits, before_script]
+  script:
+    # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+    - |
+      echo "merge base: $merge_base"
+    # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
+    - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -branch "$merge_base" ${GO_EXCLUDE_OPTIONS}
+
+.go-test:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - "**/**.go"
+  except:
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
+  script:
+    # 检查单元测试是否都可以通过
+    - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./...
+
+.go-test-coverage:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
+    changes:
+      - "**/**.go"
+  before_script:
+    - |
+      GIT_MERGE_TARGET="$GO_COVERAGE_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_COVERAGE_DIFF_SOURCE"
+    - !reference [.go-install-tools, before_script]
+    - !reference [.checkout-all-commits, before_script]
+  script:
+    # 检查单元测试是否都可以通过
+    - mkdir -pv "$(dir name "$GO_COVERAGE_FILE")"
+    - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
+  after_script:
+    # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+    - |
+      echo "merge base: $merge_base"
+    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
