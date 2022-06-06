@@ -111,7 +111,6 @@ func main() {
 		return c.Complexity > flags.Over && flags.Filter.Check(c.Filename)
 	})
 
-	log.Printf(" === filter len:%d", len(filters))
 	newCplxes := filterComplexities(complexities, func(c gocognitive.Complexity) bool {
 		for _, filter := range filters {
 			if !filter(c.Filename, c.BeginLine, c.EndLine) {
