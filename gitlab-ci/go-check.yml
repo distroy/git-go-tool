@@ -34,7 +34,7 @@
 .go-test-coverage:
   # 相同stage的job并行执行
   stage: go-check-stage
-  image: "GO_CHECK_IMAGE"
+  image: "$GO_CHECK_IMAGE"
   variables:
     GIT_MERGE_TARGET: "$GO_COVERAGE_DIFF_TARGET"
     GIT_MERGE_SOURCE: "$GO_COVERAGE_DIFF_SOURCE"
@@ -62,7 +62,7 @@
 .go-test:
   # 相同stage的job并行执行
   stage: go-check-stage
-  image: "GO_CHECK_IMAGE"
+  image: "$GO_CHECK_IMAGE"
   only:
     refs:
       - merge_requests
@@ -78,7 +78,7 @@
 .go-cognitive:
   # 相同stage的job并行执行
   stage: go-check-stage
-  image: "GO_CHECK_IMAGE"
+  image: "$GO_CHECK_IMAGE"
   variables:
     GIT_MERGE_TARGET: "$GO_COGNITIVE_DIFF_TARGET"
     GIT_MERGE_SOURCE: "$GO_COGNITIVE_DIFF_SOURCE"
@@ -102,7 +102,7 @@
 .go-build:
   # 相同stage的job并行执行
   stage: go-check-stage
-  image: "GO_CHECK_IMAGE"
+  image: "$GO_CHECK_IMAGE"
   only:
     refs:
       - merge_requests
