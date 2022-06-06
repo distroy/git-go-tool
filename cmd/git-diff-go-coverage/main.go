@@ -39,7 +39,7 @@ func parseFlags() *Flags {
 		},
 	}
 
-	flag.StringVar(&f.Mode, "mode", "", "coverage mode: default=show the coverage with git diff; all=show all the coverage")
+	flag.StringVar(&f.Mode, "mode", "", "compare mode: default=show the coverage with git diff; all=show all the coverage")
 
 	flag.StringVar(&f.Branch, "branch", "", "view the changes you have in your working tree relative to the named <branch>")
 

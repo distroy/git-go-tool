@@ -1,0 +1,127 @@
+.go-install-tools:
+  before_script:
+    # 输出一些信息
+    - echo "job:" "$CI_JOB_NAME"
+    - echo "CI_MERGE_REQUEST_PROJECT_URL:" "$CI_MERGE_REQUEST_PROJECT_URL"
+    - echo "CI_MERGE_REQUEST_SOURCE_PROJECT_URL:" "$CI_MERGE_REQUEST_SOURCE_PROJECT_URL"
+    # 切换到上级目录，安装golang检查认知复杂度的工具
+    # 在project目录执行go install时，会下载project所有的import
+    # 我们已经把import的依赖，放到了vendor，不需要下载了
+    - |
+      if [[ "$_GO_INSTALL_DIR" == "" ]]; then
+        _GO_INSTALL_DIR="$CI_PROJECT_DIR/.."
+      fi
+    - cd "$_GO_INSTALL_DIR"
+    - |
+      function go_install {
+        echo "go install $1 || go install $1@latest"
+        go install $1 || go install $1@latest || exit $?
+      }
+    - go_install github.com/distroy/git-go-tool/cmd/go-cognitive
+    - go_install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive
+    - go_install github.com/distroy/git-go-tool/cmd/git-diff-go-coverage
+    - cd "$CI_PROJECT_DIR"
+
+.checkout-all-commits:
+  before_script:
+    # 因为job执行时，默认只会拉取最近的一些commit，为了对比MR的2个branch的差异
+    # 需要拉取所有的commit
+    - cd "$CI_PROJECT_DIR/.."
+    - rm -rf "$CI_PROJECT_DIR"
+    - git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
+    - cd "$CI_PROJECT_DIR/"
+    # checkout 2 个分支
+    - git checkout "$GIT_MERGE_TARGET"
+    - git checkout "$GIT_MERGE_SOURCE"
+
+.go-build:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - "**/**.go"
+  script:
+    # 检查服务 build 是否都可以成功
+    - |
+      if [[ -$GO_BUILD_TARGET_DIR != - ]]; then
+        for i in $(ls $GO_BUILD_TARGET_DIR/*/*.go); do
+          _service_dir="$(dirname "$i")"
+          echo "=== building service: $_service_dir"
+          _service_name="$(basename "$_service_dir")"
+          cd "$_service_dir"
+          echo go build ${GO_FLAGS} -o "$_service_name" .
+          go build ${GO_FLAGS} -o "$_service_name" || exit $?
+        done
+      fi
+
+.go-cognitive:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  stage: go-check-stage
+  only:
+    refs:
+      - merge_requests
+    # changes:
+    #   - "**/**.go"
+  before_script:
+    - |
+      GIT_MERGE_TARGET="$GO_COGNITIVE_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_COGNITIVE_DIFF_SOURCE"
+    - !reference [.go-install-tools, before_script]
+    - !reference [.checkout-all-commits, before_script]
+  script:
+    # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+    - |
+      echo "merge base: $merge_base"
+    # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
+    - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" ${GO_EXCLUDE_OPTIONS}
+
+.go-test:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - "**/**.go"
+  except:
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
+  script:
+    # 检查单元测试是否都可以通过
+    - go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./...
+
+.go-test-coverage:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
+    changes:
+      - "**/**.go"
+  before_script:
+    - |
+      GIT_MERGE_TARGET="$GO_COVERAGE_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_COVERAGE_DIFF_SOURCE"
+    - !reference [.go-install-tools, before_script]
+    - !reference [.checkout-all-commits, before_script]
+  script:
+    # 检查单元测试是否都可以通过
+    - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
+    - go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
+    # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+    - |
+      echo "merge base: $merge_base"
+    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
