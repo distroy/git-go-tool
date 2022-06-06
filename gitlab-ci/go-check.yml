@@ -16,7 +16,10 @@
       function go_install {
         echo "go install $1 || go install $1@latest"
         go install $1 || go install $1@latest
-        exit $?
+        r=$?
+        if (( r != 0 )); then
+          exit $?
+        fi
       }
     - go_install github.com/distroy/git-go-tool/cmd/go-cognitive
     - go_install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive
