@@ -63,6 +63,7 @@
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base "$GIT_MERGE_TARGET" "$GIT_MERGE_SOURCE")
+    - |
       echo "merge base: $merge_base"
     - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
 
@@ -102,6 +103,7 @@
     # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base "$GIT_MERGE_TARGET" "$GIT_MERGE_SOURCE")
+    - |
       echo "merge base: $merge_base"
     # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
     - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -branch "$merge_base" ${GO_EXCLUDE_OPTIONS}
