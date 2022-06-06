@@ -94,7 +94,7 @@ go-test:
 
 .PHONY: setup
 setup:
-	git config core.hooksPath "script/git-hook"
+	git config core.hooksPath "git-hook"
 	$(call go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
 	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
 	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)

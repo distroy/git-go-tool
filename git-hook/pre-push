@@ -1,0 +1,58 @@
+#! /usr/bin/env bash
+
+# An example hook script to verify what is about to be pushed.  Called by "git
+# push" after it has checked the remote status, but before anything has been
+# pushed.  If this script exits with a non-zero status nothing will be pushed.
+#
+# This hook is called with the following parameters:
+#
+# $1 -- Name of the remote to which the push is being done
+# $2 -- URL to which the push is being done
+#
+# If pushing without using a named remote those arguments will be equal.
+#
+# Information about the commits which are being pushed is supplied as lines to
+# the standard input in the form:
+#
+#   <local ref> <local sha1> <remote ref> <remote sha1>
+#
+# This sample shows how to prevent push of commits where the log message starts
+# with "WIP" (work in progress).
+
+function _echo() {
+    echo "$@" >&2
+}
+
+remote="$1" # origin
+url="$2"    # git@github.com:distroy/ldgo.git
+
+# _echo "$(date '+%FT%T%z')"
+# _echo "remote:$remote" "url:$url"
+
+z40=0000000000000000000000000000000000000000
+
+# eg:
+# refs/heads/dev/atomic 7339347bd880efbe3e37699fc4f9a8a3c03171d8 refs/heads/dev/atomic ea986eb9bc53437c41d88dd45fa760843265fe9c
+while read local_ref local_sha remote_ref remote_sha; do
+    # _echo "$local_ref" "$local_sha" "$remote_ref" "$remote_sha"
+    if [ "$local_sha" = $z40 ]; then
+        # Handle delete
+        continue
+    fi
+
+    if [ "$remote_sha" = $z40 ]; then
+        # New branch, examine all commits
+        range="$local_sha"
+    else
+        # Update to existing branch, examine new commits
+        range="$remote_sha..$local_sha"
+    fi
+
+    # Check for WIP commit
+    commit=`git rev-list -n 1 --grep '^WIP' "$range"`
+    # _echo "commit: $commit"
+    if [ -n "$commit" ]; then
+        _echo "Found WIP commit in $local_ref, not pushing"
+        exit 1
+    fi
+done

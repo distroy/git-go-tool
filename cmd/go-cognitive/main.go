@@ -101,7 +101,7 @@ func main() {
 		showAverage(res)
 	}
 
-	if f.Over > 0 && written > f.Over {
+	if f.Over > 0 && written > 0 {
 		os.Exit(1)
 	}
 }
