@@ -119,7 +119,6 @@
     # 检查单元测试是否都可以通过
     - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
     - go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
-  after_script:
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
