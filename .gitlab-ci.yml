@@ -8,6 +8,8 @@ stages:
 
 # 环境变量
 variables:
+  _GO_INSTALL_DIR: "$CI_PROJECT_DIR"
+
   # go flags
   GO_FLAGS: ""
   GO_TEST_FLAGS: '-gcflags="all=-l"'

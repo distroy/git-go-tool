@@ -7,7 +7,11 @@
     # 切换到上级目录，安装golang检查认知复杂度的工具
     # 在project目录执行go install时，会下载project所有的import
     # 我们已经把import的依赖，放到了vendor，不需要下载了
-    - cd "$CI_PROJECT_DIR/.."
+    - |
+      if [[ "$_GO_INSTALL_DIR" == "" ]]; then
+        _GO_INSTALL_DIR="$CI_PROJECT_DIR/.."
+      fi
+    - cd "$_GO_INSTALL_DIR"
     - |
       function go_install {
         echo "go install $1 || go install $1@latest"
@@ -113,10 +117,11 @@
     - |
       if [[ "$GO_BUILD_TARGET_DIR" != "" ]]; then
         for i in $(ls $GO_BUILD_TARGET_DIR/*/*.go); do
-          echo "=== building service: $i"
-          name="$(basename "$i")"
-          cd "$i"
-          echo go build ${GO_FLAGS} -o "$name" .
-          go build ${GO_FLAGS} -o "$name" || exit $?
+          _service_dir="$(dirname "$i")"
+          echo "=== building service: $_service_dir"
+          _service_name="$(basename "$_service_dir")"
+          cd "$_service_dir"
+          echo go build ${GO_FLAGS} -o "$_service_name" .
+          go build ${GO_FLAGS} -o "$_service_name" || exit $?
         done
       fi
