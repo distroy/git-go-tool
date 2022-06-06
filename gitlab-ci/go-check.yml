@@ -47,17 +47,20 @@
     changes:
       - "**/**.go"
   before_script:
+    - echo "before_script"
     - !reference [.go-install-tools, before_script]
     - !reference [.checkout-all-commits, before_script]
   script:
+    - echo "script"
     # 检查单元测试是否都可以通过
     - mkdir -pv "$(dir name "$GO_COVERAGE_FILE")"
     - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
   after_script:
+    - echo "after_script"
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - merge_base=$(git merge-base "$GIT_MERGE_TARGET" "$GIT_MERGE_SOURCE")
     - echo "merge base: $merge_base"
-    - git-diff-go-coverage -rate $GO_COVERAGE_RATE -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
+    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_EXCLUDE_OPTIONS}
 
 .go-test:
   # 相同stage的job并行执行
@@ -72,8 +75,10 @@
     variables:
       - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
   before_script:
+    - echo "before_script"
     - !reference [.go-install-tools, before_script]
   script:
+    - echo "script"
     # 检查单元测试是否都可以通过
     - go test -v ${GO_TEST_FLAGS} ${GO_TEST_FLAGS} ./...
 
@@ -91,9 +96,11 @@
     # changes:
     #   - "**/**.go"
   before_script:
+    - echo "before_script"
     - !reference [.go-install-tools, before_script]
     - !reference [.checkout-all-commits, before_script]
   script:
+    - echo "script"
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - merge_base=$(git merge-base "$GIT_MERGE_TARGET" "$GIT_MERGE_SOURCE")
     - echo "merge base: $merge_base"
@@ -110,8 +117,10 @@
     changes:
       - "**/**.go"
   before_script:
+    - echo "before_script"
     - !reference [.go-install-tools, before_script]
   script:
+    - echo "script"
     # 检查服务 build 是否都可以成功
     - |
       if [[ "$GO_BUILD_TARGET_DIR" != "" ]]; then
