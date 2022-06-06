@@ -15,7 +15,7 @@ import (
 )
 
 func ParseNewLines(branch string) ([]Different, error) {
-	cmd := exec.Command("git", "diff", "--unified", branch)
+	cmd := exec.Command("git", "diff", "--unified=0", branch)
 	return parseNewLinesFromCommand(cmd)
 }
 
