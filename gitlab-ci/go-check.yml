@@ -93,7 +93,7 @@
   before_script:
     - !reference [.go-install-tools, before_script]
     - !reference [.checkout-all-commits, before_script]
-  after_script:
+  script:
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - merge_base=$(git merge-base "$GIT_MERGE_TARGET" "$GIT_MERGE_SOURCE")
     - echo "merge base: $merge_base"
