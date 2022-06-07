@@ -17,7 +17,7 @@ variables:
 
   # go flags
   GO_FLAGS: "-mod=vendor"
-  GO_TEST_FLAGS: '-gcflags="all=-l"'
+  GO_TEST_FLAGS: "-gcflags=all=-l"
   GO_EXCLUDE_OPTIONS: -exclude '^vendor/'
 
   # go buile variables
