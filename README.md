@@ -54,7 +54,6 @@ variables:
   # GO_COGNITIVE_EXCLUDES: ""
 ```
 
-
 # Commands 介绍
 
 ## Installation

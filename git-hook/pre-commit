@@ -21,6 +21,9 @@ if [[ "$GO_COGNITIVE_OVER" == "" ]]; then
     GO_COGNITIVE_OVER=15
 fi
 
+type git-diff-go-cognitive \
+    || go install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive@latest \
+    || go install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive
 git-diff-go-cognitive \
     -over $GO_COGNITIVE_OVER \
     ${GO_EXCLUDE_OPTIONS} \
