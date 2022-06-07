@@ -1,5 +1,5 @@
 .go-install-tools:
-  before_script:
+  script:
     # 输出一些信息
     - echo "job:" "$CI_JOB_NAME"
     - echo "CI_MERGE_REQUEST_PROJECT_URL:" "$CI_MERGE_REQUEST_PROJECT_URL"
@@ -23,7 +23,7 @@
     - cd "$CI_PROJECT_DIR"
 
 .checkout-all-commits:
-  before_script:
+  script:
     # 因为job执行时，默认只会拉取最近的一些commit，为了对比MR的2个branch的差异
     # 需要拉取所有的commit
     - cd "$CI_PROJECT_DIR/.."
@@ -67,13 +67,12 @@
       - merge_requests
     # changes:
     #   - "**/**.go"
-  before_script:
+  script:
     - |
       GIT_MERGE_TARGET="$GO_COGNITIVE_DIFF_TARGET"
       GIT_MERGE_SOURCE="$GO_COGNITIVE_DIFF_SOURCE"
-    - !reference [.go-install-tools, before_script]
-    - !reference [.checkout-all-commits, before_script]
-  script:
+    - !reference [.go-install-tools, script]
+    - !reference [.checkout-all-commits, script]
     - |
       if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
         GO_COGNITIVE_EXCLUDES=GO_EXCLUDE_OPTIONS
@@ -114,13 +113,12 @@
       - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
     changes:
       - "**/**.go"
-  before_script:
+  script:
     - |
       GIT_MERGE_TARGET="$GO_COVERAGE_DIFF_TARGET"
       GIT_MERGE_SOURCE="$GO_COVERAGE_DIFF_SOURCE"
-    - !reference [.go-install-tools, before_script]
-    - !reference [.checkout-all-commits, before_script]
-  script:
+    - !reference [.go-install-tools, script]
+    - !reference [.checkout-all-commits, script]
     - |
       if [[ "$GO_COVERAGE_EXCLUDES" == "" ]]; then
         GO_COVERAGE_EXCLUDES=GO_EXCLUDE_OPTIONS
