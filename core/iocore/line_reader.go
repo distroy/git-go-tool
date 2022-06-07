@@ -24,23 +24,29 @@ type LineReader interface {
 
 type lineReader struct {
 	reader    io.Reader
-	token     []byte
 	buffer    []byte
 	maxSize   int
 	tokenPos  int
-	bufferPos int
+	tokenEnd  int
+	tokenNext int
+	bufferEnd int
 	err       error
 }
 
-func NewLineReader(r io.Reader) *lineReader {
+func NewLineReader(r io.Reader) LineReader {
 	maxSize := 4096
+	return newLineReader(r, maxSize)
+}
+
+func newLineReader(r io.Reader, maxSize int) *lineReader {
 	return &lineReader{
 		reader:    r,
-		token:     make([]byte, maxSize),
 		buffer:    make([]byte, maxSize),
 		maxSize:   maxSize,
-		tokenPos:  -1,
-		bufferPos: 0,
+		tokenPos:  0,
+		tokenEnd:  -1,
+		tokenNext: 0,
+		bufferEnd: 0,
 		err:       nil,
 	}
 }
@@ -67,8 +73,8 @@ func (r *lineReader) Peek() ([]byte, error) {
 		return nil, err
 	}
 
-	if r.tokenPos >= 0 {
-		return r.token[:r.tokenPos], nil
+	if r.tokenEnd >= 0 {
+		return r.buffer[r.tokenPos:r.tokenEnd], nil
 	}
 
 	return nil, r.err
@@ -80,91 +86,100 @@ func (r *lineReader) Read() ([]byte, error) {
 		return nil, err
 	}
 
-	if pos := r.tokenPos; pos >= 0 {
-		r.tokenPos = -1
-		return r.token[:pos], nil
+	if end := r.tokenEnd; end >= 0 {
+		pos := r.tokenPos
+		r.tokenEnd = -1
+		return r.buffer[pos:end], nil
 	}
 
 	return nil, r.err
 }
 
 func (r *lineReader) read() error {
-	if r.tokenPos >= 0 {
+	if r.tokenEnd >= 0 {
+		return nil
+	}
+
+	idx := r.indexToken(r.tokenNext)
+	if idx >= 0 {
+		r.setToken(idx)
 		return nil
 	}
 
 	if r.err != nil {
-		if r.err == io.EOF && r.bufferPos > 0 {
-			r.tokenPos = r.bufferPos
+		if r.err == io.EOF && r.bufferEnd > r.tokenNext {
+			r.setToken(r.bufferEnd)
 			return nil
 		}
 		return r.err
-	}
-
-	idx := r.indexToken(0)
-	if idx >= 0 {
-		r.copyToken(idx)
-		return nil
 	}
 
 	return r.readLineLoop()
 }
 
 func (r *lineReader) readLineLoop() error {
+	r.moveFront()
+
 	for {
-		pos := r.bufferPos
-		buf := r.buffer[pos:]
+		end := r.bufferEnd
+		buf := r.buffer[end:]
 		n, err := r.reader.Read(buf)
 		if err != nil {
 			r.err = err
 			break
 		}
 
-		r.bufferPos += n
-		idx := r.indexToken(pos)
+		r.bufferEnd += n
+		idx := r.indexToken(end)
 		if idx >= 0 {
-			r.copyToken(idx)
+			r.setToken(idx)
 			return nil
 		}
 
-		if r.bufferPos >= r.maxSize {
+		if r.bufferEnd >= r.maxSize {
 			r.err = ErrOverMaxSize
 			return r.err
 		}
 	}
 
 	if r.err == io.EOF {
-		if r.bufferPos > 0 {
-			r.copyToken(r.bufferPos)
+		if r.bufferEnd > r.tokenNext {
+			r.setToken(r.bufferEnd)
+			return nil
 		}
-		return nil
 	}
 	return r.err
 }
 
 func (r *lineReader) indexToken(pos int) int {
-	end := r.bufferPos
-	return bytes.IndexByte(r.buffer[pos:end], '\n') + pos
+	end := r.bufferEnd
+	if pos >= end {
+		return -1
+		// log.Printf(" *** pos:%d, token pos:%d, token end:%d, token next:%d, buffer end:%d, err:%v",
+		// 	pos, r.tokenPos, r.tokenEnd, r.tokenNext, r.bufferEnd, r.err)
+	}
+	idx := bytes.IndexByte(r.buffer[pos:end], '\n')
+	if idx < 0 {
+		return -1
+	}
+	return idx + pos
 }
 
-func (r *lineReader) copyToken(pos int) {
-	copy(r.token[:pos], r.buffer[:pos])
-	r.tokenPos = pos
-	// log.Printf(" === token 1:\n%s", r.token[:r.tokenPos])
-	if r.tokenPos > 1 && r.token[r.tokenPos-1] == '\r' {
-		r.tokenPos--
-		// log.Printf(" === token 2:\n%s", r.token[:r.tokenPos])
+func (r *lineReader) setToken(idx int) {
+	r.tokenPos = r.tokenNext
+	r.tokenEnd = idx
+	r.tokenNext = idx + 1
+
+	if r.tokenEnd > r.tokenPos && r.buffer[r.tokenEnd-1] == '\r' {
+		r.tokenEnd--
+	}
+}
+
+func (r *lineReader) moveFront() {
+	if r.tokenNext < r.bufferEnd {
+		copy(r.buffer, r.buffer[r.tokenNext:r.bufferEnd])
 	}
 
-	// log.Printf(" === before:\n%s", r.buffer[:r.bufferPos])
-	// defer func() { log.Printf(" === after:\n%s", r.buffer[:r.bufferPos]) }()
-
-	pos++
-	if pos >= r.bufferPos {
-		r.bufferPos = 0
-		return
-	}
-
-	copy(r.buffer, r.buffer[pos:r.bufferPos])
-	r.bufferPos -= pos
+	r.bufferEnd -= r.tokenNext
+	r.tokenNext = 0
 }
