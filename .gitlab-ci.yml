@@ -15,7 +15,7 @@ variables:
 
   # go flags
   GO_FLAGS: ""
-  GO_TEST_FLAGS: '-gcflags="all=-l"'
+  GO_TEST_FLAGS: "-gcflags=all=-l"
   GO_EXCLUDE_OPTIONS: ""
 
   # go buile variables
