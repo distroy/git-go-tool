@@ -64,9 +64,32 @@ func TestLineReader_Peek(t *testing.T) {
 }
 
 func TestLineReader_OverSize(t *testing.T) {
-	text := "1234"
-	r := NewLineReader(strings.NewReader(text))
-	r.maxSize = 4
+	text := "a\nb\nc\r\n1234\n"
+	r := newLineReader(strings.NewReader(text), 4)
+
+	tests := []struct{ want string }{
+		{want: "a"},
+		{want: "b"},
+		{want: "c"},
+	}
+	for _, tt := range tests {
+		got, err := r.PeekString()
+		if err != nil {
+			t.Errorf("LineReader.PeekString() error = %v", err)
+			return
+		}
+		if got != tt.want {
+			t.Errorf("LineReader.PeekString() = %v, want:%s", got, tt.want)
+		}
+		got, err = r.ReadString()
+		if err != nil {
+			t.Errorf("LineReader.ReadString() error = %v", err)
+			return
+		}
+		if got != tt.want {
+			t.Errorf("LineReader.ReadString() = %v, want:%s", got, tt.want)
+		}
+	}
 
 	if got, err := r.PeekString(); err != ErrOverMaxSize {
 		t.Errorf("LineReader.PeekString() = %v, error = %s", got, err)
