@@ -15,21 +15,6 @@ env:
   WORKSPACE: "${{ github.workspace }}"
 
 jobs:
-  echo-env-job:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "$PWD"
-      - run: |
-          echo "$GITHUB_BASE_REF"
-          echo "$GITHUB_HEAD_REF"
-          echo "$GITHUB_EVENT_NAME"
-      - run: |
-          echo "$PROJECT_URL"
-          echo "$WORKSPACE"
-      # - run: echo '${{ toJSON(github) }}'
-      - run: |
-          echo "${{ github.event_name }}"
 
   go-cognitive-job:
     runs-on: ubuntu-latest
