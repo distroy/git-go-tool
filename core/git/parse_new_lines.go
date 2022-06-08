@@ -78,8 +78,8 @@ func ParseNewLinesFromReader(r io.Reader) ([]Different, error) {
 	}
 }
 
-func readFileLines(r iocore.LineReader) ([]string, error) {
-	line, err := r.ReadString()
+func readFileLines(r *iocore.LineReader) ([]string, error) {
+	line, err := r.ReadLineString()
 	if err != nil {
 		// if err == io.EOF {
 		// 	return nil, io.EOF
@@ -94,7 +94,7 @@ func readFileLines(r iocore.LineReader) ([]string, error) {
 	buffer := make([]string, 0, 32)
 	buffer = append(buffer, line)
 	for {
-		line, err = r.PeekString()
+		line, err = r.PeekLineString()
 		if err == io.EOF {
 			return buffer, nil
 
@@ -105,7 +105,7 @@ func readFileLines(r iocore.LineReader) ([]string, error) {
 			return buffer, nil
 		}
 
-		r.Read()
+		r.ReadLine()
 		buffer = append(buffer, line)
 	}
 }

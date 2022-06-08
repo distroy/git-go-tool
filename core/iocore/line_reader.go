@@ -14,15 +14,7 @@ var (
 	ErrOverMaxSize = fmt.Errorf("over max size")
 )
 
-type LineReader interface {
-	Read() ([]byte, error)
-	ReadString() (string, error)
-
-	Peek() ([]byte, error)
-	PeekString() (string, error)
-}
-
-type lineReader struct {
+type LineReader struct {
 	reader    io.Reader
 	buffer    []byte
 	maxSize   int
@@ -33,13 +25,13 @@ type lineReader struct {
 	err       error
 }
 
-func NewLineReader(r io.Reader) LineReader {
+func NewLineReader(r io.Reader) *LineReader {
 	maxSize := 4096
 	return newLineReader(r, maxSize)
 }
 
-func newLineReader(r io.Reader, maxSize int) *lineReader {
-	return &lineReader{
+func newLineReader(r io.Reader, maxSize int) *LineReader {
+	return &LineReader{
 		reader:    r,
 		buffer:    make([]byte, maxSize),
 		maxSize:   maxSize,
@@ -51,23 +43,42 @@ func newLineReader(r io.Reader, maxSize int) *lineReader {
 	}
 }
 
-func (r *lineReader) PeekString() (string, error) {
-	b, err := r.Peek()
+func (r *LineReader) ReadAllLineStrings() ([]string, error) {
+	res := make([]string, 0, 10)
+
+	for {
+		l, err := r.ReadLineString()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return res, err
+		}
+
+		res = append(res, l)
+	}
+
+	return res, nil
+}
+
+func (r *LineReader) PeekLineString() (string, error) {
+	b, err := r.PeekLine()
 	if err != nil {
 		return "", err
 	}
 	return string(b), nil
 }
 
-func (r *lineReader) ReadString() (string, error) {
-	b, err := r.Read()
+func (r *LineReader) ReadLineString() (string, error) {
+	b, err := r.ReadLine()
 	if err != nil {
 		return "", err
 	}
 	return string(b), nil
 }
 
-func (r *lineReader) Peek() ([]byte, error) {
+func (r *LineReader) PeekLine() ([]byte, error) {
 	err := r.read()
 	if err != nil {
 		return nil, err
@@ -80,7 +91,7 @@ func (r *lineReader) Peek() ([]byte, error) {
 	return nil, r.err
 }
 
-func (r *lineReader) Read() ([]byte, error) {
+func (r *LineReader) ReadLine() ([]byte, error) {
 	err := r.read()
 	if err != nil {
 		return nil, err
@@ -95,7 +106,7 @@ func (r *lineReader) Read() ([]byte, error) {
 	return nil, r.err
 }
 
-func (r *lineReader) read() error {
+func (r *LineReader) read() error {
 	if r.tokenEnd >= 0 {
 		return nil
 	}
@@ -117,7 +128,7 @@ func (r *lineReader) read() error {
 	return r.readLineLoop()
 }
 
-func (r *lineReader) readLineLoop() error {
+func (r *LineReader) readLineLoop() error {
 	r.moveFront()
 
 	for {
@@ -151,7 +162,7 @@ func (r *lineReader) readLineLoop() error {
 	return r.err
 }
 
-func (r *lineReader) indexToken(pos int) int {
+func (r *LineReader) indexToken(pos int) int {
 	end := r.bufferEnd
 	if pos >= end {
 		return -1
@@ -165,7 +176,7 @@ func (r *lineReader) indexToken(pos int) int {
 	return idx + pos
 }
 
-func (r *lineReader) setToken(idx int) {
+func (r *LineReader) setToken(idx int) {
 	r.tokenPos = r.tokenNext
 	r.tokenEnd = idx
 	r.tokenNext = idx + 1
@@ -175,7 +186,7 @@ func (r *lineReader) setToken(idx int) {
 	}
 }
 
-func (r *lineReader) moveFront() {
+func (r *LineReader) moveFront() {
 	if r.tokenNext < r.bufferEnd {
 		copy(r.buffer, r.buffer[r.tokenNext:r.bufferEnd])
 	}

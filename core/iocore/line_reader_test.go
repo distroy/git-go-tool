@@ -28,7 +28,7 @@ func testLineReader(t *testing.T, f func() (string, error), tests []testLineRead
 	}
 }
 
-func TestLineReader_Peek(t *testing.T) {
+func TestLineReader_PeekLineString(t *testing.T) {
 	text := "1111\r\n\n2222\n3333\r\n"
 	r := NewLineReader(strings.NewReader(text))
 
@@ -40,26 +40,26 @@ func TestLineReader_Peek(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := r.PeekString()
+		got, err := r.PeekLineString()
 		if err != nil {
-			t.Errorf("LineReader.PeekString() error = %v", err)
+			t.Errorf("LineReader.PeekLineString() error = %v", err)
 			return
 		}
 		if got != tt.want {
-			t.Errorf("LineReader.PeekString() = %v, want:%s", got, tt.want)
+			t.Errorf("LineReader.PeekLineString() = %v, want:%s", got, tt.want)
 		}
-		got, err = r.ReadString()
+		got, err = r.ReadLineString()
 		if err != nil {
-			t.Errorf("LineReader.ReadString() error = %v", err)
+			t.Errorf("LineReader.ReadLineString() error = %v", err)
 			return
 		}
 		if got != tt.want {
-			t.Errorf("LineReader.ReadString() = %v, want:%s", got, tt.want)
+			t.Errorf("LineReader.ReadLineString() = %v, want:%s", got, tt.want)
 		}
 	}
 
-	if got, err := r.PeekString(); err != io.EOF {
-		t.Errorf("LineReader.ReadString() = %v, error = %s", got, err)
+	if got, err := r.PeekLineString(); err != io.EOF {
+		t.Errorf("LineReader.ReadLineString() = %v, error = %s", got, err)
 	}
 }
 
@@ -73,34 +73,34 @@ func TestLineReader_OverSize(t *testing.T) {
 		{want: "c"},
 	}
 	for _, tt := range tests {
-		got, err := r.PeekString()
+		got, err := r.PeekLineString()
 		if err != nil {
-			t.Errorf("LineReader.PeekString() error = %v", err)
+			t.Errorf("LineReader.PeekLineString() error = %v", err)
 			return
 		}
 		if got != tt.want {
-			t.Errorf("LineReader.PeekString() = %v, want:%s", got, tt.want)
+			t.Errorf("LineReader.PeekLineString() = %v, want:%s", got, tt.want)
 		}
-		got, err = r.ReadString()
+		got, err = r.ReadLineString()
 		if err != nil {
-			t.Errorf("LineReader.ReadString() error = %v", err)
+			t.Errorf("LineReader.ReadLineString() error = %v", err)
 			return
 		}
 		if got != tt.want {
-			t.Errorf("LineReader.ReadString() = %v, want:%s", got, tt.want)
+			t.Errorf("LineReader.ReadLineString() = %v, want:%s", got, tt.want)
 		}
 	}
 
-	if got, err := r.PeekString(); err != ErrOverMaxSize {
-		t.Errorf("LineReader.PeekString() = %v, error = %s", got, err)
+	if got, err := r.PeekLineString(); err != ErrOverMaxSize {
+		t.Errorf("LineReader.PeekLineString() = %v, error = %s", got, err)
 	}
 
-	if got, err := r.ReadString(); err != ErrOverMaxSize {
-		t.Errorf("LineReader.ReadString() = %v, error = %s", got, err)
+	if got, err := r.ReadLineString(); err != ErrOverMaxSize {
+		t.Errorf("LineReader.ReadLineString() = %v, error = %s", got, err)
 	}
 }
 
-func TestLineReader_Read(t *testing.T) {
+func TestLineReader_ReadLineString(t *testing.T) {
 	text := "1234\nabcd"
 	r := NewLineReader(strings.NewReader(text))
 
@@ -110,20 +110,20 @@ func TestLineReader_Read(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := r.ReadString()
+		got, err := r.ReadLineString()
 		if err != nil {
-			t.Errorf("LineReader.ReadString() error:%v, want:%s", err, tt.want)
+			t.Errorf("LineReader.ReadLineString() error:%v, want:%s", err, tt.want)
 			return
 		}
 		if got != tt.want {
-			t.Errorf("LineReader.ReadString() = %v, want:%s", got, tt.want)
+			t.Errorf("LineReader.ReadLineString() = %v, want:%s", got, tt.want)
 		}
 	}
 
-	if got, err := r.PeekString(); err != io.EOF {
-		t.Errorf("LineReader.ReadString() = %v, error = %s", got, err)
+	if got, err := r.PeekLineString(); err != io.EOF {
+		t.Errorf("LineReader.ReadLineString() = %v, error = %s", got, err)
 	}
-	if got, err := r.PeekString(); err != io.EOF {
-		t.Errorf("LineReader.ReadString() = %v, error = %s", got, err)
+	if got, err := r.PeekLineString(); err != io.EOF {
+		t.Errorf("LineReader.ReadLineString() = %v, error = %s", got, err)
 	}
 }

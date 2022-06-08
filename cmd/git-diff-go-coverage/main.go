@@ -10,7 +10,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
+	"github.com/distroy/git-go-tool/core/filelinecache"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/gocoverage"
@@ -88,6 +90,18 @@ func getFilters(flags *Flags) []func(file string, lineNo int) bool {
 	})
 
 	if flags.Mode == ModeAll {
+		cache := filelinecache.NewCache(git.GetRootDir())
+		filters = append(filters, func(file string, lineNo int) bool {
+			ok, err := cache.CheckFileRange(file, lineNo-1, lineNo, func(line string) bool {
+				line = strings.TrimSpace(line)
+				return len(line) != 0
+			})
+			if err != nil {
+				log.Fatalf("check file range fail. file:%s, lineNo:%d, err:%v",
+					file, lineNo, err)
+			}
+			return ok
+		})
 		return filters
 	}
 

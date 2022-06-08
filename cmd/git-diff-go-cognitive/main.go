@@ -11,7 +11,9 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 
+	"github.com/distroy/git-go-tool/core/filelinecache"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/gocognitive"
@@ -87,8 +89,20 @@ func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity 
 }
 
 func getFilters(flags *Flags) []func(file string, begin, end int) bool {
-	filters := make([]func(file string, begin, end int) bool, 0, 1)
+	filters := make([]func(file string, begin, end int) bool, 0, 2)
 	if flags.Mode == ModeAll {
+		cache := filelinecache.NewCache(git.GetRootDir())
+		filters = append(filters, func(file string, begin, end int) bool {
+			ok, err := cache.CheckFileRange(file, begin-1, end, func(line string) bool {
+				line = strings.TrimSpace(line)
+				return len(line) != 0
+			})
+			if err != nil {
+				log.Fatalf("check file range fail. file:%s, begin:%d, end:%d, err:%v",
+					file, begin, end, err)
+			}
+			return ok
+		})
 		return filters
 	}
 

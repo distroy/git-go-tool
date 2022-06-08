@@ -54,7 +54,7 @@ func parseReader(prefix string, reader io.Reader) ([]Coverage, error) {
 
 	res := make([]Coverage, 0, 32)
 	for {
-		line, err := r.ReadString()
+		line, err := r.ReadLineString()
 		if err != nil {
 			if err == io.EOF {
 				return res, nil
