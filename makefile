@@ -64,11 +64,7 @@ clean:
 .PHONY: dep
 dep: setup
 	$(GO) mod tidy
-	$(GO) mod vendor
-
-.PHONY: update
-update: dep
-	$(MAKE) protocol
+	# $(GO) mod vendor
 
 .PHONY: build-test
 build-test: $(COMMANDS) clean

@@ -120,8 +120,7 @@ dep-backup:
 	echo "source $(PROJECT_ROOT)/bash/bashrc" >> ~/.bashrc
 
 .PHONY: update
-update: dep
-	$(MAKE) protocol
+update: dep pb
 
 .PHONY: build-test
 build-test: $(TARGETS) clean
