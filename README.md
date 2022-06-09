@@ -1,6 +1,13 @@
 [![GoDoc](https://godoc.org/github.com/distroy/git-go-tool?status.svg)](https://godoc.org/github.com/distroy/git-go-tool)
 
-# GitLab CI/CD 接入
+# 接入
+
+## GitLab CI/CD 接入
+
+- 参考文档：[`.gitlab-ci.yml` file | GitLab](https://docs.gitlab.com/ee/ci/yaml/gitlab_ci_yaml.html)
+- 中文文档：[`.gitlab-ci.yml` 文件 | GitLab](https://docs.gitlab.cn/jh/ci/yaml/gitlab_ci_yaml.html)
+
+请在 .gitlab-ci.yml 添加以下配置（请根据需要配置不同的环境变量）
 
 ```yml
 include:
@@ -13,6 +20,9 @@ stages: # 特别重要
 
 # 环境变量
 variables:
+  # # 执行 go-check-stage 的镜像
+  # GO_CHECK_IMAGE: 'harbor.shopeemobile.com/shopee/golang-base'
+
   # # git 的比较模式
   # #   diff: 增量模式，只检查新增代码的认知复杂度和单测覆盖率
   # #   all: 全量模式，检查所有代码的认知复杂度和单测覆盖率
@@ -54,6 +64,37 @@ variables:
   # GO_COGNITIVE_EXCLUDES: ""
 ```
 
+## git hook 接入
+
+### Leader 先把 git-go-tool 加到项目的 submodule
+
+请在项目的根目录执行以下命令
+
+```shell
+git submodule add https://github.com/distroy/git-go-tool.git git-go-tool
+```
+
+### Member 把项目的修改拉取到本地，再设置git hook
+
+请在项目的根目录执行以下命令
+
+```shell
+git submodule init
+git submodule update
+git config core.hooksPath "git-go-tool/git-hook"
+```
+
+可以参考 [makefile](doc/template/makefile) 的 setup
+
+### git hook 更新
+
+请进入到项目的git-go-tool目录执行
+
+```shell
+git pull
+```
+
+
 # Commands 介绍
 
 ## Installation
@@ -66,6 +107,12 @@ go install github.com/distroy/git-go-tool/cmd/git-diff-go-coverage@latest
 
 ## go-cognitive
 go-cognitive analyze cognitive complexities of functions in Go source code. A measurement of how hard does the code is intuitively to understand.
+
+# 认知复杂度介绍
+
+- 参考文档：[CognitiveComplexity.pdf (sonarsource.com)](https://www.sonarsource.com/docs/CognitiveComplexity.pdf)
+- 中文文档：[认知复杂度—估算项目代码的理解成本](https://blog.csdn.net/tjgykhulj/article/details/106569894)
+- 计算示例：[core/gocognitive/example_for_test.go](core/gocognitive/example_for_test.go)
 
 > The document of cognitive complexity: [https://sonarsource.com/docs/CognitiveComplexity.pdf](https://sonarsource.com/docs/CognitiveComplexity.pdf)
 > Example: these example are specific for Go, please see the [core/gocognitive/example_for_test.go](https://github.com/distroy/git-go-tool/blob/master/core/gocognitive/example_for_test.go)
