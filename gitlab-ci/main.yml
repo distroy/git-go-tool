@@ -9,6 +9,8 @@ stages:
 # 环境变量
 variables:
   GO111MODULE: "on"
+  TZ: Asia/Shanghai
+
   # 用来运行的镜像
   GO_CHECK_IMAGE: 'harbor.shopeemobile.com/shopee/golang-base'
 

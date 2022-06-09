@@ -1,3 +1,12 @@
+.echo-and-run:
+  script:
+    - |
+      function echo_and_run() {
+        echo "$@"
+        "$@"
+        return $?
+      }
+
 .go-install-tools:
   script:
     # 输出一些信息
@@ -15,7 +24,8 @@
     - |
       function go_install {
         echo "go install $1 || go install $1@latest"
-        go install $1 || go install $1@latest || exit $?
+        go install $1 || go install $1@latest
+        return $?
       }
     - go_install github.com/distroy/git-go-tool/cmd/go-cognitive
     - go_install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive
@@ -44,16 +54,18 @@
     changes:
       - "**/**.go"
   script:
+    - !reference [.echo-and-run, script]
     # 检查服务 build 是否都可以成功
     - |
-      if [[ -$GO_BUILD_TARGET_DIR != - ]]; then
+      if [[ -$GO_BUILD_TARGET_DIR == - ]]; then
+        echo "no need run go build"
+      else
         for i in $(ls $GO_BUILD_TARGET_DIR/*/*.go); do
           _service_dir="$(dirname "$i")"
           echo "=== building service: $_service_dir"
           _service_name="$(basename "$_service_dir")"
           cd "$_service_dir"
-          echo go build ${GO_FLAGS} -o "$_service_name" .
-          go build ${GO_FLAGS} -o "$_service_name" || exit $?
+          echo_and_run go build ${GO_FLAGS} -o "$_service_name" || exit $?
         done
       fi
 
@@ -68,6 +80,7 @@
     # changes:
     #   - "**/**.go"
   script:
+    - !reference [.echo-and-run, script]
     - |
       GIT_MERGE_TARGET="$GO_COGNITIVE_DIFF_TARGET"
       GIT_MERGE_SOURCE="$GO_COGNITIVE_DIFF_SOURCE"
@@ -81,10 +94,9 @@
     # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
-    - |
       echo "merge base: $merge_base"
     # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
-    - git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" ${GO_COGNITIVE_EXCLUDES}
+    - echo_and_run git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" ${GO_COGNITIVE_EXCLUDES}
 
 .go-test:
   # 相同stage的job并行执行
@@ -99,8 +111,9 @@
     variables:
       - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
   script:
+    - !reference [.echo-and-run, script]
     # 检查单元测试是否都可以通过
-    - go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./...
+    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./...
 
 .go-test-coverage:
   # 相同stage的job并行执行
@@ -114,21 +127,21 @@
     changes:
       - "**/**.go"
   script:
+    - !reference [.echo-and-run, script]
     - |
       GIT_MERGE_TARGET="$GO_COVERAGE_DIFF_TARGET"
       GIT_MERGE_SOURCE="$GO_COVERAGE_DIFF_SOURCE"
     - !reference [.go-install-tools, script]
     - !reference [.checkout-all-commits, script]
-    - |
-      if [[ "$GO_COVERAGE_EXCLUDES" == "" ]]; then
-        GO_COVERAGE_EXCLUDES=GO_EXCLUDE_OPTIONS
-      fi
     # 检查单元测试是否都可以通过
     - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
-    - go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
+    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
+    - |
+      if [[ -$GO_COVERAGE_EXCLUDES == - ]]; then
+        GO_COVERAGE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
+      fi
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
-    - |
       echo "merge base: $merge_base"
-    - git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_COVERAGE_EXCLUDES}
+    - echo_and_run git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_COVERAGE_EXCLUDES}
