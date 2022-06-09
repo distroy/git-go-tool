@@ -113,6 +113,3 @@ go-cognitive analyze cognitive complexities of functions in Go source code. A me
 - 参考文档：[CognitiveComplexity.pdf (sonarsource.com)](https://www.sonarsource.com/docs/CognitiveComplexity.pdf)
 - 中文文档：[认知复杂度—估算项目代码的理解成本](https://blog.csdn.net/tjgykhulj/article/details/106569894)
 - 计算示例：[core/gocognitive/example_for_test.go](core/gocognitive/example_for_test.go)
-
-> The document of cognitive complexity: [https://sonarsource.com/docs/CognitiveComplexity.pdf](https://sonarsource.com/docs/CognitiveComplexity.pdf)
-> Example: these example are specific for Go, please see the [core/gocognitive/example_for_test.go](https://github.com/distroy/git-go-tool/blob/master/core/gocognitive/example_for_test.go)
