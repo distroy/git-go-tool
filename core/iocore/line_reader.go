@@ -14,33 +14,39 @@ var (
 	ErrOverMaxSize = fmt.Errorf("over max size")
 )
 
+var (
+	defaultBufferSize = 409600
+)
+
 type LineReader struct {
-	reader    io.Reader
-	buffer    []byte
-	maxSize   int
-	tokenPos  int
-	tokenEnd  int
-	tokenNext int
-	bufferEnd int
-	err       error
+	reader     io.Reader
+	buffer     []byte
+	bufferSize int
+	tokenPos   int
+	tokenEnd   int
+	tokenNext  int
+	bufferEnd  int
+	err        error
 }
 
-func NewLineReader(r io.Reader) *LineReader {
-	maxSize := 409600
-	return newLineReader(r, maxSize)
-}
-
-func newLineReader(r io.Reader, maxSize int) *LineReader {
-	return &LineReader{
-		reader:    r,
-		buffer:    make([]byte, maxSize),
-		maxSize:   maxSize,
-		tokenPos:  0,
-		tokenEnd:  -1,
-		tokenNext: 0,
-		bufferEnd: 0,
-		err:       nil,
+func NewLineReader(reader io.Reader, opts ...LineReaderOption) *LineReader {
+	r := &LineReader{
+		reader:     reader,
+		buffer:     nil,
+		bufferSize: defaultBufferSize,
+		tokenPos:   0,
+		tokenEnd:   -1,
+		tokenNext:  0,
+		bufferEnd:  0,
+		err:        nil,
 	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	r.buffer = make([]byte, r.bufferSize)
+	return r
 }
 
 func (r *LineReader) ReadAllLineStrings() ([]string, error) {
@@ -92,18 +98,23 @@ func (r *LineReader) PeekLine() ([]byte, error) {
 }
 
 func (r *LineReader) ReadLine() ([]byte, error) {
-	err := r.read()
-	if err != nil {
-		return nil, err
-	}
-
-	if end := r.tokenEnd; end >= 0 {
-		pos := r.tokenPos
+	d, err := r.PeekLine()
+	if err == nil {
 		r.tokenEnd = -1
-		return r.buffer[pos:end], nil
 	}
-
-	return nil, r.err
+	return d, err
+	// err := r.read()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
+	// if end := r.tokenEnd; end >= 0 {
+	// 	pos := r.tokenPos
+	// 	r.tokenEnd = -1
+	// 	return r.buffer[pos:end], nil
+	// }
+	//
+	// return nil, r.err
 }
 
 func (r *LineReader) read() error {
@@ -147,7 +158,7 @@ func (r *LineReader) readLineLoop() error {
 			return nil
 		}
 
-		if r.bufferEnd >= r.maxSize {
+		if r.bufferEnd >= r.bufferSize {
 			// log.Printf(" === token pos:%d, token end:%d, token next:%d, buffer end:%d, buffer:%s",
 			// 	r.tokenPos, r.tokenEnd, r.tokenNext, r.bufferEnd, r.buffer[:r.bufferEnd])
 			r.err = ErrOverMaxSize

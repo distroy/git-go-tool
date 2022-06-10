@@ -65,7 +65,7 @@ func TestLineReader_PeekLineString(t *testing.T) {
 
 func TestLineReader_OverSize(t *testing.T) {
 	text := "a\nb\nc\r\n1234\n"
-	r := newLineReader(strings.NewReader(text), 4)
+	r := NewLineReader(strings.NewReader(text), LineReaderBufferSize(4))
 
 	tests := []struct{ want string }{
 		{want: "a"},

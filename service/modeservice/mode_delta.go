@@ -6,6 +6,7 @@ package modeservice
 
 import (
 	"log"
+	"path"
 
 	"github.com/distroy/git-go-tool/core/git"
 )
@@ -17,6 +18,8 @@ type modeDelta struct {
 }
 
 func (m *modeDelta) mustInit(c *Config) {
+	m.modeBase.mustInit(c)
+
 	branch := c.Branch
 	if branch == "" {
 		branch = git.GetBranch()
@@ -35,9 +38,24 @@ func (m *modeDelta) IsIn(file string, begin, end int) bool {
 }
 
 func (m *modeDelta) Walk(fn WalkFunc) {
-	for _, file := range m.files {
-		for _, diff := range file {
-			fn(diff.Filename, diff.BeginLine, diff.EndLine)
+	for _, differents := range m.files {
+		if len(differents) == 0 {
+			continue
 		}
+
+		filename := differents[0].Filename
+		// if filename == "/dev/null" {
+		// 	continue
+		// }
+
+		filePath := path.Join(m.rootDir, filename)
+		m.mustWalkFile(filePath, func(file string, begin, end int) {
+			for i := begin; i <= end; i++ {
+				if !m.IsIn(file, begin, end) {
+					continue
+				}
+				fn(file, i, i)
+			}
+		})
 	}
 }

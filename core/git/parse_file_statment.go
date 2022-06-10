@@ -49,6 +49,10 @@ func parsePositionFromSummaryLine(summary string) (begin int, end int, err error
 		end = begin + n - 1
 	}
 
+	if end < begin {
+		end = begin
+	}
+
 	return begin, end, nil
 }
 
@@ -115,6 +119,10 @@ func parseNewLinesFromStatmentLines(filename string, lines []string) ([]Differen
 	begin, end, err := parsePositionFromSummaryLine(line)
 	if err != nil {
 		return nil, err
+	}
+
+	if begin == 0 && end == 0 {
+		return nil, nil
 	}
 
 	diff := Different{
