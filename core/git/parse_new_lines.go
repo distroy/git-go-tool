@@ -37,6 +37,7 @@ func parseNewLinesFromCommand(cmd *exec.Cmd) ([]Different, error) {
 
 	res, err := ParseNewLinesFromReader(stdout)
 	if err != nil {
+		stdout.Close()
 		return nil, err
 	}
 

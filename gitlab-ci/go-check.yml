@@ -38,11 +38,11 @@
     # 需要拉取所有的commit
     - cd "$CI_PROJECT_DIR/.."
     - rm -rf "$CI_PROJECT_DIR"
-    - git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
-    - cd "$CI_PROJECT_DIR/"
+    - echo_and_run git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
+    - cd "$CI_PROJECT_DIR"
     # checkout 2 个分支
-    - git checkout "$GIT_MERGE_TARGET"
-    - git checkout "$GIT_MERGE_SOURCE"
+    - echo_and_run git checkout "$GIT_MERGE_TARGET"
+    - echo_and_run git checkout "$GIT_MERGE_SOURCE"
 
 .go-build:
   # 相同stage的job并行执行
@@ -73,7 +73,6 @@
   # 相同stage的job并行执行
   stage: go-check-stage
   image: "$GO_CHECK_IMAGE"
-  stage: go-check-stage
   only:
     refs:
       - merge_requests

@@ -26,7 +26,7 @@ type LineReader struct {
 }
 
 func NewLineReader(r io.Reader) *LineReader {
-	maxSize := 4096
+	maxSize := 409600
 	return newLineReader(r, maxSize)
 }
 
@@ -148,6 +148,8 @@ func (r *LineReader) readLineLoop() error {
 		}
 
 		if r.bufferEnd >= r.maxSize {
+			// log.Printf(" === token pos:%d, token end:%d, token next:%d, buffer end:%d, buffer:%s",
+			// 	r.tokenPos, r.tokenEnd, r.tokenNext, r.bufferEnd, r.buffer[:r.bufferEnd])
 			r.err = ErrOverMaxSize
 			return r.err
 		}
