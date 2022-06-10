@@ -11,14 +11,12 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strings"
 
-	"github.com/distroy/git-go-tool/core/filelinecache"
 	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 	"github.com/distroy/git-go-tool/core/termcolor"
+	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
 const (
@@ -60,18 +58,6 @@ func parseFlags() *Flags {
 	return f
 }
 
-func analyzeGitNews(branch string) git.Files {
-	if branch == "" {
-		branch = git.GetBranch()
-	}
-	s, err := git.ParseNewLines(branch)
-	if err != nil {
-		log.Fatalf("parse the git different relative to the branch:%s. err:%v", branch, err)
-	}
-
-	return git.NewFileDifferents(s)
-}
-
 func filterComplexities(array []gocognitive.Complexity, f func(gocognitive.Complexity) bool) []gocognitive.Complexity {
 	n := filter.FilterSlice(array, f)
 	return array[:n]
@@ -88,58 +74,33 @@ func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity 
 	})
 }
 
-func getFilters(flags *Flags) []func(file string, begin, end int) bool {
-	filters := make([]func(file string, begin, end int) bool, 0, 2)
-	if flags.Mode == ModeAll {
-		cache := filelinecache.NewCache(git.GetRootDir())
-		filters = append(filters, func(file string, begin, end int) bool {
-			ok, err := cache.CheckFileRange(file, begin-1, end, func(line string) bool {
-				line = strings.TrimSpace(line)
-				return len(line) != 0
-			})
-			if err != nil {
-				log.Fatalf("check file range fail. file:%s, begin:%d, end:%d, err:%v",
-					file, begin, end, err)
-			}
-			return ok
-		})
-		return filters
-	}
-
-	differents := analyzeGitNews(flags.Branch)
-	filters = append(filters, func(file string, begin, end int) bool {
-		return differents.IsIn(file, begin, end)
-	})
-	return filters
-}
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	flags := parseFlags()
 
-	filters := getFilters(flags)
+	// filters := getFilters(flags)
+	mode := modeservice.New(&modeservice.Config{
+		Mode:   flags.Mode,
+		Branch: flags.Branch,
+	})
 
 	complexities := analyzeCognitive(flags.Over, flags.Filter)
-	complexities = filterComplexities(complexities, func(c gocognitive.Complexity) bool {
+
+	overs := filterComplexities(complexities, func(c gocognitive.Complexity) bool {
 		return c.Complexity > flags.Over && flags.Filter.Check(c.Filename)
 	})
 
-	newCplxes := filterComplexities(complexities, func(c gocognitive.Complexity) bool {
-		for _, filter := range filters {
-			if !filter(c.Filename, c.BeginLine, c.EndLine) {
-				return false
-			}
-		}
-		return true
+	newOvers := filterComplexities(overs, func(c gocognitive.Complexity) bool {
+		return mode.IsIn(c.Filename, c.BeginLine, c.EndLine)
 	})
 
-	if len(newCplxes) > 0 {
-		printForGitNews(os.Stdout, flags, newCplxes)
+	if len(newOvers) > 0 {
+		printForGitNews(os.Stdout, flags, newOvers)
 		os.Exit(1)
 	}
 
-	printOldOvers(os.Stdout, flags, complexities)
+	printOldOvers(os.Stdout, flags, overs)
 }
 
 func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {

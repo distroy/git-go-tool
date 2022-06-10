@@ -12,16 +12,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/distroy/git-go-tool/core/filelinecache"
 	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/gocoverage"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 	"github.com/distroy/git-go-tool/core/termcolor"
-)
-
-const (
-	ModeAll = "all"
+	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
 type Flags struct {
@@ -56,22 +51,10 @@ func parseFlags() *Flags {
 
 	if f.File == "" {
 		flag.Usage()
-		log.Fatalf("-file must be empty")
+		log.Fatalf("-file must not be empty")
 	}
 
 	return f
-}
-
-func analyzeGitNews(branch string) git.Files {
-	if branch == "" {
-		branch = git.GetBranch()
-	}
-	s, err := git.ParseNewLines(branch)
-	if err != nil {
-		log.Fatalf("parse the git different relative to the branch:%s. err:%v", branch, err)
-	}
-
-	return git.NewFileDifferents(s)
 }
 
 func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool) gocoverage.Files {
@@ -83,44 +66,31 @@ func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool
 	return gocoverage.NewFileCoverages(coverages, filters...)
 }
 
-func getFilters(flags *Flags) []func(file string, lineNo int) bool {
-	filters := make([]func(file string, lineNo int) bool, 0, 2)
-	filters = append(filters, func(file string, lineNo int) bool {
-		return flags.Filter.Check(file)
-	})
-
-	if flags.Mode == ModeAll {
-		cache := filelinecache.NewCache(git.GetRootDir())
-		filters = append(filters, func(file string, lineNo int) bool {
-			ok, err := cache.CheckFileRange(file, lineNo-1, lineNo, func(line string) bool {
-				line = strings.TrimSpace(line)
-				return len(line) != 0
-			})
-			if err != nil {
-				log.Fatalf("check file range fail. file:%s, lineNo:%d, err:%v",
-					file, lineNo, err)
-			}
-			return ok
-		})
-		return filters
-	}
-
-	differents := analyzeGitNews(flags.Branch)
-	filters = append(filters, func(file string, lineNo int) bool {
-		return differents.IsIn(file, lineNo, lineNo)
-	})
-
-	return filters
-}
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	flags := parseFlags()
 
-	filters := getFilters(flags)
+	mode := modeservice.New(&modeservice.Config{
+		Mode:   flags.Mode,
+		Branch: flags.Branch,
+	})
 
-	coverages := analyzeCoverages(flags.File, filters...)
+	coverages := analyzeCoverages(flags.File, func(file string, lineNo int) bool {
+		return flags.Filter.Check(file) && mode.IsIn(file, lineNo, lineNo)
+	})
+
+	mode.Walk(func(file string, begin, end int) {
+		if strings.HasSuffix(file, "_test.go") {
+			return
+		}
+		coverages.Add(gocoverage.Coverage{
+			Filename:  file,
+			BeginLine: begin,
+			EndLine:   end,
+			Count:     0,
+		})
+	})
 
 	printResult(os.Stderr, flags, coverages)
 }
