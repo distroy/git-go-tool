@@ -56,6 +56,7 @@ jobs:
       - run: make go-test-coverage
       # - run: git-diff-go-coverage -mode all -rate 0.65 -file log/coverage.out
       - run: |
-          merge_base=$(git merge-base "$GITHUB_BASE_REF" "$GITHUB_HEAD_REF")
-          echo "merge base: $merge_base"
-          git-diff-go-coverage -branch $merge_base -rate 0.35 -file log/coverage.out
+          # merge_base=$(git merge-base "$GITHUB_BASE_REF" "$GITHUB_HEAD_REF")
+          # echo "merge base: $merge_base"
+          # git-diff-go-coverage -branch $merge_base -rate 0.35 -file log/coverage.out
+          git-diff-go-coverage -mode all -rate 0.35 -file log/coverage.out
