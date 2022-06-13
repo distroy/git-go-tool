@@ -84,6 +84,9 @@ func main() {
 		if strings.HasSuffix(file, "_test.go") {
 			return
 		}
+		if !flags.Filter.Check(file) {
+			return
+		}
 		coverages.Add(gocoverage.Coverage{
 			Filename:  file,
 			BeginLine: begin,
