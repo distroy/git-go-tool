@@ -27,7 +27,8 @@ func (m *modeBase) mustInit(c *Config) {
 
 func (m *modeBase) isLineIgnored(line string) bool {
 	line = strings.TrimSpace(line)
-	return len(line) == 0
+	// return len(line) == 0
+	return len(line) == 0 || line == "}"
 }
 
 func (m *modeBase) mustWalkFile(path string, fn WalkFunc) {
