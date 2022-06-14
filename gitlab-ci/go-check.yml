@@ -108,7 +108,7 @@
       - "**/**.go"
   except:
     variables:
-      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
   script:
     - !reference [.echo-and-run, script]
     # 检查单元测试是否都可以通过
@@ -122,7 +122,7 @@
     refs:
       - merge_requests
     variables:
-      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master)$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(feature|test).*$/
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
     changes:
       - "**/**.go"
   script:
