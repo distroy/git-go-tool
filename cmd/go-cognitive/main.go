@@ -94,11 +94,13 @@ func main() {
 
 	res := analyzePathes(f.Pathes, f.Filter)
 
+	out := os.Stdout
+
 	sort.Sort(gocognitive.Complexites(res))
-	written := writeResult(os.Stdout, res, f)
+	written := writeResult(out, res, f)
 
 	if f.Avg {
-		showAverage(res)
+		showAverage(out, res)
 	}
 
 	if f.Over > 0 && written > 0 {
@@ -179,8 +181,8 @@ func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
 	return len(res)
 }
 
-func showAverage(cplxes []gocognitive.Complexity) {
-	fmt.Printf("Average: %.3g\n", average(cplxes))
+func showAverage(w io.Writer, cplxes []gocognitive.Complexity) {
+	fmt.Fprintf(w, "Average: %.3g\n", average(cplxes))
 }
 
 func average(arr []gocognitive.Complexity) float64 {

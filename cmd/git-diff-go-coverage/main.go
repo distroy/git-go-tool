@@ -101,20 +101,20 @@ func main() {
 func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
 	count := coverages.GetCount()
 	if count.IsZero() {
-		log.Printf("coverage rate: -, coverages:0, non coverages:0")
+		fmt.Fprintf(w, "coverage rate: -, coverages:0, non coverages:0\n")
 		return
 	}
 
 	rate := count.GetRate()
 	if rate >= flags.Rate {
-		log.Printf("coverage rate: %.04g, coverages:%d, non coverages:%d",
+		fmt.Fprintf(w, "coverage rate: %.04g, coverages:%d, non coverages:%d\n",
 			rate, count.Coverages, count.NonCoverages)
 		return
 	}
 
 	files := getTopNonCoverageFiles(coverages, flags.Top)
 
-	log.Printf("%smust improve coverage rate. rate:%.04g, threshold:%g coverages:%d, non coverages:%d%s",
+	fmt.Fprintf(w, "%smust improve coverage rate. rate:%.04g, threshold:%g coverages:%d, non coverages:%d%s\n",
 		termcolor.Red, rate, flags.Rate, count.Coverages, count.NonCoverages, termcolor.Reset)
 
 	fmt.Fprint(w, termcolor.Red)
