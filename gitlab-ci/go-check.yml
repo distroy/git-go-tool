@@ -1,3 +1,21 @@
+.color-message:
+  script:
+    - |
+      ECHO_COLOR_RED=$'\E[31;1m'
+      ECHO_COLOR_GREEN=$'\E[32;1m'
+      ECHO_COLOR_YELLO=$'\E[33;1m'
+      ECHO_COLOR_BLUE=$'\E[34;1m'
+      ECHO_COLOR_MAGENTA=$'\E[35;1m'
+      ECHO_COLOR_CYAN=$'\E[36;1m'
+      ECHO_COLOR_RESET=$'\E[0m'
+
+      echo_msgr() { echo -n "$ECHO_COLOR_RED"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgg() { echo -n "$ECHO_COLOR_GREEN"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgy() { echo -n "$ECHO_COLOR_YELLO"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgb() { echo -n "$ECHO_COLOR_BLUE"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgm() { echo -n "$ECHO_COLOR_MAGENTA"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgc() { echo -n "$ECHO_COLOR_CYAN"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+
 .echo-and-run:
   script:
     - |
@@ -54,11 +72,12 @@
     changes:
       - "**/**.go"
   script:
+    - !reference [.color-message, script]
     - !reference [.echo-and-run, script]
     # 检查服务 build 是否都可以成功
     - |
       if [[ -$GO_BUILD_TARGET_DIR == - ]]; then
-        echo "no need run go build"
+        echo_msgg "no need run go build"
       else
         for i in $(ls $GO_BUILD_TARGET_DIR/*/*.go); do
           _service_dir="$(dirname "$i")"
@@ -144,3 +163,34 @@
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
       echo "merge base: $merge_base"
     - echo_and_run git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_COVERAGE_EXCLUDES}
+
+.check-for-test:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
+  script:
+    - !reference [.color-message, script]
+    - !reference [.echo-and-run, script]
+    - |
+      function check_for_test() {
+        local text=$(grep -r -i -E "$FOR_TEST_KEYWORD" .)
+        local count=$(echo "$text" | wc -l)
+        if (( count <= 0 )); then
+          echo_msgg "did not find the keyword: $FOR_TEST_KEYWORD"
+          return
+        fi
+
+        echo_msgr "found the keyword: $FOR_TEST_KEYWORD"
+        echo "$text"
+      }
+    - |
+      if [[ -$FOR_TEST_KEYWORD == - ]]; then
+        echo_msgg "no need check for test keyword"
+      else
+        check_for_test
+      fi

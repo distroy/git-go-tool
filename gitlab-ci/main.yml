@@ -38,6 +38,8 @@ variables:
   GO_COGNITIVE_OVER: "15"
   # GO_COGNITIVE_EXCLUDES: ""
 
+  FOR_TEST_KEYWORD: "todo for test"
+
 go-build-job:
   extends:
     - .go-build
@@ -53,3 +55,7 @@ go-test-job:
 go-test-coverage-job:
   extends:
     - .go-test-coverage
+
+check-for-test-job:
+  extends:
+    - .check-for-test
