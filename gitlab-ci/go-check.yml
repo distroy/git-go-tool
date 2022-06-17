@@ -178,6 +178,7 @@
     - !reference [.echo-and-run, script]
     - |
       function check_for_test() {
+        # todofor  test
         local text=$(grep -r -i -E -n "$FOR_TEST_KEYWORD" . | grep -v FOR_TEST_KEYWORD)
         local count=$(echo -n "$text" | wc -l)
         if (( count <= 0 )); then
