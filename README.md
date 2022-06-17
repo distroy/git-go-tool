@@ -21,7 +21,7 @@ stages: # 特别重要
 # 环境变量
 variables:
   # # 执行 go-check-stage 的镜像
-  # GO_CHECK_IMAGE: 'harbor.shopeemobile.com/shopee/golang-base'
+  # GO_CHECK_IMAGE: 'ubuntu-latest'
 
   # # git 的比较模式
   # #   diff: 增量模式，只检查新增代码的认知复杂度和单测覆盖率

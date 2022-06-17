@@ -15,7 +15,6 @@ env:
   WORKSPACE: "${{ github.workspace }}"
 
 jobs:
-
   go-cognitive-job:
     runs-on: ubuntu-latest
     steps:

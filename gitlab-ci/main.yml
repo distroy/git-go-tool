@@ -12,7 +12,7 @@ variables:
   TZ: Asia/Shanghai
 
   # 用来运行的镜像
-  GO_CHECK_IMAGE: 'harbor.shopeemobile.com/shopee/golang-base'
+  GO_CHECK_IMAGE: 'ubuntu-latest'
 
   # git flags
   GIT_COMPARE_MODE: "diff"
