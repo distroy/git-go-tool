@@ -176,8 +176,6 @@
   script:
     - !reference [.color-message, script]
     - !reference [.echo-and-run, script]
-    # todofor  test
-    # todo for  test
     - |
       function check_for_test() {
         local count=$(grep -r -i -E -n "$FOR_TEST_KEYWORD" . | wc -l)
