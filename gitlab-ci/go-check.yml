@@ -177,18 +177,17 @@
     - !reference [.color-message, script]
     - !reference [.echo-and-run, script]
     # todofor  test
+    # todo for  test
     - |
-      echo grep -r -i -E -n "$FOR_TEST_KEYWORD" .
       function check_for_test() {
-        local text=$(grep -r -i -E -n "$FOR_TEST_KEYWORD" . | grep -v FOR_TEST_KEYWORD)
-        local count=$(echo -n "$text" | wc -l)
+        local count=$(grep -r -i -E -n "$FOR_TEST_KEYWORD" . | wc -l)
         if (( count <= 0 )); then
-          echo_msgg "did not find the keyword: $FOR_TEST_KEYWORD"
+          echo_msgg "did not find the keyword: \"$FOR_TEST_KEYWORD\""
           return
         fi
 
-        echo_msgr "found the keyword: $FOR_TEST_KEYWORD"
-        echo "$text"
+        echo_msgr "found the keyword: \"$FOR_TEST_KEYWORD\""
+        echo_and_run grep -r -i -E -n "$FOR_TEST_KEYWORD" .
         return 1
       }
     - |

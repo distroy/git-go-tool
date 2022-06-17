@@ -38,7 +38,7 @@ variables:
   GO_COGNITIVE_OVER: "15"
   # GO_COGNITIVE_EXCLUDES: ""
 
-  FOR_TEST_KEYWORD: "todo\\s*for\\s*test"
+  FOR_TEST_KEYWORD: todo\s*for\s*test
 
 go-build-job:
   extends:
