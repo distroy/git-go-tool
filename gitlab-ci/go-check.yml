@@ -178,7 +178,7 @@
     - !reference [.echo-and-run, script]
     - |
       function check_for_test() {
-        local text=$(grep -r -i -E "$FOR_TEST_KEYWORD" .)
+        local text=$(grep -r -i -E -n "$FOR_TEST_KEYWORD" .)
         local count=$(echo "$text" | wc -l)
         if (( count <= 0 )); then
           echo_msgg "did not find the keyword: $FOR_TEST_KEYWORD"
@@ -187,6 +187,7 @@
 
         echo_msgr "found the keyword: $FOR_TEST_KEYWORD"
         echo "$text"
+        return 1
       }
     - |
       if [[ -$FOR_TEST_KEYWORD == - ]]; then
