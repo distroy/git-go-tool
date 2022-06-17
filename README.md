@@ -62,6 +62,9 @@ variables:
   # # 检查单测覆盖率时，优先选择GO_COGNITIVE_EXCLUDES
   # # 如果 GO_COGNITIVE_EXCLUDES 为空字符，则使用GO_EXCLUDE_OPTIONS
   # GO_COGNITIVE_EXCLUDES: ""
+
+  # # 检查 test 代码的关键字，防止合入 test 代码
+  # FOR_TEST_KEYWORD: todo\s*for\s*test
 ```
 
 ## git hook 接入
