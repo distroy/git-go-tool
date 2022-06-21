@@ -5,7 +5,7 @@
 package regexpcore
 
 import (
-	"fmt"
+	"encoding/json"
 	"regexp"
 )
 
@@ -58,7 +58,9 @@ func (p *RegExps) Set(s string) error {
 }
 
 func (p *RegExps) String() string {
-	return fmt.Sprint(p.strings)
+	d, _ := json.Marshal(p.strings)
+	return string(d)
+	// return fmt.Sprint(p.strings)
 }
 
 func (p *RegExps) Check(s string) bool {
