@@ -6,8 +6,8 @@ package modeservice
 
 import (
 	"log"
-	"os"
-	"path/filepath"
+
+	"github.com/distroy/git-go-tool/core/filecore"
 )
 
 type modeAll struct {
@@ -32,13 +32,12 @@ func (m *modeAll) IsIn(file string, begin, end int) bool {
 }
 
 func (m *modeAll) Walk(fn WalkFunc) {
+	cache := m.cache
 	rootDir := m.rootDir
 
-	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() {
-			m.mustWalkFile(path, fn)
-		}
-		return err
+	err := cache.WalkFiles(func(file *filecore.File) error {
+		m.mustWalkFile(file, fn)
+		return nil
 	})
 
 	if err != nil {

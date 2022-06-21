@@ -41,5 +41,5 @@ func parseFlags() *Flags {
 	return f
 }
 func main() {
-	flags := parseFlags()
+	// flags := parseFlags()
 }

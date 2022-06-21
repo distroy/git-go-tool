@@ -9,9 +9,9 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
-	"path/filepath"
 	"strings"
 
+	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/git"
 )
 
@@ -31,17 +31,21 @@ func (m *modeBase) isLineIgnored(line string) bool {
 	return len(line) == 0 || line == "}"
 }
 
-func (m *modeBase) mustWalkFile(path string, fn WalkFunc) {
-	if !strings.HasSuffix(path, ".go") {
+func (m *modeBase) mustWalkFile(file *filecore.File, fn WalkFunc) {
+	filename := file.Name
+	path := file.Path
+
+	if !strings.HasSuffix(filename, ".go") {
 		return
 	}
 
-	rootDir := m.rootDir
 	cache := m.cache
+	defer cache.Del(filename)
 
-	filename, _ := filepath.Rel(rootDir, path)
-	file := cache.MustGetFile(filename)
-	cache.DelFile(filename)
+	lines, err := file.ReadLines()
+	if err != nil {
+		log.Fatalf("read file fail. file:%s, err:%v", filename, err)
+	}
 
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, path, nil, 0)
@@ -64,7 +68,7 @@ func (m *modeBase) mustWalkFile(path string, fn WalkFunc) {
 		pos := fset.Position(body.Lbrace)
 		end := fset.Position(body.Rbrace)
 		for i := pos.Line - 1; i < end.Line; i++ {
-			if m.isLineIgnored(file.Lines[i]) {
+			if m.isLineIgnored(lines[i]) {
 				continue
 			}
 

@@ -5,28 +5,12 @@
 package iocore
 
 import (
+	"bytes"
 	"io"
+	"reflect"
 	"strings"
 	"testing"
 )
-
-type testLineReaderWant struct {
-	want    string
-	wantErr bool
-}
-
-func testLineReader(t *testing.T, f func() (string, error), tests []testLineReaderWant) {
-	for _, tt := range tests {
-		got, err := f()
-		if (err != nil) != tt.wantErr {
-			t.Errorf("%s() error = %v, wantErr %v", t.Name(), err, tt.wantErr)
-			return
-		}
-		if err != nil && got != tt.want {
-			t.Errorf("%s() = %v want:%s", t.Name(), got, tt.want)
-		}
-	}
-}
 
 func TestLineReader_PeekLineString(t *testing.T) {
 	text := "1111\r\n\n2222\n3333\r\n"
@@ -125,5 +109,59 @@ func TestLineReader_ReadLineString(t *testing.T) {
 	}
 	if got, err := r.PeekLineString(); err != io.EOF {
 		t.Errorf("LineReader.ReadLineString() = %v, error = %s", got, err)
+	}
+}
+
+func TestLineReader_ReadAllLineStrings(t *testing.T) {
+	type fields struct {
+		reader     io.Reader
+		bufferSize int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []string
+		wantErr bool
+	}{
+		{
+			fields: fields{
+				reader: strings.NewReader("1111\r\n\n2222\n3333\r\n"),
+			},
+			want: []string{
+				"1111",
+				"",
+				"2222",
+				"3333",
+			},
+		},
+		{
+			fields: fields{
+				reader: bytes.NewBuffer([]byte("1111\r\n\n2222\n3333\n")),
+			},
+			want: []string{
+				"1111",
+				"",
+				"2222",
+				"3333",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := make([]LineReaderOption, 0)
+			if tt.fields.bufferSize > 0 {
+				opts = append(opts, LineReaderBufferSize(tt.fields.bufferSize))
+			}
+
+			r := NewLineReader(tt.fields.reader, opts...)
+			got, err := r.ReadAllLineStrings()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("LineReader.ReadAllLineStrings() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("LineReader.ReadAllLineStrings() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
