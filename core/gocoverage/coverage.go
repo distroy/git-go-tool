@@ -7,7 +7,6 @@ package gocoverage
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -27,17 +26,23 @@ func (c Coverage) String() string {
 	return fmt.Sprintf("%s:%d,%d#%d", c.Filename, c.BeginLine, c.EndLine, c.Count)
 }
 
+func MustParseFile(filePath string) []Coverage {
+	res, err := ParseFile(filePath)
+	if err != nil {
+		panic(fmt.Errorf("open coverage file fail. file:%s, err:%v", filePath, err))
+	}
+	return res
+}
+
 func ParseFile(filePath string) ([]Coverage, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		log.Fatalf("open coverage file fail. file:%s, err:%v", filePath, err)
 		return nil, err
 	}
 	defer f.Close()
 
 	res, err := ParseReader(f)
 	if err != nil {
-		log.Fatalf("parse coverage file fail. file:%s, err:%v", filePath, err)
 		return nil, err
 	}
 
@@ -45,7 +50,7 @@ func ParseFile(filePath string) ([]Coverage, error) {
 }
 
 func ParseReader(reader io.Reader) ([]Coverage, error) {
-	modPrefix := gocore.GetModPrefix()
+	modPrefix := gocore.MustGetModPrefix()
 	return parseReader(modPrefix, reader)
 }
 

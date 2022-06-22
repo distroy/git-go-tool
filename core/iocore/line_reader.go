@@ -45,17 +45,22 @@ func NewLineReader(reader io.Reader, opts ...LineReaderOption) *LineReader {
 		opt(r)
 	}
 
-	if v, ok := reader.(*bytes.Buffer); ok && v != nil {
-		r.reader = nil
-		r.buffer = v.Bytes()
-		r.err = io.EOF
-		r.bufferEnd = len(r.buffer)
+	switch v := reader.(type) {
+	case *bytes.Buffer:
+		r.setBytes(v.Bytes())
 	}
 
 	if r.buffer == nil {
 		r.buffer = make([]byte, r.bufferSize)
 	}
 	return r
+}
+
+func (r *LineReader) setBytes(data []byte) {
+	r.reader = nil
+	r.buffer = data
+	r.err = io.EOF
+	r.bufferEnd = len(data)
 }
 
 func (r *LineReader) ReadAllLineStrings() ([]string, error) {

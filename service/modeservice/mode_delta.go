@@ -5,7 +5,7 @@
 package modeservice
 
 import (
-	"log"
+	"fmt"
 	"path"
 
 	"github.com/distroy/git-go-tool/core/filecore"
@@ -23,12 +23,12 @@ func (m *modeDelta) mustInit(c *Config) {
 
 	branch := c.Branch
 	if branch == "" {
-		branch = git.GetBranch()
+		branch = git.MustGetBranch()
 	}
 
 	s, err := git.ParseNewLines(branch)
 	if err != nil {
-		log.Fatalf("parse the git different relative to the branch:%s. err:%v", branch, err)
+		panic(fmt.Errorf("parse the git different relative to the branch:%s. err:%v", branch, err))
 	}
 
 	m.files = git.NewFileDifferents(s)
