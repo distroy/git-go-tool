@@ -5,15 +5,16 @@
 package gocognitive
 
 import (
-	"bytes"
 	"go/ast"
 	"go/token"
 	"log"
+
+	"github.com/distroy/git-go-tool/core/filecore"
 )
 
 type visitor struct {
 	log             *log.Logger
-	fset            *token.FileSet
+	file            *filecore.File
 	name            *ast.Ident
 	complexity      int
 	nesting         int
@@ -23,12 +24,10 @@ type visitor struct {
 }
 
 func (v *visitor) printBody(n ast.Node) {
-	if v.fset == nil {
+	if v.file == nil {
 		return
 	}
-	buffer := bytes.NewBuffer(nil)
-	ast.Fprint(buffer, v.fset, n, nil)
-	v.log.Printf("print content: \n%s", buffer.String())
+	v.log.Printf("print content: \n%s", v.file.NodeBody(n))
 }
 
 func (v *visitor) incLevel() int {

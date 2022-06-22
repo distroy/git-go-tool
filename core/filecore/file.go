@@ -122,6 +122,12 @@ func (f *File) Parse() (*ast.File, error) {
 	return f.file, nil
 }
 
+func (f *File) NodeBody(n ast.Node) []byte {
+	buffer := bytes.NewBuffer(nil)
+	ast.Fprint(buffer, f.fset, n, nil)
+	return buffer.Bytes()
+}
+
 func (f *File) Position(p token.Pos) token.Position {
 	return f.fset.Position(p)
 }

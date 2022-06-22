@@ -47,7 +47,8 @@ func (c *Cache) Del(filename string) *File {
 }
 
 func (c *Cache) WalkFiles(walkFunc func(file *File) error) error {
-	return WalkFiles(c.root, func(file *File) error {
+	rootDir := c.root
+	return WalkFiles(rootDir, func(file *File) error {
 		c.files[file.Name] = file
 		return walkFunc(file)
 	})
