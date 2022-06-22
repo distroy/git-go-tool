@@ -5,6 +5,7 @@
 package gocognitive
 
 import (
+	"bytes"
 	"go/ast"
 	"go/token"
 	"log"
@@ -27,7 +28,20 @@ func (v *visitor) printBody(n ast.Node) {
 	if v.file == nil {
 		return
 	}
-	v.log.Printf("print content: \n%s", v.file.NodeBody(n))
+
+	// 0  *ast.BlockStmt {
+	// 1  .  Lbrace: cmd/git-diff-go-coverage/file.go:30:10
+	// 2  .  List: []ast.Stmt (len = 1) {
+	// 3  .  .  0: *ast.ExprStmt {
+	// 4  .  .  .  X: *ast.CallExpr {
+	// 5  .  .  .  .  Fun: *ast.SelectorExpr {
+	// 6  .  .  .  .  .  X: *ast.Ident {
+	// 7  .  .  .  .  .  .  NamePos: cmd/git-diff-go-coverage/file.go:31:4
+	// 8  .  .  .  .  .  .  Name: "fmt"
+	// 9  .  .  .  .  .  .  Obj: nil
+	buffer := &bytes.Buffer{}
+	v.file.WriteNode(buffer, n)
+	v.log.Printf("print content: \n%s", buffer.Bytes())
 }
 
 func (v *visitor) incLevel() int {

@@ -6,8 +6,12 @@ package main
 
 import (
 	"flag"
+	"os"
 
+	"github.com/distroy/git-go-tool/core/filecore"
+	// abc
 	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/goformat"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 )
 
@@ -42,4 +46,10 @@ func parseFlags() *Flags {
 }
 func main() {
 	// flags := parseFlags()
+	checker := goformat.ImportChecker()
+	issues := checker.Check(&filecore.File{
+		Name: "./cmd/go-format/main.go",
+		Path: "./cmd/go-format/main.go",
+	})
+	goformat.NewIssueWriter(os.Stdout).WriteIssues(issues)
 }

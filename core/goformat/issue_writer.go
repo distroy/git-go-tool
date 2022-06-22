@@ -74,5 +74,9 @@ type writer struct {
 }
 
 func (w *writer) Write(issue *Issue) {
-	fmt.Fprintf(w.writer, "%s %s:%d %s", issue.Level.String(), issue.Filename, issue.BeginLine, issue.Description)
+	if issue.BeginLine == issue.EndLine {
+		fmt.Fprintf(w.writer, "%s %s:%d %s\n", issue.Level.String(), issue.Filename, issue.BeginLine, issue.Description)
+	} else {
+		fmt.Fprintf(w.writer, "%s %s:%d,%d %s\n", issue.Level.String(), issue.Filename, issue.BeginLine, issue.EndLine, issue.Description)
+	}
 }

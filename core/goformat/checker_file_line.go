@@ -19,6 +19,10 @@ type fileLineChecker struct {
 }
 
 func (c fileLineChecker) Check(f *filecore.File) []*Issue {
+	if c.fileLine <= 0 {
+		return nil
+	}
+
 	lines := f.MustReadLines()
 	return c.checkLines(f, lines)
 }

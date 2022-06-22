@@ -10,6 +10,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"strings"
 
 	"github.com/distroy/git-go-tool/core/iocore"
@@ -30,7 +31,7 @@ func (f *File) IsGoTest() bool { return strings.HasSuffix(f.Name, "_test.go") }
 func (f *File) MustRead() []byte {
 	data, err := f.Read()
 	if err != nil {
-		panic(fmt.Sprintf("read file fail. file:%s, err:%v", f.Path, err))
+		panic(fmt.Errorf("read file fail. file:%s, err:%v", f.Path, err))
 	}
 	return data
 }
@@ -56,7 +57,7 @@ func (f *File) Read() ([]byte, error) {
 func (f *File) MustReadLines() []string {
 	lines, err := f.ReadLines()
 	if err != nil {
-		panic(fmt.Sprintf("read file lines fail. file:%s, err:%v", f.Path, err))
+		panic(fmt.Errorf("read file lines fail. file:%s, err:%v", f.Path, err))
 	}
 	return lines
 }
@@ -91,7 +92,7 @@ func (f *File) ReadLines() ([]string, error) {
 func (f *File) MustParse() *ast.File {
 	file, err := f.Parse()
 	if err != nil {
-		panic(fmt.Sprintf("parse file fail. file:%s, err:%v", f.Path, err))
+		panic(fmt.Errorf("parse file fail. file:%s, err:%v", f.Path, err))
 	}
 	return file
 }
@@ -122,10 +123,8 @@ func (f *File) Parse() (*ast.File, error) {
 	return f.file, nil
 }
 
-func (f *File) NodeBody(n ast.Node) []byte {
-	buffer := bytes.NewBuffer(nil)
-	ast.Fprint(buffer, f.fset, n, nil)
-	return buffer.Bytes()
+func (f *File) WriteNode(w io.Writer, n ast.Node) {
+	ast.Fprint(w, f.fset, n, nil)
 }
 
 func (f *File) Position(p token.Pos) token.Position {
