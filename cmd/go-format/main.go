@@ -6,6 +6,8 @@ package main
 
 import (
 	"flag"
+
+	"log"
 	"os"
 
 	"github.com/distroy/git-go-tool/core/filecore"
@@ -51,25 +53,52 @@ func parseFlags() *Flags {
 }
 
 func buildChecker(flags *Flags) goformat.Checker {
-	checkers := []goformat.Checker{
-		goformat.FileLineChecker(flags.FileLine),
-		goformat.PackageChecker(flags.Package),
-		goformat.ImportChecker(flags.Import),
-		goformat.FormatChecker(flags.Formated),
-	}
+	checkers := make([]goformat.Checker, 0, 8)
 
-	return goformat.AddChecker(checkers...)
+	checkers = append(checkers, goformat.FileLineChecker(flags.FileLine))
+	checkers = append(checkers, goformat.PackageChecker(flags.Package))
+	checkers = append(checkers, goformat.ImportChecker(flags.Import))
+	checkers = append(checkers, goformat.FormatChecker(flags.Formated))
+
+	return goformat.Checkers(checkers...)
+}
+
+func walkPathes(pathes []string, fn func(f *filecore.File) error) {
+	for _, path := range pathes {
+		if !filecore.IsDir(path) {
+			f := &filecore.File{
+				Path: path,
+				Name: path,
+			}
+
+			fn(f)
+			continue
+		}
+
+		err := filecore.WalkFiles(path, fn)
+		if err != nil {
+			log.Fatalf("walk dir fail. dir:%s, err:%v", path, err)
+		}
+	}
 }
 
 func main() {
 	flags := parseFlags()
 
 	checker := buildChecker(flags)
+	writer := goformat.NewIssueWriter(os.Stdout)
 
-	issues := checker.Check(&filecore.File{
-		Name: "cmd/go-format/main.go",
-		Path: "cmd/go-format/main.go",
+	walkPathes(flags.Pathes, func(f *filecore.File) error {
+		if !f.IsGo() || !flags.Filter.Check(f.Name) {
+			return nil
+		}
+
+		issues := checker.Check(f)
+		writer.WriteIssues(issues)
+		return nil
 	})
 
-	goformat.NewIssueWriter(os.Stdout).WriteIssues(issues)
+	if writer.Count().Error > 0 {
+		os.Exit(1)
+	}
 }

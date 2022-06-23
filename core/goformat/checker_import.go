@@ -100,10 +100,10 @@ func (c importChecker) isGroupedAndOrdered(stds, others []*importInfo) bool {
 	}
 
 	if len(stds) > 0 && len(others) > 0 {
-		if stds[len(stds)-1].Line < others[0].Line-1 {
+		if stds[len(stds)-1].Line > others[0].Line {
 			return false
 		}
-		if stds[len(stds)-1].Line > others[0].Line {
+		if others[0].Line-stds[len(stds)-1].Line > 2 {
 			return false
 		}
 	}

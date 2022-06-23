@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-func WalkFiles(dirPath string, walkFunc func(file *File) error) error {
+func WalkFiles(dirPath string, walkFunc func(f *File) error) error {
 	// fset := token.NewFileSet()
 	return filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {

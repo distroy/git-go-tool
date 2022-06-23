@@ -4,7 +4,10 @@
 
 package goformat
 
-import "github.com/distroy/git-go-tool/core/filecore"
+import (
+	"github.com/distroy/git-go-tool/core/filecore"
+	"github.com/distroy/git-go-tool/core/filter"
+)
 
 type Checker interface {
 	Check(f *filecore.File) []*Issue
@@ -21,50 +24,23 @@ func (c checkers) Check(f *filecore.File) []*Issue {
 	return res
 }
 
-func AddChecker(args ...Checker) Checker {
-	if len(args) == 0 {
-		return checkers(nil)
-	}
+func Checkers(args ...Checker) Checker {
+	n := filter.FilterSlice(args, func(v Checker) bool {
+		if v == nil {
+			return false
+		}
 
-	size := getCheckersSize(args...)
-	if size == len(args) {
-		return checkers(args)
-	}
+		switch vv := v.(type) {
+		case checkerNil, *checkerNil:
+			return false
 
-	res := make(checkers, 0, size)
-	for _, c := range args {
-		res = appendChecker(res, c)
-	}
+		case checkers:
+			return len(vv) > 0
+		}
 
-	return res
-}
+		return true
+	})
 
-func appendChecker(res checkers, c Checker) checkers {
-	if c == nil {
-		return res
-	}
-	if cc, ok := c.(checkers); ok {
-		res = append(res, cc...)
-	} else {
-		res = append(res, c)
-	}
-	return res
-}
-
-func getCheckerSize(checker Checker) int {
-	if checker == nil {
-		return 0
-	}
-	if v, ok := checker.(checkers); ok {
-		return len(v)
-	}
-	return 1
-}
-
-func getCheckersSize(args ...Checker) int {
-	size := 0
-	for _, c := range args {
-		size += getCheckerSize(c)
-	}
-	return size
+	args = args[:n]
+	return checkers(args)
 }
