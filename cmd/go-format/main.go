@@ -6,7 +6,6 @@ package main
 
 import (
 	"flag"
-
 	"log"
 	"os"
 
@@ -21,6 +20,9 @@ type Flags struct {
 	Import   bool
 	Formated bool
 	Package  bool
+
+	FuncInputNum  int
+	FuncOutputNum int
 
 	Filter *filter.Filter
 	Pathes []string
@@ -59,6 +61,10 @@ func buildChecker(flags *Flags) goformat.Checker {
 	checkers = append(checkers, goformat.PackageChecker(flags.Package))
 	checkers = append(checkers, goformat.ImportChecker(flags.Import))
 	checkers = append(checkers, goformat.FormatChecker(flags.Formated))
+	// checkers = append(checkers, goformat.FuncParamsChecker(&goformat.FuncParamsConfig{
+	// 	InputNum:  3,
+	// 	OutputNum: 3,
+	// }))
 
 	return goformat.Checkers(checkers...)
 }
@@ -83,6 +89,8 @@ func walkPathes(pathes []string, fn func(f *filecore.File) error) {
 }
 
 func main() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
 	flags := parseFlags()
 
 	checker := buildChecker(flags)

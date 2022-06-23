@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"io"
 	"strings"
@@ -97,6 +98,15 @@ func (f *File) MustParse() *ast.File {
 	return file
 }
 
+func (f *File) FileSet() *token.FileSet {
+	fset := f.fset
+	if fset == nil {
+		fset = token.NewFileSet()
+		f.fset = fset
+	}
+	return fset
+}
+
 func (f *File) Parse() (*ast.File, error) {
 	if f.file != nil {
 		return f.file, nil
@@ -107,10 +117,7 @@ func (f *File) Parse() (*ast.File, error) {
 		return nil, err
 	}
 
-	fset := f.fset
-	if fset == nil {
-		fset = token.NewFileSet()
-	}
+	fset := f.FileSet()
 
 	mode := parser.ParseComments
 	file, err := parser.ParseFile(fset, f.Path, data, mode)
@@ -118,13 +125,12 @@ func (f *File) Parse() (*ast.File, error) {
 		return nil, err
 	}
 
-	f.fset = fset
 	f.file = file
 	return f.file, nil
 }
 
-func (f *File) WriteNode(w io.Writer, n ast.Node) {
-	ast.Fprint(w, f.fset, n, nil)
+func (f *File) WriteCode(w io.Writer, n ast.Node) {
+	printer.Fprint(w, f.fset, n)
 }
 
 func (f *File) Position(p token.Pos) token.Position {

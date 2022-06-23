@@ -14,6 +14,13 @@ var (
 	errInvalidRange = fmt.Errorf("invalid file range")
 )
 
+type cacheCheckFileRangeReq struct {
+	Filename  string
+	BeginLine int
+	EndLine   int
+	Check     func(line string) bool
+}
+
 type cache struct {
 	*filecore.Cache
 }
@@ -26,7 +33,12 @@ func newCache(rootPath string) *cache {
 
 // begin: start form 1
 // [begin, end]
-func (c *cache) CheckFileRange(filename string, begin, end int, check func(line string) bool) (bool, error) {
+func (c *cache) CheckFileRange(req *cacheCheckFileRangeReq) (bool, error) {
+	filename := req.Filename
+	begin := req.BeginLine
+	end := req.EndLine
+	check := req.Check
+
 	f := c.Get(filename)
 
 	lines, err := f.ReadLines()
