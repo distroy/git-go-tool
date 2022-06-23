@@ -7,13 +7,13 @@ package goformat
 import (
 	"fmt"
 	"go/ast"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/mathcore"
 )
 
 type importInfo struct {
@@ -23,12 +23,15 @@ type importInfo struct {
 	StdLib bool
 }
 
-func ImportChecker() Checker {
+func ImportChecker(enable bool) Checker {
+	if !enable {
+		return checkerNil{}
+	}
+
 	return importChecker{}
 }
 
-type importChecker struct {
-}
+type importChecker struct{}
 
 func (c importChecker) Check(f *filecore.File) []*Issue {
 	file := f.MustParse()
@@ -36,59 +39,86 @@ func (c importChecker) Check(f *filecore.File) []*Issue {
 		return nil
 	}
 
-	stds, others := c.converterImport(f, file.Imports)
-	return c.checkImport(f, stds, others)
+	imps := c.convertImports(f, file.Imports)
+	return c.checkImport(f, imps)
 }
 
-func (c importChecker) checkImport(f *filecore.File, stds, others []*importInfo) []*Issue {
-	res := make([]*Issue, 0, 8)
+func (c importChecker) checkImport(f *filecore.File, imps []*importInfo) []*Issue {
+	res := make([]*Issue, 0, len(imps)+1)
 
-	if len(stds)+len(others) <= 1 {
+	for _, imp := range imps {
+		// log.Printf(" === line:%d, name:%s, path:%s", imp.Line, imp.Name, imp.Path)
+		if imp.Name == "." {
+			res = append(res, &Issue{
+				Filename:    f.Name,
+				BeginLine:   imp.Line,
+				EndLine:     imp.Line,
+				Level:       LevelError,
+				Description: fmt.Sprintf("do not use the dot import"),
+			})
+		}
+	}
+
+	if len(imps) <= 1 {
 		return nil
 	}
 
-	if imps := stds; c.hasBlankLine(imps) {
+	begin, end := c.getImportRange(imps)
+
+	n := filter.FilterSlice(imps, func(v *importInfo) bool { return v.StdLib })
+	stds := imps[:n]
+	others := imps[n:]
+
+	sort.Slice(stds, func(i, j int) bool { return stds[i].Line < stds[j].Line })
+	sort.Slice(others, func(i, j int) bool { return others[i].Line < others[j].Line })
+
+	if !c.isGroupedAndOrdered(stds, others) {
 		res = append(res, &Issue{
 			Filename:    f.Name,
-			BeginLine:   imps[0].Line,
-			EndLine:     imps[len(imps)-1].Line,
+			BeginLine:   begin,
+			EndLine:     end,
 			Level:       LevelError,
-			Description: fmt.Sprintf("must not have blank line in std imports"),
+			Description: fmt.Sprintf("imports should be grouped and ordered by standards and others"),
 		})
-	}
-
-	if imps := others; c.hasBlankLine(imps) {
-		res = append(res, &Issue{
-			Filename:    f.Name,
-			BeginLine:   imps[0].Line,
-			EndLine:     imps[len(imps)-1].Line,
-			Level:       LevelError,
-			Description: fmt.Sprintf("must not have blank line in other imports"),
-		})
-	}
-
-	if n := c.getStdLibCount(stds); n < len(stds) {
-		imps := stds
-		res = append(res, &Issue{
-			Filename:    f.Name,
-			BeginLine:   imps[0].Line,
-			EndLine:     imps[len(imps)-1].Line,
-			Level:       LevelError,
-			Description: fmt.Sprintf("must not have blank line in other imports"),
-		})
-
-	} else if n := c.getStdLibCount(others); n > 0 {
-	}
-
-	for _, imp := range stds {
-		log.Printf(" === line:%d, name:%s, path:%s", imp.Line, imp.Name, imp.Path)
-	}
-	log.Printf("")
-	for _, imp := range others {
-		log.Printf(" === line:%d, name:%s, path:%s", imp.Line, imp.Name, imp.Path)
 	}
 
 	return res
+}
+
+func (c importChecker) isGroupedAndOrdered(stds, others []*importInfo) bool {
+	if c.hasBlankLine(stds) {
+		return false
+	}
+	if c.hasBlankLine(others) {
+		return false
+	}
+	if c.getStdLibCount(stds) < len(stds) {
+		return false
+	}
+	if c.getStdLibCount(others) > 0 {
+		return false
+	}
+
+	if len(stds) > 0 && len(others) > 0 {
+		if stds[len(stds)-1].Line < others[0].Line-1 {
+			return false
+		}
+		if stds[len(stds)-1].Line > others[0].Line {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (c importChecker) getImportRange(imps []*importInfo) (begin, end int) {
+	begin = imps[0].Line
+	end = imps[0].Line
+	for _, imp := range imps {
+		begin = mathcore.MinInt(begin, imp.Line)
+		end = mathcore.MaxInt(end, imp.Line)
+	}
+	return
 }
 
 func (c importChecker) getStdLibCount(imps []*importInfo) int {
@@ -131,7 +161,7 @@ func (c importChecker) isStdLibPath(path string) bool {
 	return false
 }
 
-func (c importChecker) converterImport(f *filecore.File, imps []*ast.ImportSpec) (stds, others []*importInfo) {
+func (c importChecker) convertImports(f *filecore.File, imps []*ast.ImportSpec) []*importInfo {
 	buf := make([]*importInfo, 0, len(imps))
 	for _, imp := range imps {
 		v := &importInfo{
@@ -148,13 +178,5 @@ func (c importChecker) converterImport(f *filecore.File, imps []*ast.ImportSpec)
 		buf = append(buf, v)
 	}
 
-	// sort.Slice(buf, func(i, j int) bool { return buf[i].Line < buf[j].Line })
-	n := filter.FilterSlice(buf, func(v *importInfo) bool { return v.StdLib })
-	stds = buf[:n]
-	others = buf[n:]
-
-	sort.Slice(stds, func(i, j int) bool { return buf[i].Line < buf[j].Line })
-	sort.Slice(others, func(i, j int) bool { return buf[i].Line < buf[j].Line })
-
-	return stds, others
+	return buf
 }

@@ -57,7 +57,21 @@ func (w *writerWrapper) Write(issues *Issue) {
 }
 
 func (w *writerWrapper) WriteIssues(issues []*Issue) {
-	sort.Sort(sortedIssues(issues))
+	sort.Slice(issues, func(i, j int) bool {
+		s := issues
+		a, b := s[i], s[j]
+		if a.Filename != b.Filename {
+			return a.Filename < b.Filename
+		}
+		if a.BeginLine != b.BeginLine {
+			return a.BeginLine < b.BeginLine
+		}
+		if a.EndLine != b.EndLine {
+			return a.EndLine < b.EndLine
+		}
+		return a.Level > b.Level
+	})
+
 	for _, v := range issues {
 		w.Write(v)
 	}
@@ -74,9 +88,15 @@ type writer struct {
 }
 
 func (w *writer) Write(issue *Issue) {
-	if issue.BeginLine == issue.EndLine {
-		fmt.Fprintf(w.writer, "%s %s:%d %s\n", issue.Level.String(), issue.Filename, issue.BeginLine, issue.Description)
-	} else {
-		fmt.Fprintf(w.writer, "%s %s:%d,%d %s\n", issue.Level.String(), issue.Filename, issue.BeginLine, issue.EndLine, issue.Description)
+	fmt.Fprintf(w.writer, "%s [%s] %s\n", w.fileAndLine(issue), issue.Level.String(), issue.Description)
+}
+
+func (w *writer) fileAndLine(issue *Issue) string {
+	if issue.BeginLine <= 0 || issue.EndLine <= 0 {
+		return issue.Filename
 	}
+	if issue.BeginLine == issue.EndLine {
+		return fmt.Sprintf("%s:%d", issue.Filename, issue.BeginLine)
+	}
+	return fmt.Sprintf("%s:%d,%d", issue.Filename, issue.BeginLine, issue.EndLine)
 }

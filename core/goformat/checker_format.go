@@ -12,6 +12,14 @@ import (
 	"github.com/distroy/git-go-tool/core/filecore"
 )
 
+func FormatChecker(enable bool) Checker {
+	if !enable {
+		return checkerNil{}
+	}
+
+	return formatChecker{}
+}
+
 type formatChecker struct {
 }
 
@@ -32,7 +40,7 @@ func (c formatChecker) checkData(f *filecore.File, data []byte) []*Issue {
 		res = append(res, &Issue{
 			Filename:    f.Name,
 			Level:       LevelError,
-			Description: fmt.Sprintf("source must be formated"),
+			Description: fmt.Sprintf("source should be formated"),
 		})
 	}
 
