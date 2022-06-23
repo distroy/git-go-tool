@@ -49,15 +49,22 @@ func parseFlags() *Flags {
 
 	return f
 }
-func main() {
-	flags := parseFlags()
 
-	checker := goformat.AddChecker(
+func buildChecker(flags *Flags) goformat.Checker {
+	checkers := []goformat.Checker{
 		goformat.FileLineChecker(flags.FileLine),
 		goformat.PackageChecker(flags.Package),
 		goformat.ImportChecker(flags.Import),
 		goformat.FormatChecker(flags.Formated),
-	)
+	}
+
+	return goformat.AddChecker(checkers...)
+}
+
+func main() {
+	flags := parseFlags()
+
+	checker := buildChecker(flags)
 
 	issues := checker.Check(&filecore.File{
 		Name: "cmd/go-format/main.go",
