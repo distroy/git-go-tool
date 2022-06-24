@@ -17,6 +17,14 @@ import (
 	"github.com/distroy/git-go-tool/core/iocore"
 )
 
+func NewTestFile(path string, data []byte) *File {
+	return &File{
+		Path: path,
+		Name: path,
+		data: data,
+	}
+}
+
 type File struct {
 	Path  string
 	Name  string
@@ -42,7 +50,7 @@ func (f *File) Read() ([]byte, error) {
 		return f.data, nil
 	}
 
-	data, err := iocore.ReadFile(f.Path)
+	data, err := ReadFile(f.Path)
 	if err != nil {
 		return nil, err
 	}

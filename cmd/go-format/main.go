@@ -69,25 +69,6 @@ func buildChecker(flags *Flags) goformat.Checker {
 	return goformat.Checkers(checkers...)
 }
 
-func walkPathes(pathes []string, fn func(f *filecore.File) error) {
-	for _, path := range pathes {
-		if !filecore.IsDir(path) {
-			f := &filecore.File{
-				Path: path,
-				Name: path,
-			}
-
-			fn(f)
-			continue
-		}
-
-		err := filecore.WalkFiles(path, fn)
-		if err != nil {
-			log.Fatalf("walk dir fail. dir:%s, err:%v", path, err)
-		}
-	}
-}
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
@@ -96,7 +77,7 @@ func main() {
 	checker := buildChecker(flags)
 	writer := goformat.NewIssueWriter(os.Stdout)
 
-	walkPathes(flags.Pathes, func(f *filecore.File) error {
+	filecore.MustWalkPathes(flags.Pathes, func(f *filecore.File) error {
 		if !f.IsGo() || !flags.Filter.Check(f.Name) {
 			return nil
 		}

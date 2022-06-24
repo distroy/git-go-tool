@@ -103,7 +103,7 @@ func (c importChecker) isGroupedAndOrdered(stds, others []*importInfo) bool {
 		if stds[len(stds)-1].Line > others[0].Line {
 			return false
 		}
-		if others[0].Line-stds[len(stds)-1].Line > 2 {
+		if others[0].Line-stds[len(stds)-1].Line != 2 {
 			return false
 		}
 	}
