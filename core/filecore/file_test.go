@@ -11,7 +11,7 @@ import (
 )
 
 func Test_TempFile_WriteFile_ReadFile(t *testing.T) {
-	filename := MustTempFile("", "")
+	filename := MustTempFile()
 	defer os.Remove(filename)
 	t.Logf("temp file: %s", filename)
 

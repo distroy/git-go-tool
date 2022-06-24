@@ -89,7 +89,7 @@ func Test() {
 }
 
 func TestFile_Read(t *testing.T) {
-	filename := MustTempFile("", "*.go")
+	filename := MustTempFile()
 	defer os.Remove(filename)
 
 	text := strcore.StrToBytesUnsafe(`
