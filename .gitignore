@@ -16,8 +16,15 @@ unit_test.db
 
 # log
 /log/
+*.log
+
+tmp_*
+tmp.*
+temp_*
+temp.*
 
 # commands
 /cmd/go-cognitive/go-cognitive
+/cmd/go-format/go-format
 /cmd/git-diff-go-cognitive/git-diff-go-cognitive
 /cmd/git-diff-go-coverage/git-diff-go-coverage

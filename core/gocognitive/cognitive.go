@@ -3,14 +3,11 @@ package gocognitive
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
 	"log"
 	"os"
-	"path/filepath"
 	"reflect"
-	"strings"
 
+	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/iocore"
 )
 
@@ -22,24 +19,24 @@ func SetDebug(enable bool) { _debug = enable }
 
 // AnalyzeFileByPath builds the complexity statistics.
 func AnalyzeFileByPath(filePath string) ([]Complexity, error) {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filePath, nil, 0)
-	if err != nil {
-		return nil, err
+	f := &filecore.File{
+		Path: filePath,
+		Name: filePath,
 	}
 
-	return AnalyzeFile(fset, f), nil
+	return AnalyzeFile(f)
 }
 
 // AnalyzeDirByPath builds the complexity statistics.
 func AnalyzeDirByPath(dirPath string) ([]Complexity, error) {
 	complexites := make([]Complexity, 0, 32)
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() && strings.HasSuffix(path, ".go") {
-			var res []Complexity
-			res, err = AnalyzeFileByPath(path)
-			complexites = append(complexites, res...)
+	err := filecore.WalkFiles(dirPath, func(file *filecore.File) error {
+		if !file.IsGo() {
+			return nil
 		}
+
+		res, err := AnalyzeFile(file)
+		complexites = append(complexites, res...)
 		return err
 	})
 
@@ -47,14 +44,18 @@ func AnalyzeDirByPath(dirPath string) ([]Complexity, error) {
 }
 
 // AnalyzeFile builds the complexity statistics.
-func AnalyzeFile(fset *token.FileSet, f *ast.File) []Complexity {
-	res := make([]Complexity, 0, len(f.Decls))
-	for _, decl := range f.Decls {
+func AnalyzeFile(f *filecore.File) ([]Complexity, error) {
+	file, err := f.Parse()
+	if err != nil {
+		return nil, err
+	}
+	res := make([]Complexity, 0, len(file.Decls))
+	for _, decl := range file.Decls {
 		if fn, ok := decl.(*ast.FuncDecl); ok {
-			res = append(res, AnalyzeFunction(fset, f, fn))
+			res = append(res, AnalyzeFunction(f, fn))
 		}
 	}
-	return res
+	return res, nil
 }
 
 // funcName returns the name representation of a function or method:
@@ -86,7 +87,7 @@ func typeName(i interface{}) string {
 }
 
 // AnalyzeFunction calculates the cognitive complexity of a function.
-func AnalyzeFunction(fset *token.FileSet, f *ast.File, fn *ast.FuncDecl) Complexity {
+func AnalyzeFunction(file *filecore.File, fn *ast.FuncDecl) Complexity {
 	l := log.New(iocore.Discard(), "", 0)
 	if _debug {
 		l = log.New(os.Stdout, fmt.Sprintf("debug %s ", funcName(fn)),
@@ -94,9 +95,11 @@ func AnalyzeFunction(fset *token.FileSet, f *ast.File, fn *ast.FuncDecl) Complex
 	}
 	v := visitor{
 		log:  l,
-		fset: fset,
+		file: file,
 		name: fn.Name,
 	}
+
+	f := file.MustParse()
 
 	v.log.Printf("***** %s begin *****", v.name)
 
@@ -105,7 +108,7 @@ func AnalyzeFunction(fset *token.FileSet, f *ast.File, fn *ast.FuncDecl) Complex
 	v.log.Printf("***** %s end *****", v.name)
 	v.log.Print("")
 
-	pos, end := fset.Position(fn.Pos()), fset.Position(fn.End())
+	pos, end := file.Position(fn.Pos()), file.Position(fn.End())
 	return Complexity{
 		PkgName:    f.Name.Name,
 		FuncName:   funcName(fn),

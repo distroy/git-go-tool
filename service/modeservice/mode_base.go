@@ -6,12 +6,9 @@ package modeservice
 
 import (
 	"go/ast"
-	"go/parser"
-	"go/token"
-	"log"
-	"path/filepath"
 	"strings"
 
+	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/git"
 )
 
@@ -21,7 +18,7 @@ type modeBase struct {
 }
 
 func (m *modeBase) mustInit(c *Config) {
-	m.rootDir = git.GetRootDir()
+	m.rootDir = git.MustGetRootDir()
 	m.cache = newCache(m.rootDir)
 }
 
@@ -31,24 +28,19 @@ func (m *modeBase) isLineIgnored(line string) bool {
 	return len(line) == 0 || line == "}"
 }
 
-func (m *modeBase) mustWalkFile(path string, fn WalkFunc) {
-	if !strings.HasSuffix(path, ".go") {
+func (m *modeBase) mustWalkFile(file *filecore.File, fn WalkFunc) {
+	filename := file.Name
+
+	if !file.IsGo() {
 		return
 	}
 
-	rootDir := m.rootDir
 	cache := m.cache
+	defer cache.Del(filename)
 
-	filename, _ := filepath.Rel(rootDir, path)
-	file := cache.MustGetFile(filename)
-	cache.DelFile(filename)
+	lines := file.MustReadLines()
 
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, path, nil, 0)
-	if err != nil {
-		log.Fatalf("parse file fail. file:%s, err:%v", filename, err)
-	}
-
+	f := file.MustParse()
 	for _, decl := range f.Decls {
 		fDecl, ok := decl.(*ast.FuncDecl)
 		if !ok {
@@ -61,10 +53,10 @@ func (m *modeBase) mustWalkFile(path string, fn WalkFunc) {
 			continue
 		}
 
-		pos := fset.Position(body.Lbrace)
-		end := fset.Position(body.Rbrace)
+		pos := file.Position(body.Lbrace)
+		end := file.Position(body.Rbrace)
 		for i := pos.Line - 1; i < end.Line; i++ {
-			if m.isLineIgnored(file.Lines[i]) {
+			if m.isLineIgnored(lines[i]) {
 				continue
 			}
 

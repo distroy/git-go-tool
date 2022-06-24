@@ -5,9 +5,10 @@
 package modeservice
 
 import (
-	"log"
+	"fmt"
 	"path"
 
+	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/git"
 )
 
@@ -22,12 +23,12 @@ func (m *modeDelta) mustInit(c *Config) {
 
 	branch := c.Branch
 	if branch == "" {
-		branch = git.GetBranch()
+		branch = git.MustGetBranch()
 	}
 
 	s, err := git.ParseNewLines(branch)
 	if err != nil {
-		log.Fatalf("parse the git different relative to the branch:%s. err:%v", branch, err)
+		panic(fmt.Errorf("parse the git different relative to the branch:%s. err:%v", branch, err))
 	}
 
 	m.files = git.NewFileDifferents(s)
@@ -49,7 +50,11 @@ func (m *modeDelta) Walk(fn WalkFunc) {
 		// }
 
 		filePath := path.Join(m.rootDir, filename)
-		m.mustWalkFile(filePath, func(file string, begin, end int) {
+		file := &filecore.File{
+			Path: filePath,
+			Name: filename,
+		}
+		m.mustWalkFile(file, func(file string, begin, end int) {
 			for i := begin; i <= end; i++ {
 				if !m.IsIn(file, begin, end) {
 					continue

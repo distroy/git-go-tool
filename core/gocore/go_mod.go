@@ -5,7 +5,7 @@
 package gocore
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -30,12 +30,20 @@ func mustGetCwd() string {
 	return cwd
 }
 
-func GetModPrefix() string {
-	gitRootDir := git.GetRootDir()
+func MustGetModPrefix() string {
+	prefix, err := GetModPrefix()
+	if err != nil {
+		panic(err)
+	}
+	return prefix
+}
+
+func GetModPrefix() (string, error) {
+	gitRootDir := git.MustGetRootDir()
 
 	goModFile := path.Join(gitRootDir, "go.mod")
 	if _, err := os.Stat(goModFile); err != nil {
-		log.Fatalf("cannot find the go.mod file. work path:%s, git root:%s, err:%v",
+		return "", fmt.Errorf("cannot find the go.mod file. work path:%s, git root:%s, err:%v",
 			mustGetCwd(), gitRootDir, err)
 	}
 
@@ -43,19 +51,16 @@ func GetModPrefix() string {
 	out, err := cmd.Output()
 	if err != nil {
 		switch v := err.(type) {
-		default:
-			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v.Error())
-
 		case *exec.ExitError:
-			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%v",
+			return "", fmt.Errorf("exec command fail. cmd:%s, code:%d, err:%v",
 				getCommandString(cmd), v.ExitCode(), v.Error())
 		}
 
-		return ""
+		return "", fmt.Errorf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err.Error())
 	}
 
 	prefix := strings.Split(string(out), " ")[1]
 	prefix = strings.TrimSpace(prefix)
 
-	return prefix
+	return prefix, nil
 }

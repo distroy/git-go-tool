@@ -92,6 +92,7 @@ go-test:
 setup:
 	git config core.hooksPath "git-hook"
 	$(call go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
+	$(call go_install,github.com/distroy/git-go-tool/cmd/go-format)
 	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
 	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'

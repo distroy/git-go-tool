@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/regexpcore"
@@ -108,15 +109,10 @@ func main() {
 	}
 }
 
-func isDir(filename string) bool {
-	fi, err := os.Stat(filename)
-	return err == nil && fi.IsDir()
-}
-
 func analyzePathes(pathes []string, filter *filter.Filter) []gocognitive.Complexity {
 	var res []gocognitive.Complexity
 	for _, path := range pathes {
-		if isDir(path) {
+		if filecore.IsDir(path) {
 			res = analyzeDir(path, filter, res)
 		} else {
 			res = analyzeFile(path, filter, res)

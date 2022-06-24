@@ -18,28 +18,28 @@ func FilterSlice(slice interface{}, filter interface{}) int {
 	sliceTyp := sliceVal.Type()
 
 	if sliceTyp.Kind() != reflect.Slice && sliceTyp.Kind() != reflect.Array {
-		panic(fmt.Sprintf("the slice type must be slice or array. type:%s", sliceTyp))
+		panic(fmt.Errorf("the slice type must be slice or array. type:%s", sliceTyp))
 	}
 	elemTyp := sliceVal.Type().Elem()
 
 	filterVal := reflect.ValueOf(filter)
 	filterTyp := filterVal.Type()
 	if filterTyp.Kind() != reflect.Func {
-		panic(fmt.Sprintf("the filter must be func. type:%s", filterTyp))
+		panic(fmt.Errorf("the filter must be func. type:%s", filterTyp))
 	}
 
 	if filterTyp.NumIn() != 1 {
-		panic(fmt.Sprintf("the filter must have 1 input parameter. type:%s", filterTyp))
+		panic(fmt.Errorf("the filter must have 1 input parameter. type:%s", filterTyp))
 	}
 	if typ := filterTyp.In(0); !(typ == elemTyp || (typ.Kind() == reflect.Interface && elemTyp.Implements(typ))) {
-		panic(fmt.Sprintf("the parameter of filter must be or interface for %s", elemTyp))
+		panic(fmt.Errorf("the parameter of filter must be or interface for %s", elemTyp))
 	}
 
 	if filterTyp.NumOut() != 1 {
-		panic(fmt.Sprintf("the filter must have 1 return value. type:%s", filterTyp))
+		panic(fmt.Errorf("the filter must have 1 return value. type:%s", filterTyp))
 	}
 	if typ := filterTyp.Out(0); typ.Kind() != reflect.Bool {
-		panic(fmt.Sprintf("the return value of filter must be bool. type:%s", typ))
+		panic(fmt.Errorf("the return value of filter must be bool. type:%s", typ))
 	}
 
 	return filterSlice(sliceVal, filterVal)

@@ -15,7 +15,7 @@ var (
 )
 
 var (
-	defaultBufferSize = 409600
+	defaultBufferSize = 4096 * 100
 )
 
 type LineReader struct {
@@ -45,8 +45,22 @@ func NewLineReader(reader io.Reader, opts ...LineReaderOption) *LineReader {
 		opt(r)
 	}
 
-	r.buffer = make([]byte, r.bufferSize)
+	switch v := reader.(type) {
+	case *bytes.Buffer:
+		r.setBytes(v.Bytes())
+	}
+
+	if r.buffer == nil {
+		r.buffer = make([]byte, r.bufferSize)
+	}
 	return r
+}
+
+func (r *LineReader) setBytes(data []byte) {
+	r.reader = nil
+	r.buffer = data
+	r.err = io.EOF
+	r.bufferEnd = len(data)
 }
 
 func (r *LineReader) ReadAllLineStrings() ([]string, error) {
@@ -103,18 +117,6 @@ func (r *LineReader) ReadLine() ([]byte, error) {
 		r.tokenEnd = -1
 	}
 	return d, err
-	// err := r.read()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//
-	// if end := r.tokenEnd; end >= 0 {
-	// 	pos := r.tokenPos
-	// 	r.tokenEnd = -1
-	// 	return r.buffer[pos:end], nil
-	// }
-	//
-	// return nil, r.err
 }
 
 func (r *LineReader) read() error {

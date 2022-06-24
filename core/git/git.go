@@ -6,7 +6,6 @@ package git
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 )
@@ -21,48 +20,58 @@ func (d Different) String() string {
 	return fmt.Sprintf("%s:%d,%d", d.Filename, d.BeginLine, d.EndLine)
 }
 
-func GetBranch() string {
+func MustGetBranch() string {
+	branch, err := GetBranch()
+	if err != nil {
+		panic(err)
+	}
+	return branch
+}
+
+func GetBranch() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--verify", "HEAD")
 	_, err := cmd.Output()
 	if err == nil {
-		return "HEAD"
+		return "HEAD", nil
 	}
 
 	cmd = exec.Command("git", "hash-object", "-t", "tree", "/dev/null")
 	out, err := cmd.Output()
 	if err != nil {
 		switch v := err.(type) {
-		default:
-			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v.Error())
-
 		case *exec.ExitError:
-			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%v",
+			return "", fmt.Errorf("exec command fail. cmd:%s, code:%d, err:%v",
 				getCommandString(cmd), v.ExitCode(), v.Error())
 		}
 
-		return ""
+		return "", fmt.Errorf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err.Error())
 	}
 
-	return string(out)
+	return string(out), nil
 }
 
-func GetRootDir() string {
+func MustGetRootDir() string {
+	root, err := GetRootDir()
+	if err != nil {
+		panic(err)
+	}
+	return root
+}
+
+func GetRootDir() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
 	out, err := cmd.Output()
 	if err != nil {
 		switch v := err.(type) {
-		default:
-			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v.Error())
-
 		case *exec.ExitError:
-			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%v",
+			return "", fmt.Errorf("exec command fail. cmd:%s, code:%d, err:%v",
 				getCommandString(cmd), v.ExitCode(), v.Error())
 		}
 
-		return ""
+		return "", fmt.Errorf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err.Error())
 	}
 
-	return strings.TrimSpace(string(out))
+	return strings.TrimSpace(string(out)), nil
 }
 
 func getCommandString(c *exec.Cmd) string {
