@@ -111,7 +111,7 @@ import (
 
 			c.Check(x)
 			if got := x.Issues(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("importChecker.Check() = %v, want %v", testIssuesString(got), testIssuesString(tt.want))
+				testPrintCheckResult(t, got, tt.want)
 			}
 		})
 	}
