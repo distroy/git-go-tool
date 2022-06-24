@@ -107,7 +107,7 @@ func TestStrToBytesUnsafe(t *testing.T) {
 		{
 			name: "nil",
 			args: args{s: ""},
-			want: []byte(nil),
+			want: []byte{},
 		},
 		{
 			name: "aaa",
@@ -117,7 +117,11 @@ func TestStrToBytesUnsafe(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := StrToBytesUnsafe(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+			got := StrToBytesUnsafe(tt.args.s)
+			if got == nil {
+				got = []byte{}
+			}
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("StrToBytesUnsafe() = %#v, want %#v", got, tt.want)
 			}
 		})
