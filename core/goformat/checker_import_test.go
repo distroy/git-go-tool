@@ -5,8 +5,8 @@
 package goformat
 
 import (
-	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/distroy/git-go-tool/core/filecore"
@@ -14,15 +14,19 @@ import (
 )
 
 func testIssuesString(issues []*Issue) string {
-	data, _ := json.Marshal(issues)
-	return strcore.BytesToStrUnsafe(data)
+	buf := &strings.Builder{}
+	NewIssueWriter(buf).WriteIssues(issues)
+	return buf.String()
+}
+
+func testPrintCheckResult(t testing.TB, got, want []*Issue) {
+	t.Errorf("Check() = \n%v\n    want:\n%v", testIssuesString(got), testIssuesString(want))
 }
 
 func Test_importChecker_Check(t *testing.T) {
 	filename := "test.go"
 
 	type args struct {
-		name string
 		data string
 	}
 	tests := []struct {
@@ -33,7 +37,6 @@ func Test_importChecker_Check(t *testing.T) {
 	}{
 		{
 			args: args{
-				name: filename,
 				data: `
 package test
 import (
@@ -49,7 +52,6 @@ import (
 		},
 		{
 			args: args{
-				name: filename,
 				data: `
 package test
 import (
@@ -72,7 +74,6 @@ import (
 		},
 		{
 			args: args{
-				name: filename,
 				data: `
 package test
 import (
@@ -104,10 +105,12 @@ import (
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := importChecker{}
-			f := filecore.NewTestFile(tt.args.name, strcore.StrToBytesUnsafe(tt.args.data))
+			c := ImportChecker(true)
+			f := filecore.NewTestFile(filename, strcore.StrToBytesUnsafe(tt.args.data))
+			x := NewContext(f)
 
-			if got := c.Check(f); !reflect.DeepEqual(got, tt.want) {
+			c.Check(x)
+			if got := x.Issues(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("importChecker.Check() = %v, want %v", testIssuesString(got), testIssuesString(tt.want))
 			}
 		})

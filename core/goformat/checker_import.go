@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/mathcore"
 )
@@ -33,24 +32,22 @@ func ImportChecker(enable bool) Checker {
 
 type importChecker struct{}
 
-func (c importChecker) Check(f *filecore.File) []*Issue {
-	file := f.MustParse()
+func (c importChecker) Check(x *Context) error {
+	file := x.MustParse()
 	if len(file.Imports) <= 0 {
 		return nil
 	}
 
-	imps := c.convertImports(f, file.Imports)
-	return c.checkImport(f, imps)
+	imps := c.convertImports(x, file.Imports)
+	return c.checkImport(x, imps)
 }
 
-func (c importChecker) checkImport(f *filecore.File, imps []*importInfo) []*Issue {
-	res := make([]*Issue, 0, len(imps)+1)
-
+func (c importChecker) checkImport(x *Context, imps []*importInfo) error {
 	for _, imp := range imps {
 		// log.Printf(" === line:%d, name:%s, path:%s", imp.Line, imp.Name, imp.Path)
 		if imp.Name == "." {
-			res = append(res, &Issue{
-				Filename:    f.Name,
+			x.AddIssue(&Issue{
+				Filename:    x.Name,
 				BeginLine:   imp.Line,
 				EndLine:     imp.Line,
 				Level:       LevelError,
@@ -73,8 +70,8 @@ func (c importChecker) checkImport(f *filecore.File, imps []*importInfo) []*Issu
 	sort.Slice(others, func(i, j int) bool { return others[i].Line < others[j].Line })
 
 	if !c.isGroupedAndOrdered(stds, others) {
-		res = append(res, &Issue{
-			Filename:    f.Name,
+		x.AddIssue(&Issue{
+			Filename:    x.Name,
 			BeginLine:   begin,
 			EndLine:     end,
 			Level:       LevelError,
@@ -82,7 +79,7 @@ func (c importChecker) checkImport(f *filecore.File, imps []*importInfo) []*Issu
 		})
 	}
 
-	return res
+	return nil
 }
 
 func (c importChecker) isGroupedAndOrdered(stds, others []*importInfo) bool {
@@ -161,11 +158,11 @@ func (c importChecker) isStdLibPath(path string) bool {
 	return false
 }
 
-func (c importChecker) convertImports(f *filecore.File, imps []*ast.ImportSpec) []*importInfo {
+func (c importChecker) convertImports(ctx *Context, imps []*ast.ImportSpec) []*importInfo {
 	buf := make([]*importInfo, 0, len(imps))
 	for _, imp := range imps {
 		v := &importInfo{
-			Line: f.Position(imp.Pos()).Line,
+			Line: ctx.Position(imp.Pos()).Line,
 		}
 
 		if imp.Name != nil {

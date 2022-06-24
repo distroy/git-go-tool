@@ -16,7 +16,6 @@ func Test_packageChecker_Check(t *testing.T) {
 	filename := "test.go"
 
 	type args struct {
-		name string
 		data string
 	}
 	tests := []struct {
@@ -27,7 +26,6 @@ func Test_packageChecker_Check(t *testing.T) {
 	}{
 		{
 			args: args{
-				name: filename,
 				data: `
 package test_package
 `,
@@ -44,7 +42,6 @@ package test_package
 		},
 		{
 			args: args{
-				name: filename,
 				data: `
 package testPackage
 `,
@@ -63,9 +60,11 @@ package testPackage
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := packageChecker{}
-			f := filecore.NewTestFile(tt.args.name, strcore.StrToBytesUnsafe(tt.args.data))
+			f := filecore.NewTestFile(filename, strcore.StrToBytesUnsafe(tt.args.data))
+			x := NewContext(f)
 
-			if got := c.Check(f); !reflect.DeepEqual(got, tt.want) {
+			c.Check(x)
+			if got := x.Issues(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("packageChecker.Check() = %v, want %v", testIssuesString(got), testIssuesString(tt.want))
 			}
 		})

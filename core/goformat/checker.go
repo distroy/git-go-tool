@@ -5,23 +5,23 @@
 package goformat
 
 import (
-	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
 )
 
 type Checker interface {
-	Check(f *filecore.File) []*Issue
+	Check(x *Context) error
 }
 
 type checkers []Checker
 
-func (c checkers) Check(f *filecore.File) []*Issue {
-	res := make([]*Issue, 0, 16)
+func (c checkers) Check(ctx *Context) error {
 	for _, checker := range c {
-		r := checker.Check(f)
-		res = append(res, r...)
+		err := checker.Check(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	return res
+	return nil
 }
 
 func Checkers(args ...Checker) Checker {

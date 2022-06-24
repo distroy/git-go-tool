@@ -9,7 +9,6 @@ import (
 	"go/ast"
 	"strings"
 
-	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/strcore"
 )
 
@@ -22,24 +21,21 @@ func PackageChecker(enable bool) Checker {
 
 type packageChecker struct{}
 
-func (c packageChecker) Check(f *filecore.File) []*Issue {
-	res := make([]*Issue, 0, 8)
+func (c packageChecker) Check(x *Context) error {
 
-	file := f.MustParse()
+	file := x.MustParse()
 
-	res = c.checkPackageName(res, f, file)
-
-	return res
+	return c.checkPackageName(x, file)
 }
 
-func (c packageChecker) checkPackageName(res []*Issue, f *filecore.File, file *ast.File) []*Issue {
+func (c packageChecker) checkPackageName(x *Context, file *ast.File) error {
 	pkg := file.Name
-	pkgPos := f.Position(pkg.Pos())
+	pkgPos := x.Position(pkg.Pos())
 
 	name := pkg.Name
 	if strings.Contains(name, "_") {
-		res = append(res, &Issue{
-			Filename:    f.Name,
+		x.AddIssue(&Issue{
+			Filename:    x.Name,
 			BeginLine:   pkgPos.Line,
 			EndLine:     pkgPos.Line,
 			Level:       LevelError,
@@ -47,8 +43,8 @@ func (c packageChecker) checkPackageName(res []*Issue, f *filecore.File, file *a
 		})
 
 	} else if !strcore.IsLower(name) {
-		res = append(res, &Issue{
-			Filename:    f.Name,
+		x.AddIssue(&Issue{
+			Filename:    x.Name,
 			BeginLine:   pkgPos.Line,
 			EndLine:     pkgPos.Line,
 			Level:       LevelError,
@@ -56,5 +52,5 @@ func (c packageChecker) checkPackageName(res []*Issue, f *filecore.File, file *a
 		})
 	}
 
-	return res
+	return nil
 }

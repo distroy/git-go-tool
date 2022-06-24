@@ -82,8 +82,12 @@ func main() {
 			return nil
 		}
 
-		issues := checker.Check(f)
-		writer.WriteIssues(issues)
+		x := goformat.NewContext(f)
+		if err := checker.Check(x); err != nil {
+			log.Fatalf("check file format fail. file:%s, err:%v", x.Name, err)
+		}
+
+		writer.WriteIssues(x.Issues())
 		return nil
 	})
 
