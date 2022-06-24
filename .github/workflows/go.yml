@@ -27,12 +27,21 @@ jobs:
           go-version: "1.12.17"
       - run: make build-test
 
+  go-format-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.12.17"
+      - run: make setup
+      - run: go-format
+
   go-cognitive-job:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-        # name: go-setup
         with:
           go-version: "1.12.17"
       - run: make cognitive
