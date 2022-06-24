@@ -5,7 +5,10 @@
 package goformat
 
 import (
+	"encoding/json"
+
 	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/strcore"
 )
 
 type Checker interface {
@@ -43,4 +46,9 @@ func Checkers(args ...Checker) Checker {
 
 	args = args[:n]
 	return checkers(args)
+}
+
+func mustJsonMarshal(v interface{}) string {
+	d, _ := json.Marshal(v)
+	return strcore.BytesToStrUnsafe(d)
 }

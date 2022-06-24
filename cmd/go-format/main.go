@@ -51,6 +51,7 @@ func parseFlags() *Flags {
 		f.Pathes = []string{"."}
 	}
 
+	// log.Printf(" === %#v", f)
 	return f
 }
 

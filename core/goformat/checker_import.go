@@ -33,12 +33,12 @@ func ImportChecker(enable bool) Checker {
 type importChecker struct{}
 
 func (c importChecker) Check(x *Context) error {
-	file := x.MustParse()
-	if len(file.Imports) <= 0 {
+	f := x.MustParse()
+	if len(f.Imports) <= 0 {
 		return nil
 	}
 
-	imps := c.convertImports(x, file.Imports)
+	imps := convertImports(x, f.Imports)
 	return c.checkImport(x, imps)
 }
 
@@ -144,7 +144,7 @@ func (c importChecker) hasBlankLine(imps []*importInfo) bool {
 	return false
 }
 
-func (c importChecker) isStdLibPath(path string) bool {
+func isStdLibPath(path string) bool {
 	idx0 := strings.Index(path, "/")
 	if idx0 < 0 {
 		return true
@@ -158,7 +158,7 @@ func (c importChecker) isStdLibPath(path string) bool {
 	return false
 }
 
-func (c importChecker) convertImports(ctx *Context, imps []*ast.ImportSpec) []*importInfo {
+func convertImports(ctx *Context, imps []*ast.ImportSpec) []*importInfo {
 	buf := make([]*importInfo, 0, len(imps))
 	for _, imp := range imps {
 		v := &importInfo{
@@ -170,7 +170,7 @@ func (c importChecker) convertImports(ctx *Context, imps []*ast.ImportSpec) []*i
 		}
 
 		v.Path, _ = strconv.Unquote(imp.Path.Value)
-		v.StdLib = c.isStdLibPath(v.Path)
+		v.StdLib = isStdLibPath(v.Path)
 
 		buf = append(buf, v)
 	}

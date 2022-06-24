@@ -11,10 +11,13 @@ import (
 )
 
 type FuncParamsConfig struct {
-	InputNum     int
-	OutputNum    int
-	ContextFirst bool
-	ErrorLast    bool
+	InputNum               int
+	OutputNum              int
+	InputNumWithoutContext bool
+	OutputNumWithoutError  bool
+	ContextFirst           bool
+	ErrorLast              bool
+	ContextErrorMatch      bool
 }
 
 func FuncParamsChecker(cfg *FuncParamsConfig) Checker {
@@ -42,7 +45,7 @@ func (c funcParamsChecker) Check(x *Context) error {
 			continue
 		}
 
-		if err := c.checkFuncDecl(x, fn.Type); err != nil {
+		if err := c.checkFuncParams(x, fn.Type); err != nil {
 			return err
 		}
 
@@ -65,10 +68,10 @@ func (c funcParamsChecker) walkFunc(x *Context, fn *ast.FuncDecl) error {
 
 		switch nn := n.(type) {
 		case *ast.FuncLit:
-			err = c.checkFuncDecl(x, nn.Type)
+			err = c.checkFuncParams(x, nn.Type)
 
 		case *ast.FuncDecl:
-			err = c.checkFuncDecl(x, nn.Type)
+			err = c.checkFuncParams(x, nn.Type)
 		}
 
 		return err == nil
@@ -88,6 +91,14 @@ func (c funcParamsChecker) convertParams(x *Context, params *ast.FieldList) []*f
 		typ := getTypeInfo(x.File, param.Type)
 		// log.Printf(" === %T: %v, %#v", param.Type, param.Type, typ)
 
+		if len(param.Names) == 0 {
+			res = append(res, &funcParamInfo{
+				Name: "",
+				Type: typ,
+			})
+			continue
+		}
+
 		for _, v := range param.Names {
 			name := ""
 			if v != nil {
@@ -105,7 +116,7 @@ func (c funcParamsChecker) convertParams(x *Context, params *ast.FieldList) []*f
 	return res
 }
 
-func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
+func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) error {
 	inLimit := c.cfg.InputNum
 	outLimit := c.cfg.OutputNum
 
@@ -119,10 +130,11 @@ func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
 	}
 
 	pos := x.Position(fn.Pos())
-	// log.Printf(" === file:%s:%d, func:%s", f.Name, pos.Line, fn.Name.Name)
+	// log.Printf(" === file:%s:%d", x.Name, pos.Line)
+	// log.Printf(" === file:%s:%d, ins:%s, outs:%s", x.Name, pos.Line, mustJsonMarshal(ins), mustJsonMarshal(outs))
 
 	ctxIdx, ctx := c.indexParamByTypeName(ins, "context")
-	if c.isContextFirst(ins, ctxIdx) {
+	if !c.isContextFirst(ins, ctxIdx) {
 		x.AddIssue(&Issue{
 			Filename:    x.Name,
 			BeginLine:   pos.Line,
@@ -132,7 +144,29 @@ func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
 		})
 	}
 
-	if inLimit > 0 && ctx != nil && inNum > inLimit+1 {
+	errIdx, err := c.indexParamByTypeName(outs, "error")
+	if !c.isErrorLast(outs, errIdx) {
+		x.AddIssue(&Issue{
+			Filename:    x.Name,
+			BeginLine:   pos.Line,
+			EndLine:     pos.Line,
+			Level:       LevelError,
+			Description: fmt.Sprintf("the output parameter '%s' should not be more last", err.Type.String),
+		})
+	}
+
+	if !c.isContextErrorMatch(x, ctx, err) {
+		x.AddIssue(&Issue{
+			Filename:  x.Name,
+			BeginLine: pos.Line,
+			EndLine:   pos.Line,
+			Level:     LevelError,
+			Description: fmt.Sprintf("the context '%s' is not matched the error '%s'",
+				ctx.Type.String, err.Type.String),
+		})
+	}
+
+	if !c.isInNumValidWithoutContext(x, ins, ctx) {
 		x.AddIssue(&Issue{
 			Filename:  x.Name,
 			BeginLine: pos.Line,
@@ -142,7 +176,7 @@ func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
 				ctx.Type.String, inLimit, inNum-1),
 		})
 
-	} else if inLimit > 0 && ctx == nil && inNum > inLimit {
+	} else if !c.isInNumValid(x, ins, ctx) {
 		x.AddIssue(&Issue{
 			Filename:  x.Name,
 			BeginLine: pos.Line,
@@ -153,18 +187,7 @@ func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
 		})
 	}
 
-	errIdx, err := c.indexParamByTypeName(outs, "error")
-	if c.isErrorLast(outs, errIdx) {
-		x.AddIssue(&Issue{
-			Filename:    x.Name,
-			BeginLine:   pos.Line,
-			EndLine:     pos.Line,
-			Level:       LevelError,
-			Description: fmt.Sprintf("the output parameter '%s' should not be more last", err.Type.String),
-		})
-	}
-
-	if outLimit > 0 && err != nil && outNum > outLimit+1 {
+	if !c.isOutNumValidWithoutError(x, outs, err) {
 		x.AddIssue(&Issue{
 			Filename:  x.Name,
 			BeginLine: pos.Line,
@@ -174,7 +197,7 @@ func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
 				err.Type.String, outLimit, outNum-1),
 		})
 
-	} else if outLimit > 0 && err == nil && outNum > outLimit {
+	} else if !c.isOutNumValid(x, outs, err) {
 		x.AddIssue(&Issue{
 			Filename:  x.Name,
 			BeginLine: pos.Line,
@@ -190,7 +213,11 @@ func (c funcParamsChecker) checkFuncDecl(x *Context, fn *ast.FuncType) error {
 
 func (c funcParamsChecker) indexParamByTypeName(params []*funcParamInfo, typeName string) (int, *funcParamInfo) {
 	for i, v := range params {
-		if strings.EqualFold(v.Type.Name, typeName) {
+		typ := v.Type
+		// log.Printf(" === %s", mustJsonMarshal(typ))
+		isSpecial := typ.IsEllipsis || typ.IsFunc || typ.IsSlice
+		if !isSpecial && strings.EqualFold(typ.Name, typeName) {
+			// log.Printf(" === return %d %s", i, mustJsonMarshal(typ))
 			return i, v
 		}
 	}
@@ -199,20 +226,133 @@ func (c funcParamsChecker) indexParamByTypeName(params []*funcParamInfo, typeNam
 
 func (c funcParamsChecker) isContextFirst(params []*funcParamInfo, idx int) bool {
 	if !c.cfg.ContextFirst {
-		return false
+		return true
 	}
 
-	return idx > 0
+	if idx < 0 {
+		return true
+	}
+
+	return idx == 0
 }
 
 func (c funcParamsChecker) isErrorLast(params []*funcParamInfo, idx int) bool {
 	if !c.cfg.ErrorLast {
-		return false
+		return true
 	}
 
 	if idx < 0 {
+		return true
+	}
+
+	return idx == len(params)-1
+}
+
+func (c funcParamsChecker) isInNumValidWithoutContext(x *Context, params []*funcParamInfo, ctx *funcParamInfo) bool {
+	limit := c.cfg.InputNum
+	num := len(params)
+
+	if limit <= 0 {
+		return true
+	}
+
+	if !c.cfg.InputNumWithoutContext || ctx == nil {
+		return true
+	}
+
+	num--
+	return num <= limit
+}
+
+func (c funcParamsChecker) isInNumValid(x *Context, params []*funcParamInfo, ctx *funcParamInfo) bool {
+	limit := c.cfg.InputNum
+	num := len(params)
+
+	if limit <= 0 {
+		return true
+	}
+
+	if c.cfg.InputNumWithoutContext && ctx != nil {
+		return true
+	}
+
+	return num <= limit
+}
+
+func (c funcParamsChecker) isOutNumValidWithoutError(x *Context, params []*funcParamInfo, err *funcParamInfo) bool {
+	limit := c.cfg.OutputNum
+	num := len(params)
+
+	if limit <= 0 {
+		return true
+	}
+
+	if !c.cfg.OutputNumWithoutError || err == nil {
+		return true
+	}
+
+	num--
+	return num <= limit
+}
+
+func (c funcParamsChecker) isOutNumValid(x *Context, params []*funcParamInfo, err *funcParamInfo) bool {
+	limit := c.cfg.OutputNum
+	num := len(params)
+
+	if limit <= 0 {
+		return true
+	}
+
+	if c.cfg.OutputNumWithoutError && err != nil {
+		return true
+	}
+
+	return num <= limit
+}
+
+func (c funcParamsChecker) isContextErrorMatch(x *Context, ctx, err *funcParamInfo) bool {
+	// if ctx != nil {
+	// 	log.Printf(" === ctx:%s, %v", ctx.Type.String, c.isStdContext(x, ctx))
+	// }
+	// if err != nil {
+	// 	log.Printf(" === err:%s, %v", err.Type.String, c.isStdError(x, err))
+	// }
+
+	if ctx == nil || err == nil {
+		return true
+	}
+	if !c.cfg.ContextErrorMatch {
+		return true
+	}
+
+	return c.isStdContext(x, ctx) == c.isStdError(x, err)
+}
+
+func (c funcParamsChecker) isStdContext(x *Context, ctx *funcParamInfo) bool {
+	typ := ctx.Type
+	if typ.IsPointer {
 		return false
 	}
 
-	return idx < len(params)-1
+	if typ.Package == "" {
+		return false
+	}
+
+	f := x.MustParse()
+	imps := convertImports(x, f.Imports)
+	if len(imps) == 0 {
+		return true
+	}
+
+	for _, imp := range imps {
+		if imp.Name == typ.Package || imp.Path == typ.Package {
+			return imp.Path == "context"
+		}
+	}
+	return true
+}
+
+func (c funcParamsChecker) isStdError(x *Context, err *funcParamInfo) bool {
+	typ := err.Type
+	return !typ.IsPointer && typ.Package == "" && typ.Name == "error"
 }
