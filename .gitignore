@@ -16,6 +16,12 @@ unit_test.db
 
 # log
 /log/
+*.log
+
+tmp_*
+tmp.*
+temp_*
+temp.*
 
 # commands
 /cmd/go-cognitive/go-cognitive
