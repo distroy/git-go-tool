@@ -16,7 +16,6 @@ func Test_formatChecker_Check(t *testing.T) {
 	filename := "test.go"
 
 	type args struct {
-		name string
 		data string
 	}
 	tests := []struct {
@@ -27,7 +26,6 @@ func Test_formatChecker_Check(t *testing.T) {
 	}{
 		{
 			args: args{
-				name: filename,
 				data: `
 package test
 func TestFunc() {}
@@ -44,11 +42,13 @@ func TestFunc() {}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := formatChecker{}
-			f := filecore.NewTestFile(tt.args.name, strcore.StrToBytesUnsafe(tt.args.data))
+			c := FormatChecker(true)
+			f := filecore.NewTestFile(filename, strcore.StrToBytesUnsafe(tt.args.data))
+			x := NewContext(f)
 
-			if got := c.Check(f); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("formatChecker.Check() = %v, want %v", testIssuesString(got), testIssuesString(tt.want))
+			c.Check(x)
+			if got := x.Issues(); !reflect.DeepEqual(got, tt.want) {
+				testPrintCheckResult(t, got, tt.want)
 			}
 		})
 	}

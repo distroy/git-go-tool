@@ -26,7 +26,11 @@ func funcIf_2(a int) int {
 	return a
 }
 
-func funcIf_4(a, b, c, d bool) int {
+func funcIf_4(z ...bool) int {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
 	if a && (b && c || d) { // +4
 		return 10
 	}
@@ -69,30 +73,61 @@ func funcIfElse_6(a, b, c int) int {
 	return b + c
 }
 
-func funcIfParen_5(a, b, c, d, e int) int {
+func funcIfParen_5(z ...int) int {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
+	e := z[4]
+
 	if (a > 10 || a < -100) && (!(b < 10000 && b > 10 && d > 1000) || c > 100) && e > 10 { // +5
 		return a
 	}
 	return b
 }
 
-func funcLogicalExpr_1(a, b, c, d, e int) bool {
+func funcLogicalExpr_1(z ...int) bool {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	// d := z[3]
+	// e := z[4]
 	return a > 10 || !(b > 1000) || c < 100 // +1
 }
 
-func funcLogicalExpr_2(a, b, c, d, e int) bool {
+func funcLogicalExpr_2(z ...int) bool {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	// d := z[3]
+	// e := z[4]
 	return a > 10 || b > 1000 && c < 100 // +2
 }
 
-func funcLogicalExpr_3(a, b, c, d, e int) bool {
+func funcLogicalExpr_3(z ...int) bool {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
+	// e := z[4]
 	return a > 10 || b > 1000 && c < 100 || d > -10 // +3
 }
 
-func funcLogicalExpr_4(a, b, c, d, e int) bool {
+func funcLogicalExpr_4(z ...int) bool {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
+	e := z[4]
 	return (a > 10 || a < -100) && ((b < 10000 && b > 10 && d > 1000) || c > 100) && e > 10 // +4
 }
 
-func funcLogicalExpr_5(a, b, c, d, e int) bool {
+func funcLogicalExpr_5(z ...int) bool {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
+	e := z[4]
 	return (a > 10 || a < -100) && ((b < 10000 && (b > 10 && d > 1000)) || c > 100) && e > 10 // +5
 }
 
@@ -159,7 +194,12 @@ func funcRecursion_3(n int) int {
 	}
 }
 
-func funcFunc_9(a, b, c, d int) func(x int) int {
+func funcFunc_9(z ...int) func(x int) int {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
+	// e := z[4]
 	switch { // +1
 	default:
 		return func(x int) int { return x }
@@ -236,7 +276,12 @@ func funcSwitchType_1(a interface{}) int {
 	}
 }
 
-func funcIfSwith_9(a, b, c, d int) int {
+func funcIfSwith_9(z ...int) int {
+	a := z[0]
+	b := z[1]
+	c := z[2]
+	d := z[3]
+	// e := z[4]
 	if a == 0 { // +1
 		switch b { // +2 (nesting +1)
 		case 1:

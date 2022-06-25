@@ -5,7 +5,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/gocoverage"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 	"github.com/distroy/git-go-tool/core/termcolor"
@@ -20,41 +20,12 @@ import (
 )
 
 type Flags struct {
-	Mode   string
-	Branch string
-	Rate   float64
-	Top    int
-	File   string
+	Mode   string  `flag:"meta:mode; usage:compare mode: default=show the coverage with git diff. all=show all the coverage"`
+	Branch string  `flag:"meta:branch; usage:view the changes you have in your working tree relative to the named <branch>"`
+	Rate   float64 `flag:"default:0.65; usage:the lowest coverage rate. range: [0, 1.0)"`
+	Top    int     `flag:"meta:N; default:10; usage:show the top <N> least coverage rage file only"`
+	File   string  `flag:"meta:file; usage:the coverage file path, cannot be empty"`
 	Filter *filter.Filter
-}
-
-func parseFlags() *Flags {
-	f := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
-	}
-
-	flag.StringVar(&f.Mode, "mode", "", "compare mode: default=show the coverage with git diff; all=show all the coverage")
-
-	flag.StringVar(&f.Branch, "branch", "", "view the changes you have in your working tree relative to the named <branch>")
-
-	flag.Float64Var(&f.Rate, "rate", 0.65, "the lowest coverage rate")
-	flag.IntVar(&f.Top, "top", 10, "show the top N most complex functions only")
-	flag.StringVar(&f.File, "file", "", "the coverage file path, cannot be empty")
-
-	flag.Var(f.Filter.Includes, "include", "the regexp for include pathes")
-	flag.Var(f.Filter.Excludes, "exclude", "the regexp for exclude pathes")
-
-	flag.Parse()
-
-	if f.File == "" {
-		flag.Usage()
-		log.Fatalf("-file must not be empty")
-	}
-
-	return f
 }
 
 func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool) gocoverage.Files {
@@ -69,7 +40,13 @@ func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	flags := parseFlags()
+	flags := &Flags{
+		Filter: &filter.Filter{
+			Includes: regexpcore.MustNewRegExps(nil),
+			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
+		},
+	}
+	flagcore.MustParse(flags)
 
 	mode := modeservice.New(&modeservice.Config{
 		Mode:   flags.Mode,

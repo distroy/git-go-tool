@@ -5,8 +5,8 @@
 package regexpcore
 
 import (
-	"encoding/json"
 	"regexp"
+	"strings"
 )
 
 var DefaultExcludes = []string{
@@ -57,11 +57,7 @@ func (p *RegExps) Set(s string) error {
 	return nil
 }
 
-func (p *RegExps) String() string {
-	d, _ := json.Marshal(p.strings)
-	return string(d)
-	// return fmt.Sprint(p.strings)
-}
+func (p *RegExps) String() string { return strings.Join(p.strings, "\n") }
 
 func (p *RegExps) Check(s string) bool {
 	for _, re := range p.regexps {

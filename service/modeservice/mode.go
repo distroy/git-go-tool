@@ -13,14 +13,15 @@ type WalkFunc = func(file string, begin, end int)
 type Mode interface {
 	mustInit(c *Config)
 
+	// if begin == 0 && end == 0, check the whole file
 	IsIn(file string, begin, end int) bool
 
 	Walk(fn WalkFunc)
 }
 
 type Config struct {
-	Mode   string
-	Branch string
+	Mode   string `flag:"meta:mode; usage:compare mode: default=show the coverage with git diff. all=show all the coverage"`
+	Branch string `flag:"meta:branch; usage:view the changes you have in your working tree relative to the named <branch>"`
 }
 
 func New(c *Config) Mode {

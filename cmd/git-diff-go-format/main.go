@@ -13,18 +13,18 @@ import (
 	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/goformat"
 	"github.com/distroy/git-go-tool/core/regexpcore"
+	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
 type Flags struct {
+	ModeConfig    modeservice.Config
 	CheckerConfig goformat.Config
 
 	Filter *filter.Filter
-	Pathes []string `flag:"args; meta:path; default:."`
+	// Pathes []string `flag:"args; meta:path; default:."`
 }
 
 func main() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-
 	flags := &Flags{
 		Filter: &filter.Filter{
 			Includes: regexpcore.MustNewRegExps(nil),
@@ -33,10 +33,12 @@ func main() {
 	}
 	flagcore.MustParse(flags)
 
+	mode := modeservice.New(&flags.ModeConfig)
+
 	checker := goformat.BuildChecker(&flags.CheckerConfig)
 	writer := goformat.NewIssueWriter(os.Stdout)
 
-	filecore.MustWalkPathes(flags.Pathes, func(f *filecore.File) error {
+	filecore.MustWalkFiles(".", func(f *filecore.File) error {
 		if !f.IsGo() || !flags.Filter.Check(f.Name) {
 			return nil
 		}
@@ -46,7 +48,13 @@ func main() {
 			log.Fatalf("check file format fail. file:%s, err:%v", x.Name, err)
 		}
 
-		writer.WriteIssues(x.Issues())
+		issues := x.Issues()
+		n := filter.FilterSlice(issues, func(issue *goformat.Issue) bool {
+			return mode.IsIn(issue.Filename, issue.BeginLine, issue.EndLine)
+		})
+		issues = issues[:n]
+
+		writer.WriteIssues(issues)
 		return nil
 	})
 

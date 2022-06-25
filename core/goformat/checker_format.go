@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-
-	"github.com/distroy/git-go-tool/core/filecore"
 )
 
 func FormatChecker(enable bool) Checker {
@@ -23,26 +21,24 @@ func FormatChecker(enable bool) Checker {
 type formatChecker struct {
 }
 
-func (c formatChecker) Check(f *filecore.File) []*Issue {
-	data := f.MustRead()
-	return c.checkData(f, data)
+func (c formatChecker) Check(x *Context) Error {
+	data := x.MustRead()
+	return c.checkData(x, data)
 }
 
-func (c formatChecker) checkData(f *filecore.File, data []byte) []*Issue {
-	res := make([]*Issue, 0, 1)
-
+func (c formatChecker) checkData(x *Context, data []byte) Error {
 	fmtData, err := format.Source(data)
 	if err != nil {
-		panic(fmt.Errorf("format file fail. file:%s, err:%v", f.Name, err))
+		panic(fmt.Errorf("format file fail. file:%s, err:%v", x.Name, err))
 	}
 
 	if !bytes.Equal(data, fmtData) {
-		res = append(res, &Issue{
-			Filename:    f.Name,
+		x.AddIssue(&Issue{
+			Filename:    x.Name,
 			Level:       LevelError,
 			Description: fmt.Sprintf("source should be formated"),
 		})
 	}
 
-	return res
+	return nil
 }

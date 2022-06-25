@@ -46,6 +46,10 @@ func (c *cache) CheckFileRange(req *cacheCheckFileRangeReq) (bool, error) {
 		return false, err
 	}
 
+	if begin == 0 && end == 0 {
+		return true, nil
+	}
+
 	begin--
 	if begin < 0 || end > len(lines) {
 		// log.Printf(" === %s, %s, %#v", f.Path, f.Name, lines)
