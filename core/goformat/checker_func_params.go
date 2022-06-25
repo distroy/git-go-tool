@@ -146,6 +146,10 @@ func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) error {
 		return e
 	}
 
+	if e := c.checkNamedOutput(x, pos, outs); e != nil {
+		return e
+	}
+
 	if e := c.checkInNumValidWithoutContext(x, pos, ins, ctx); e != nil {
 		return e
 	}
@@ -406,4 +410,61 @@ func (c funcParamsChecker) isStdContext(x *Context, ctx *funcParamInfo) bool {
 func (c funcParamsChecker) isStdError(x *Context, err *funcParamInfo) bool {
 	typ := err.Type
 	return !typ.IsPointer && typ.Package == "" && typ.Name == "error"
+}
+
+func (c funcParamsChecker) getOutputTypeName(x *Context, out *funcParamInfo) string {
+	typeName := out.Type.Name
+	typeName = strings.ToLower(typeName)
+
+	if strings.HasPrefix(typeName, "int") {
+		return "-number"
+	}
+
+	if strings.HasPrefix(typeName, "uint") {
+		return "-number"
+	}
+
+	if strings.HasPrefix(typeName, "float") {
+		return "-number"
+	}
+
+	if strings.HasPrefix(typeName, "byte") {
+		return "-number"
+	}
+
+	return typeName
+}
+
+func (c funcParamsChecker) checkNamedOutput(x *Context, pos token.Position, outs []*funcParamInfo) error {
+	if !c.cfg.NamedOutput {
+		return nil
+	}
+
+	if len(outs) <= 1 {
+		return nil
+	}
+
+	if outs[0].Name != "" {
+		return nil
+	}
+
+	m := make(map[string]struct{}, len(outs))
+	for _, out := range outs {
+		typeName := c.getOutputTypeName(x, out)
+		if _, ok := m[typeName]; !ok {
+			m[typeName] = struct{}{}
+			continue
+		}
+
+		x.AddIssue(&Issue{
+			Filename:    x.Name,
+			BeginLine:   pos.Line,
+			EndLine:     pos.Line,
+			Level:       LevelError,
+			Description: fmt.Sprintf("output types are similar, please name the output parameters"),
+		})
+		break
+	}
+
+	return nil
 }

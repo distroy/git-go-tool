@@ -41,7 +41,7 @@ func TestFunc(a *Context, b, c, d int) (o, p, q int, r Error) {
 		return a ^ c, b & d, c - a
 	}
 	func() {
-		go func (a, b, c, d int) (o, p, q, r int) {
+		go func (a, b, c, d int) (int, int, uint, int) {
 			a, b, c, d = fn(a, b, c, d)
 			return a + b, b - c, c * d, d / a
 		}(a, b, c , d)
@@ -104,6 +104,7 @@ func TestFunc(a *Context, b, c, d int) (o, p, q int, r Error) {
 					ContextFirst:           true,
 					ErrorLast:              true,
 					ContextErrorMatch:      true,
+					NamedOutput:            true,
 				},
 				data: `
 package test
@@ -123,7 +124,7 @@ func TestFunc(ctx *Context, a, b, c int) (o, p, q int, err error) {
 	fn3 := func(ctx context.Context) *error { return nil }
 	fn4 := func(ctx ctx.Context) Error { return nil }
 	func() {
-		go func (a, b, c, d int) (o, p, q, r int) {
+		go func (a, b, c, d int) (int, int, uint, int) {
 			a, b, c, d = fn1(a, b, c, d)
 			return a + b, b - c, c * d, d / a
 		}(a, b, c , d)
@@ -166,6 +167,13 @@ func TestFunc(ctx *Context, a, b, c int) (o, p, q int, err error) {
 					EndLine:     17,
 					Level:       LevelError,
 					Description: "context 'ctx.Context' is standard context, but error 'Error' is not standard error",
+				},
+				{
+					Filename:    filename,
+					BeginLine:   19,
+					EndLine:     19,
+					Level:       LevelError,
+					Description: "output types are similar, please name the output parameters",
 				},
 				{
 					Filename:    filename,
