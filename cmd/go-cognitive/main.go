@@ -23,36 +23,38 @@ type Flags struct {
 	Debug bool `flag:"usage:print debug log"`
 
 	Filter *filter.Filter
-	Pathes []string `flag:"args; meta:path"`
+	Pathes []string `flag:"args; meta:path; default:."`
 }
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	// log.SetPrefix("go-cognitive: ")
 
-	f := &Flags{
+	flags := &Flags{
 		Filter: &filter.Filter{
 			Includes: regexpcore.MustNewRegExps(nil),
 			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
 		},
 	}
 
-	flagcore.MustParse(f)
+	flagcore.MustParse(flags)
+	// log.Printf(" === %#v", flags)
 
-	gocognitive.SetDebug(f.Debug)
+	gocognitive.SetDebug(flags.Debug)
 
-	res := analyzePathes(f.Pathes, f.Filter)
+	res := analyzePathes(flags.Pathes, flags.Filter)
+	// log.Printf(" === %#v", res)
 
 	out := os.Stdout
 
 	sort.Sort(gocognitive.Complexites(res))
-	written := writeResult(out, res, f)
+	written := writeResult(out, res, flags)
 
-	if f.Avg {
+	if flags.Avg {
 		showAverage(out, res)
 	}
 
-	if f.Over > 0 && written > 0 {
+	if flags.Over > 0 && written > 0 {
 		os.Exit(1)
 	}
 }
@@ -109,7 +111,7 @@ func analyzeDir(dirPath string, filter *filter.Filter, res []gocognitive.Complex
 func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
 	top := flags.Top
 	over := flags.Over
-	if top < 0 {
+	if top <= 0 {
 		top = math.MaxInt32
 	}
 
