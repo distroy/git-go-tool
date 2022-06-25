@@ -45,7 +45,7 @@ include:
     - !reference [.checkout-all-commits, script]
     - |
       if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
-        GO_FORMAT_EXCLUDES=GO_EXCLUDE_OPTIONS
+        GO_FORMAT_EXCLUDES="$GO_EXCLUDE_OPTIONS"
       fi
     # 检查单元测试是否都可以通过
     # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
@@ -67,7 +67,7 @@ include:
           -func-output-num-without-error "$GO_FORMAT_FUNC_OUTPUT_NUM_WITHOUT_ERROR" \
           -func-context-first "$GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST" \
           -func-error-last "$GO_FORMAT_FUNC_OUTPUT_ERROR_LAST" \
-          -func-context-error-match "$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH" \
+          -func-context-error-match="$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH" \
           ${GO_FORMAT_EXCLUDES}
 
 .go-cognitive:
@@ -88,7 +88,7 @@ include:
     - !reference [.checkout-all-commits, script]
     - |
       if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
-        GO_COGNITIVE_EXCLUDES=GO_EXCLUDE_OPTIONS
+        GO_COGNITIVE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
       fi
     # 检查单元测试是否都可以通过
     # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
