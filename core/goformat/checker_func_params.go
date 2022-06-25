@@ -376,6 +376,8 @@ func (c funcParamsChecker) checkContextErrorMatch(x *Context, pos token.Position
 			ctx.Type.String, err.Type.String)
 	}
 
+	// log.Printf(" === ctx:%#v(%v) err:%#v(%v) desc:%s", ctx.Type, isStdCtx, err.Type, isStdErr, desc)
+
 	x.AddIssue(&Issue{
 		Filename:    x.Name,
 		BeginLine:   pos.Line,
@@ -404,11 +406,12 @@ func (c funcParamsChecker) isStdContext(x *Context, ctx *funcParamInfo) bool {
 	}
 
 	for _, imp := range imps {
-		if imp.Name == typ.Package || imp.Path == typ.Package {
-			return imp.Path == "context"
+		if imp.Path == "context" && (typ.Package == imp.Path || typ.Package == imp.Name) {
+			return true
 		}
 	}
-	return true
+
+	return false
 }
 
 func (c funcParamsChecker) isStdError(x *Context, err *funcParamInfo) bool {
