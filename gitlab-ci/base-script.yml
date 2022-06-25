@@ -42,7 +42,8 @@
     - cd "$_GO_INSTALL_DIR"
     - |
       function go_install {
-        echo_and_run go install "github.com/distroy/git-go-tool/cmd/$1" || echo_and_run go install "github.com/distroy/git-go-tool/cmd/$1@latest"
+        echo_and_run go install github.com/distroy/git-go-tool/cmd/$1 \
+          || echo_and_run go install github.com/distroy/git-go-tool/cmd/$1@latest
         return $?
       }
     - go_install git-diff-go-cognitive
