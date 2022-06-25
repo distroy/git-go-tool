@@ -64,7 +64,7 @@ variables:
   GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST: "true"
   # 是否检查 error 时函数的最后一个返回值
   GO_FORMAT_FUNC_OUTPUT_ERROR_LAST: "true"
-  # 是否检查函数参数的 context 和 返回值的 error，是否同时为 go 标注的类型，或者同时为自定义的类型
+  # 是否检查函数参数的 context 和 返回值的 error，是否同时为 go 标准的类型，或者同时为自定义的类型
   GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH: "false"
   # 检查 go 代码格式，排除的文件选项
   # 请参照 GO_EXCLUDE_OPTIONS 说明

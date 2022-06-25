@@ -34,8 +34,8 @@ include:
   only:
     refs:
       - merge_requests
-    # changes:
-    #   - "**/**.go"
+    changes:
+      - "**/**.go"
   script:
     - !reference [.echo-and-run, script]
     - |
