@@ -69,7 +69,7 @@ func (s *FlagSet) printUsageHeader(w io.Writer) {
 		name = "<command>"
 	}
 
-	if s.args != nil && s.args.Meta != "" {
+	if s.args != nil {
 		meta := s.args.Meta
 		if meta == "" {
 			meta = "<arg>"
