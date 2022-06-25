@@ -6,12 +6,49 @@ package flagcore
 
 import (
 	"encoding/json"
+	"flag"
 	"strconv"
+	"time"
 )
+
+type Value interface {
+	flag.Value
+}
 
 func mustMarshalJson(v interface{}) string {
 	d, _ := json.Marshal(v)
 	return string(d)
+}
+
+// duration
+type durationValue time.Duration
+
+func newDurationValue(p *time.Duration) *durationValue { return (*durationValue)(p) }
+func (p *durationValue) String() string                { return time.Duration(*p).String() }
+func (p *durationValue) Set(s string) error {
+	v, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+	*p = durationValue(v)
+	return nil
+}
+
+// func
+type funcValue func(string) error
+
+func newFuncValue(f func(string) error) funcValue { return funcValue(f) }
+func (f funcValue) Set(s string) error            { return f(s) }
+func (f funcValue) String() string                { return "" }
+
+// string
+type stringValue string
+
+func newStringValue(p *string) *stringValue { return (*stringValue)(p) }
+func (p *stringValue) String() string       { return string(*p) }
+func (p *stringValue) Set(s string) error {
+	*p = stringValue(s)
+	return nil
 }
 
 // bool
@@ -34,6 +71,60 @@ func (p *boolValue) Set(s string) error {
 // func (p *boolValue) Get() interface{} { return bool(*p) }
 // func (p *boolValue) IsBoolFlag() bool { return true }
 
+// int
+type intValue int
+
+func newIntValue(p *int) *intValue { return (*intValue)(p) }
+func (p *intValue) String() string { return strconv.Itoa(int(*p)) }
+func (p *intValue) Set(s string) error {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return err
+	}
+	*p = intValue(v)
+	return nil
+}
+
+type int64Value int64
+
+func newInt64Value(p *int64) *int64Value { return (*int64Value)(p) }
+func (p *int64Value) String() string     { return strconv.FormatInt(int64(*p), 10) }
+func (p *int64Value) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, 64)
+	if err != nil {
+		return err
+	}
+	*p = int64Value(v)
+	return nil
+}
+
+// uint
+type uintValue uint
+
+func newUintValue(p *uint) *uintValue { return (*uintValue)(p) }
+func (p *uintValue) String() string   { return strconv.FormatUint(uint64(*p), 10) }
+func (p *uintValue) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, strconv.IntSize)
+	if err != nil {
+		return err
+	}
+	*p = uintValue(v)
+	return nil
+}
+
+type uint64Value uint64
+
+func newUint64Value(p *uint64) *uint64Value { return (*uint64Value)(p) }
+func (p *uint64Value) String() string       { return strconv.FormatUint(uint64(*p), 10) }
+func (p *uint64Value) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, 64)
+	if err != nil {
+		return err
+	}
+	*p = uint64Value(v)
+	return nil
+}
+
 // float
 type float32Value float32
 
@@ -45,6 +136,29 @@ func (p *float32Value) Set(s string) error {
 		return err
 	}
 	*p = float32Value(v)
+	return nil
+}
+
+type float64Value float64
+
+func newFloat64Value(p *float64) *float64Value { return (*float64Value)(p) }
+func (p *float64Value) String() string         { return strconv.FormatFloat(float64(*p), 'g', -1, 64) }
+func (p *float64Value) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+	*p = float64Value(v)
+	return nil
+}
+
+// strings
+type stringsValue []string
+
+func newStringsValue(p *[]string) *stringsValue { return (*stringsValue)(p) }
+func (p *stringsValue) String() string          { return mustMarshalJson(*p) }
+func (p *stringsValue) Set(s string) error {
+	*p = append(*p, s)
 	return nil
 }
 
@@ -126,15 +240,5 @@ func (p *float64sValue) Set(s string) error {
 		return err
 	}
 	*p = append(*p, v)
-	return nil
-}
-
-// strings
-type stringsValue []string
-
-func newStringsValue(p *[]string) *stringsValue { return (*stringsValue)(p) }
-func (p *stringsValue) String() string          { return mustMarshalJson(*p) }
-func (p *stringsValue) Set(s string) error {
-	*p = append(*p, s)
 	return nil
 }
