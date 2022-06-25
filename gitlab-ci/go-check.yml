@@ -1,66 +1,5 @@
-.color-message:
-  script:
-    - |
-      ECHO_COLOR_RED=$'\E[31;1m'
-      ECHO_COLOR_GREEN=$'\E[32;1m'
-      ECHO_COLOR_YELLO=$'\E[33;1m'
-      ECHO_COLOR_BLUE=$'\E[34;1m'
-      ECHO_COLOR_MAGENTA=$'\E[35;1m'
-      ECHO_COLOR_CYAN=$'\E[36;1m'
-      ECHO_COLOR_RESET=$'\E[0m'
-
-      echo_msgr() { echo -n "$ECHO_COLOR_RED"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
-      echo_msgg() { echo -n "$ECHO_COLOR_GREEN"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
-      echo_msgy() { echo -n "$ECHO_COLOR_YELLO"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
-      echo_msgb() { echo -n "$ECHO_COLOR_BLUE"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
-      echo_msgm() { echo -n "$ECHO_COLOR_MAGENTA"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
-      echo_msgc() { echo -n "$ECHO_COLOR_CYAN"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
-
-.echo-and-run:
-  script:
-    - |
-      function echo_and_run() {
-        echo "$@"
-        "$@"
-        return $?
-      }
-
-.go-install-tools:
-  script:
-    # 输出一些信息
-    - echo "job:" "$CI_JOB_NAME"
-    - echo "CI_MERGE_REQUEST_PROJECT_URL:" "$CI_MERGE_REQUEST_PROJECT_URL"
-    - echo "CI_MERGE_REQUEST_SOURCE_PROJECT_URL:" "$CI_MERGE_REQUEST_SOURCE_PROJECT_URL"
-    # 切换到上级目录，安装golang检查认知复杂度的工具
-    # 在project目录执行go install时，会下载project所有的import
-    # 我们已经把import的依赖，放到了vendor，不需要下载了
-    - |
-      if [[ "$_GO_INSTALL_DIR" == "" ]]; then
-        _GO_INSTALL_DIR="$CI_PROJECT_DIR/.."
-      fi
-    - cd "$_GO_INSTALL_DIR"
-    - |
-      function go_install {
-        echo "go install $1 || go install $1@latest"
-        go install $1 || go install $1@latest
-        return $?
-      }
-    - go_install github.com/distroy/git-go-tool/cmd/go-cognitive
-    - go_install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive
-    - go_install github.com/distroy/git-go-tool/cmd/git-diff-go-coverage
-    - cd "$CI_PROJECT_DIR"
-
-.checkout-all-commits:
-  script:
-    # 因为job执行时，默认只会拉取最近的一些commit，为了对比MR的2个branch的差异
-    # 需要拉取所有的commit
-    - cd "$CI_PROJECT_DIR/.."
-    - rm -rf "$CI_PROJECT_DIR"
-    - echo_and_run git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
-    - cd "$CI_PROJECT_DIR"
-    # checkout 2 个分支
-    - echo_and_run git checkout "$GIT_MERGE_TARGET"
-    - echo_and_run git checkout "$GIT_MERGE_SOURCE"
+include:
+  - '/gitlab-ci/base-script.yml'
 
 .go-build:
   # 相同stage的job并行执行
@@ -88,6 +27,49 @@
         done
       fi
 
+.go-format:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    # changes:
+    #   - "**/**.go"
+  script:
+    - !reference [.echo-and-run, script]
+    - |
+      GIT_MERGE_TARGET="$GO_FORMAT_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_FORMAT_DIFF_SOURCE"
+    - !reference [.go-install-tools, script]
+    - !reference [.checkout-all-commits, script]
+    - |
+      if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
+        GO_FORMAT_EXCLUDES="$GO_EXCLUDE_OPTIONS"
+      fi
+    # 检查单元测试是否都可以通过
+    # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+      echo "merge base: $merge_base"
+    # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
+    - |
+      echo_and_run git-diff-go-format \
+          -mode "$GIT_COMPARE_MODE" \
+          -branch "$merge_base" \
+          -import "$GO_FORMAT_CHECK_IMPORT" \
+          -formated "$GO_FORMAT_CHECK_SOURCE_FORMATED" \
+          -package "$GO_FORMAT_CHECK_PACKAGE_NAME" \
+          -func-input-num "$GO_FORMAT_FUNC_INPUT_NUM_LIMIT" \
+          -func-output-num "$GO_FORMAT_FUNC_OUTPUT_NUM_LIMIT" \
+          -func-named-output "$GO_FORMAT_FUNC_OUTPUT_IF_NEED_NAMED" \
+          -func-input-num-without-context "$GO_FORMAT_FUNC_INPUT_NUM_WITHOUT_CONTEXT" \
+          -func-output-num-without-error "$GO_FORMAT_FUNC_OUTPUT_NUM_WITHOUT_ERROR" \
+          -func-context-first "$GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST" \
+          -func-error-last "$GO_FORMAT_FUNC_OUTPUT_ERROR_LAST" \
+          -func-context-error-match="$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH" \
+          ${GO_FORMAT_EXCLUDES}
+
 .go-cognitive:
   # 相同stage的job并行执行
   stage: go-check-stage
@@ -106,7 +88,7 @@
     - !reference [.checkout-all-commits, script]
     - |
       if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
-        GO_COGNITIVE_EXCLUDES=GO_EXCLUDE_OPTIONS
+        GO_COGNITIVE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
       fi
     # 检查单元测试是否都可以通过
     # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
@@ -114,7 +96,12 @@
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
       echo "merge base: $merge_base"
     # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
-    - echo_and_run git-diff-go-cognitive -over "$GO_COGNITIVE_OVER" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" ${GO_COGNITIVE_EXCLUDES}
+    - |
+      echo_and_run git-diff-go-cognitive \
+          -over "$GO_COGNITIVE_OVER" \
+          -mode "$GIT_COMPARE_MODE" \
+          -branch "$merge_base" \
+          ${GO_COGNITIVE_EXCLUDES}
 
 .go-test:
   # 相同stage的job并行执行
@@ -162,7 +149,13 @@
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
       echo "merge base: $merge_base"
-    - echo_and_run git-diff-go-coverage -rate "$GO_COVERAGE_RATE" -mode "$GIT_COMPARE_MODE" -branch "$merge_base" -file "$GO_COVERAGE_FILE" ${GO_COVERAGE_EXCLUDES}
+    - |
+      echo_and_run git-diff-go-coverage \
+          -rate "$GO_COVERAGE_RATE" \
+          -mode "$GIT_COMPARE_MODE" \
+          -branch "$merge_base" \
+          -file "$GO_COVERAGE_FILE" \
+          ${GO_COVERAGE_EXCLUDES}
 
 .check-for-test:
   # 相同stage的job并行执行
