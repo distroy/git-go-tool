@@ -236,7 +236,7 @@ func (s *FlagSet) addFlag(f *Flag) {
 	// log.Printf(" === %s: %v", typ.String(), val.Interface())
 }
 
-func (s *FlagSet) getFlagValue(f *Flag) (Value, reflect.Value) {
+func (s *FlagSet) getFlagValue(f *Flag) (flagVal Value, refVal reflect.Value) {
 	val := f.val
 	if v, ok := val.Interface().(Value); ok {
 		return v, val

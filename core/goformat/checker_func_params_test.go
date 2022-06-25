@@ -173,7 +173,7 @@ func TestFunc(ctx *Context, a, b, c int) (o, p, q int, err error) {
 					BeginLine:   19,
 					EndLine:     19,
 					Level:       LevelError,
-					Description: "output types are similar, please name the output parameters",
+					Description: "output parameter types are similar, please name them",
 				},
 				{
 					Filename:    filename,

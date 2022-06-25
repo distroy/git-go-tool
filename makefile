@@ -95,6 +95,7 @@ setup:
 	$(call go_install,github.com/distroy/git-go-tool/cmd/go-format)
 	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
 	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
+	$(call go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-format)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: cognitive

@@ -21,7 +21,7 @@ type Config struct {
 	FuncOutputNumWithoutError  bool `flag:"default:true; usage:func output num limit if without error"`
 	FuncContextFirst           bool `flag:"default:true; usage:context should be the firsr input parameter"`
 	FuncErrorLast              bool `flag:"default:true; usage:error should be the last output parameter"`
-	FuncContextErrorMatch      bool `flag:"default:false; usage:context and error should both be standard, or both not be"`
+	FuncContextErrorMatch      bool `flag:"bool; usage:context and error should both be standard, or both not be"`
 }
 
 func BuildChecker(cfg *Config) Checker {

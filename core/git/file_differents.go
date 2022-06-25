@@ -60,8 +60,17 @@ func NewFileDifferents(slice Differents) Files {
 	return m
 }
 
+// if begin == 0 && end == 0, check the whole file
 func (m Files) IsIn(file string, begin, end int) bool {
 	s := m[file]
+
+	if len(s) == 0 {
+		return false
+	}
+
+	if begin == 0 && end == 0 {
+		return true
+	}
 
 	return s.IsIn(begin, end)
 }

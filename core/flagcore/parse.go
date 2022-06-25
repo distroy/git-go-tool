@@ -6,6 +6,7 @@ package flagcore
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"unicode"
@@ -14,6 +15,10 @@ import (
 const (
 	tagName = "flag"
 )
+
+func init() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+}
 
 func MustParse(v interface{}, args ...[]string) {
 	s := NewFlagSet()
@@ -103,6 +108,8 @@ func unquoteUsage(f *Flag) (meta string, usage string) {
 	// No explicit name, so use type if we can find one.
 	meta = "<value>"
 	switch f.Value.(type) {
+	case *boolFlag:
+		meta = ""
 	case *boolValue:
 		meta = "<bool>"
 	case *durationValue:

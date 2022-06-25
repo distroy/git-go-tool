@@ -64,6 +64,10 @@ func (c funcParamsChecker) walkFunc(x *Context, fn *ast.FuncDecl) error {
 		return nil
 	}
 
+	if x.IsGoTest() && fn.Name != nil && strings.HasPrefix(fn.Name.Name, "Test") {
+		return nil
+	}
+
 	var err error
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
 		// log.Printf(" === %T %#v", n, n)
@@ -461,7 +465,7 @@ func (c funcParamsChecker) checkNamedOutput(x *Context, pos token.Position, outs
 			BeginLine:   pos.Line,
 			EndLine:     pos.Line,
 			Level:       LevelError,
-			Description: fmt.Sprintf("output types are similar, please name the output parameters"),
+			Description: fmt.Sprintf("output parameter types are similar, please name them"),
 		})
 		break
 	}
