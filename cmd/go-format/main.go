@@ -19,30 +19,19 @@ type Flags struct {
 	CheckerConfig goformat.Config
 
 	Filter *filter.Filter
-	Pathes []string `flag:"args"`
-}
-
-func parseFlags() *Flags {
-	f := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
-	}
-
-	flagcore.Parse(f)
-	if len(f.Pathes) == 0 {
-		f.Pathes = []string{"."}
-	}
-
-	// log.Printf(" === %#v", f)
-	return f
+	Pathes []string `flag:"args; meta:path; default:."`
 }
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	flags := parseFlags()
+	flags := &Flags{
+		Filter: &filter.Filter{
+			Includes: regexpcore.MustNewRegExps(nil),
+			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
+		},
+	}
+	flagcore.MustParse(flags)
 
 	checker := goformat.BuildChecker(&flags.CheckerConfig)
 	writer := goformat.NewIssueWriter(os.Stdout)

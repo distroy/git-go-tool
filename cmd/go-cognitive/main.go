@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -12,48 +11,25 @@ import (
 
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 )
 
-const usageDoc = `Calculate cognitive complexities of Go functions.
-Usage:
-        go-cognitive [flags] <Go file or directory> ...
-<Go file or directory>:
-        default current directory
-Flags:
-        -over <N>   show functions with complexity > N only and
-                    return exit code 1 if the set is non-empty
-        -top <N>    show the top N most complex functions only
-        -avg        show the average complexity over all functions,
-                    not depending on whether -over or -top are set
-        -include <regexp>
-                    the regexp for include pathes
-        -exclude <regexp>
-                    the regexp for exclude pathes
-                    default:
-                        ^vendor/
-                        /vendor/
-                        \.pb\.go$
-
-The output fields for each line are:
-<complexity> <package> <function> <file:begin_row,end_row>
-
-The document of cognitive complexity:
-https://sonarsource.com/docs/CognitiveComplexity.pdf
-`
-
 type Flags struct {
-	Over  int
-	Top   int
-	Avg   bool
-	Debug bool
+	Over  int  `flag:"name:over; meta:N; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
+	Top   int  `flag:"name:top; meta:N; usage:show the top <N> most complex functions only"`
+	Avg   bool `flag:"usage:show the average complexity over all functions, not depending on whether -over or -top are set"`
+	Debug bool `flag:"usage:print debug log"`
 
 	Filter *filter.Filter
-	Pathes []string
+	Pathes []string `flag:"args; meta:path"`
 }
 
-func parseFlags() *Flags {
+func main() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	// log.SetPrefix("go-cognitive: ")
+
 	f := &Flags{
 		Filter: &filter.Filter{
 			Includes: regexpcore.MustNewRegExps(nil),
@@ -61,35 +37,7 @@ func parseFlags() *Flags {
 		},
 	}
 
-	flag.IntVar(&f.Over, "over", 0, "show functions with complexity > N only")
-	flag.IntVar(&f.Top, "top", -1, "show the top N most complex functions only")
-	flag.BoolVar(&f.Avg, "avg", false, "show the average complexity")
-
-	flag.BoolVar(&f.Debug, "debug", false, "show the debug message")
-
-	flag.Var(f.Filter.Includes, "include", "the regexp for include pathes")
-	flag.Var(f.Filter.Excludes, "exclude", "the regexp for exclude pathes")
-
-	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, usageDoc)
-		os.Exit(2)
-	}
-
-	flag.Parse()
-
-	f.Pathes = flag.Args()
-	if len(f.Pathes) == 0 {
-		f.Pathes = []string{"."}
-	}
-
-	return f
-}
-
-func main() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	// log.SetPrefix("go-cognitive: ")
-
-	f := parseFlags()
+	flagcore.MustParse(f)
 
 	gocognitive.SetDebug(f.Debug)
 

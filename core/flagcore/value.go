@@ -54,10 +54,8 @@ func (p *stringValue) Set(s string) error {
 // bool
 type boolValue bool
 
-func newBoolValue(p *bool) *boolValue {
-	return (*boolValue)(p)
-}
-func (p *boolValue) String() string { return strconv.FormatBool(bool(*p)) }
+func newBoolValue(p *bool) *boolValue { return (*boolValue)(p) }
+func (p *boolValue) String() string   { return strconv.FormatBool(bool(*p)) }
 func (p *boolValue) Set(s string) error {
 	v, err := strconv.ParseBool(s)
 	// log.Printf(" === %v, %v, %v", *p, v, err)
@@ -67,6 +65,13 @@ func (p *boolValue) Set(s string) error {
 	*p = boolValue(v)
 	return nil
 }
+
+type boolFlag bool
+
+func newBoolFlag(p *boolValue) *boolFlag { return (*boolFlag)(p) }
+func (p *boolFlag) String() string       { return (*boolValue)(p).String() }
+func (p *boolFlag) Set(s string) error   { return (*boolValue)(p).Set(s) }
+func (p *boolFlag) IsBoolFlag() bool     { return true }
 
 // func (p *boolValue) Get() interface{} { return bool(*p) }
 // func (p *boolValue) IsBoolFlag() bool { return true }

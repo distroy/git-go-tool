@@ -9,13 +9,13 @@ type Checker interface {
 }
 
 type Config struct {
-	FileLine int  `flag:"default:1000; usage:file line limit. disable if <= 0"`
+	FileLine int  `flag:"default:1000; usage:file line limit. 0=disable"`
 	Import   bool `flag:"default:true; usage:enable/disable check import"`
 	Formated bool `flag:"default:true; usage:enable/disable check file formated"`
 	Package  bool `flag:"default:true; usage:enable/disable check package name"`
 
-	FuncInputNum               int  `flag:"default:3; usage:func input num limit. disable if <= 0"`
-	FuncOutputNum              int  `flag:"default:3; usage:func output num limit. disable if <= 0"`
+	FuncInputNum               int  `flag:"default:3; usage:func input num limit. 0=disable"`
+	FuncOutputNum              int  `flag:"default:3; usage:func output num limit. 0=disable"`
 	FuncNamedOutput            bool `flag:"default:true; usage:check func output param if need be named"`
 	FuncInputNumWithoutContext bool `flag:"default:true; usage:func input num limit if without context"`
 	FuncOutputNumWithoutError  bool `flag:"default:true; usage:func output num limit if without error"`

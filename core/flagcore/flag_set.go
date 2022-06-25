@@ -7,8 +7,11 @@ package flagcore
 import (
 	"flag"
 	"fmt"
+	"go/ast"
+	"io"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/distroy/git-go-tool/core/tagcore"
@@ -21,21 +24,27 @@ type Flag struct {
 
 	Name    string
 	Value   Value
+	Meta    string
 	Default string
 	Usage   string
 	IsArgs  bool
+	Bool    bool
 }
 
 type FlagSet struct {
-	command *flag.FlagSet
-	flags   map[string]*Flag
-	args    *Flag
+	command   *flag.FlagSet
+	name      string
+	flagSlice []*Flag
+	flagMap   map[string]*Flag
+	args      *Flag
 }
 
 func NewFlagSet() *FlagSet {
+	name := os.Args[0]
 	s := &FlagSet{
-		command: flag.NewFlagSet(os.Args[0], flag.ExitOnError),
-		flags:   make(map[string]*Flag),
+		command: flag.NewFlagSet(name, flag.ExitOnError),
+		name:    name,
+		flagMap: make(map[string]*Flag),
 	}
 
 	s.command.Usage = s.printUsage
@@ -43,32 +52,63 @@ func NewFlagSet() *FlagSet {
 }
 
 func (s *FlagSet) printUsage() {
-	s.command.VisitAll(func(f *flag.Flag) {
-		ff := s.flags[f.Name]
-		s.printFlagUsage(ff)
-	})
+	w := s.command.Output()
+
+	s.printUsageHeader(w)
+
+	flags := s.flagSlice
+	// flags := s.sortedFlags()
+	for _, f := range flags {
+		s.printFlagUsage(w, f)
+	}
 }
 
-func (s *FlagSet) printFlagUsage(f *Flag) {
+func (s *FlagSet) printUsageHeader(w io.Writer) {
+	name := s.name
+	if name == "" {
+		name = "<command>"
+	}
+
+	if s.args != nil && s.args.Meta != "" {
+		meta := s.args.Meta
+		if meta == "" {
+			meta = "<arg>"
+		}
+
+		fmt.Fprintf(w, "Usage: %s [<flags>] [%s...]\n", name, meta)
+		fmt.Fprint(w, "\n")
+		fmt.Fprintf(w, "Flags:\n")
+		return
+	}
+
+	fmt.Fprintf(w, "Usage of %s:\n", name)
+	fmt.Fprintf(w, "Flags:\n")
+}
+
+func (s *FlagSet) printFlagUsage(w io.Writer, f *Flag) {
 	const (
-		tab           = "    "
-		namePrefix    = "  "
-		usagePrefix   = "\n  " + tab + tab
-		defaultPrefix = usagePrefix + tab + tab
+		tab           = "        "
+		nameSize      = len(tab) * 2
+		namePrefix    = tab
+		usagePrefix   = "\n" + namePrefix + tab
+		defaultPrefix = usagePrefix + tab
 	)
 
 	b := &strings.Builder{}
 
 	fmt.Fprintf(b, "%s-%s", namePrefix, f.Name) // Two spaces before -; see next two comments.
-	name, usage := unquoteUsage(f)
-	if len(name) > 0 {
-		fmt.Fprintf(b, " %s", name)
+	meta, usage := unquoteUsage(f)
+	if len(meta) > 0 {
+		fmt.Fprintf(b, " %s", meta)
 	}
 	// Boolean flags of one ASCII letter are so common we
 	// treat them specially, putting their usage on the same line.
-	if b.Len() <= 4 { // space, space, '-', 'x'.
-		fmt.Fprintf(b, tab)
-	} else {
+	if b.Len() <= nameSize-2 { // space, space, '-', 'x'.
+		for i := b.Len(); i < nameSize; i++ {
+			fmt.Fprint(b, ' ')
+		}
+
+	} else if usage != "" {
 		// Four spaces before the tab triggers good alignment
 		// for both 4- and 8-space tab stops.
 		fmt.Fprint(b, usagePrefix)
@@ -77,29 +117,40 @@ func (s *FlagSet) printFlagUsage(f *Flag) {
 	fmt.Fprint(b, strings.ReplaceAll(usage, "\n", usagePrefix))
 
 	if isZeroValue(f.Value, f.Default) {
-		fmt.Fprint(s.command.Output(), b.String(), "\n")
+		fmt.Fprint(w, b.String(), "\n")
 		return
 	}
 
-	fmt.Fprint(b, usagePrefix, "default: ")
 	switch v := f.Value.(type) {
 	default:
 		if strings.Index(f.Default, "\n") > 0 {
+			fmt.Fprint(b, usagePrefix, "default: ")
 			fmt.Fprint(b, defaultPrefix, strings.ReplaceAll(f.Default, "\n", defaultPrefix))
 		} else {
-			fmt.Fprintf(b, "%v", f.Default)
+			fmt.Fprintf(b, " (default: %v)", f.Default)
 		}
 
 	case *stringValue:
-		fmt.Fprintf(b, "%q", f.Default)
+		fmt.Fprintf(b, " (default: %q)", f.Default)
 
 	case *stringsValue:
+		fmt.Fprint(b, usagePrefix, "default: ")
 		for _, s := range *v {
 			fmt.Fprintf(b, "%s%q", defaultPrefix, s)
 		}
 	}
 
-	fmt.Fprint(s.command.Output(), b.String(), "\n")
+	fmt.Fprint(w, b.String(), "\n")
+}
+
+func (s *FlagSet) sortedFlags() []*Flag {
+	res := make([]*Flag, len(s.flagSlice))
+	copy(res, s.flagSlice)
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Name < res[j].Name
+	})
+	return res
 }
 
 func (s *FlagSet) MustParse(args ...[]string) {
@@ -119,20 +170,25 @@ func (s *FlagSet) Parse(args ...[]string) error {
 		return s.parse(args[0])
 	}
 
-	if err := s.parse(os.Args[1:]); err != nil {
-		return err
-	}
-
-	if s.args != nil {
-		s.args.val.Set(reflect.ValueOf(s.command.Args()))
-	}
-
-	return nil
+	return s.parse(os.Args[1:])
 }
 
 func (s *FlagSet) parse(args []string) error {
 	err := s.command.Parse(args)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// log.Printf(" === %#v", s.args)
+	if s.args != nil {
+		args := s.command.Args()
+		if len(args) == 0 && s.args.Default != "" {
+			args = []string{s.args.Default}
+		}
+		// log.Printf(" === %v", args)
+		s.args.val.Set(reflect.ValueOf(args))
+	}
+	return nil
 }
 
 func (s *FlagSet) Model(v interface{}) {
@@ -152,9 +208,11 @@ func (s *FlagSet) addFlag(f *Flag) {
 	}
 
 	if f.IsArgs {
+		// log.Printf(" === 111 %#v", f)
 		if s.args == nil || s.args.lvl > f.lvl {
 			s.args = f
 		}
+		// log.Printf(" === 222 %#v", s.args)
 		return
 	}
 
@@ -173,7 +231,8 @@ func (s *FlagSet) addFlag(f *Flag) {
 	f.Default = v.String()
 
 	s.command.Var(v, f.Name, f.Usage)
-	s.flags[f.Name] = f
+	s.flagSlice = append(s.flagSlice, f)
+	s.flagMap[f.Name] = f
 	// log.Printf(" === %s: %v", typ.String(), val.Interface())
 }
 
@@ -195,7 +254,12 @@ func (s *FlagSet) getFlagValue(f *Flag) (Value, reflect.Value) {
 		return nil, val
 	}
 
-	return fn(val), val
+	v := fn(val)
+	if vv, ok := v.(*boolValue); ok && f.Bool {
+		return newBoolFlag(vv), val
+	}
+
+	return v, val
 }
 
 func (s *FlagSet) parseStruct(lvl int, val reflect.Value) {
@@ -205,6 +269,10 @@ func (s *FlagSet) parseStruct(lvl int, val reflect.Value) {
 
 	for i, l := 0, typ.NumField(); i < l; i++ {
 		field := typ.Field(i)
+		if !ast.IsExported(field.Name) {
+			continue
+		}
+
 		fVal := val.Field(i)
 
 		if _, ok := fVal.Interface().(Value); ok {
@@ -240,9 +308,11 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 		val:     val,
 		tags:    tags,
 		Name:    tags.Get("name"),
+		Meta:    tags.Get("meta"),
 		Usage:   tags.Get("usage"),
 		Default: tags.Get("default"),
 		IsArgs:  tags.Has("args"),
+		Bool:    tags.Has("bool"),
 	}
 
 	if len(f.Name) == 0 {
