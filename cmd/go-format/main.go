@@ -5,27 +5,21 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"os"
 
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/goformat"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 )
 
 type Flags struct {
-	FileLine int
-	Import   bool
-	Formated bool
-	Package  bool
-
-	FuncInputNum  int
-	FuncOutputNum int
+	CheckerConfig goformat.Config
 
 	Filter *filter.Filter
-	Pathes []string
+	Pathes []string `flag:"args"`
 }
 
 func parseFlags() *Flags {
@@ -36,17 +30,7 @@ func parseFlags() *Flags {
 		},
 	}
 
-	flag.IntVar(&f.FileLine, "file-line", 1000, "check file line")
-	flag.BoolVar(&f.Import, "import", true, "enable/disable check import")
-	flag.BoolVar(&f.Formated, "formated", true, "enable/disable check file formated")
-	flag.BoolVar(&f.Package, "package", true, "enable/disable check package name")
-
-	flag.Var(f.Filter.Includes, "include", "the regexp for include pathes")
-	flag.Var(f.Filter.Excludes, "exclude", "the regexp for exclude pathes")
-
-	flag.Parse()
-
-	f.Pathes = flag.Args()
+	flagcore.Parse(f)
 	if len(f.Pathes) == 0 {
 		f.Pathes = []string{"."}
 	}
@@ -55,27 +39,12 @@ func parseFlags() *Flags {
 	return f
 }
 
-func buildChecker(flags *Flags) goformat.Checker {
-	checkers := make([]goformat.Checker, 0, 8)
-
-	checkers = append(checkers, goformat.FileLineChecker(flags.FileLine))
-	checkers = append(checkers, goformat.PackageChecker(flags.Package))
-	checkers = append(checkers, goformat.ImportChecker(flags.Import))
-	checkers = append(checkers, goformat.FormatChecker(flags.Formated))
-	checkers = append(checkers, goformat.FuncParamsChecker(&goformat.FuncParamsConfig{
-		InputNum:  3,
-		OutputNum: 3,
-	}))
-
-	return goformat.Checkers(checkers...)
-}
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	flags := parseFlags()
 
-	checker := buildChecker(flags)
+	checker := goformat.BuildChecker(&flags.CheckerConfig)
 	writer := goformat.NewIssueWriter(os.Stdout)
 
 	filecore.MustWalkPathes(flags.Pathes, func(f *filecore.File) error {

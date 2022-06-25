@@ -19,8 +19,8 @@ type Values interface {
 // }
 
 type Filter struct {
-	Includes Values
-	Excludes Values
+	Includes Values `flag:"name:include;usage:the regexp for include pathes"`
+	Excludes Values `flag:"name:exclude;usage:the regexp for exclude pathes"`
 }
 
 func (f *Filter) Check(s string) bool {

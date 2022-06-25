@@ -7,12 +7,14 @@ package goformat
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"strings"
 )
 
 type FuncParamsConfig struct {
 	InputNum               int
 	OutputNum              int
+	NamedOutput            bool
 	InputNumWithoutContext bool
 	OutputNumWithoutError  bool
 	ContextFirst           bool
@@ -117,9 +119,6 @@ func (c funcParamsChecker) convertParams(x *Context, params *ast.FieldList) []*f
 }
 
 func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) error {
-	inLimit := c.cfg.InputNum
-	outLimit := c.cfg.OutputNum
-
 	ins := c.convertParams(x, fn.Params)
 	outs := c.convertParams(x, fn.Results)
 
@@ -134,78 +133,33 @@ func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) error {
 	// log.Printf(" === file:%s:%d, ins:%s, outs:%s", x.Name, pos.Line, mustJsonMarshal(ins), mustJsonMarshal(outs))
 
 	ctxIdx, ctx := c.indexParamByTypeName(ins, "context")
-	if !c.isContextFirst(ins, ctxIdx) {
-		x.AddIssue(&Issue{
-			Filename:    x.Name,
-			BeginLine:   pos.Line,
-			EndLine:     pos.Line,
-			Level:       LevelError,
-			Description: fmt.Sprintf("the input parameter '%s' should be the first", ctx.Type.String),
-		})
+	if e := c.checkContextFirst(x, pos, ins, ctxIdx); e != nil {
+		return e
 	}
 
 	errIdx, err := c.indexParamByTypeName(outs, "error")
-	if !c.isErrorLast(outs, errIdx) {
-		x.AddIssue(&Issue{
-			Filename:    x.Name,
-			BeginLine:   pos.Line,
-			EndLine:     pos.Line,
-			Level:       LevelError,
-			Description: fmt.Sprintf("the output parameter '%s' should not be more last", err.Type.String),
-		})
+	if e := c.checkErrorLast(x, pos, outs, errIdx); e != nil {
+		return e
 	}
 
-	if !c.isContextErrorMatch(x, ctx, err) {
-		x.AddIssue(&Issue{
-			Filename:  x.Name,
-			BeginLine: pos.Line,
-			EndLine:   pos.Line,
-			Level:     LevelError,
-			Description: fmt.Sprintf("the context '%s' is not matched the error '%s'",
-				ctx.Type.String, err.Type.String),
-		})
+	if e := c.checkContextErrorMatch(x, pos, ctx, err); e != nil {
+		return e
 	}
 
-	if !c.isInNumValidWithoutContext(x, ins, ctx) {
-		x.AddIssue(&Issue{
-			Filename:  x.Name,
-			BeginLine: pos.Line,
-			EndLine:   pos.Line,
-			Level:     LevelError,
-			Description: fmt.Sprintf("the num of input parameters without '%s' should not be more than %d, there are %d",
-				ctx.Type.String, inLimit, inNum-1),
-		})
-
-	} else if !c.isInNumValid(x, ins, ctx) {
-		x.AddIssue(&Issue{
-			Filename:  x.Name,
-			BeginLine: pos.Line,
-			EndLine:   pos.Line,
-			Level:     LevelError,
-			Description: fmt.Sprintf("the num of input parameters should not be more than %d, there are %d",
-				inLimit, inNum),
-		})
+	if e := c.checkInNumValidWithoutContext(x, pos, ins, ctx); e != nil {
+		return e
 	}
 
-	if !c.isOutNumValidWithoutError(x, outs, err) {
-		x.AddIssue(&Issue{
-			Filename:  x.Name,
-			BeginLine: pos.Line,
-			EndLine:   pos.Line,
-			Level:     LevelError,
-			Description: fmt.Sprintf("the num of output parameters without '%s' should not be more than %d, there are %d",
-				err.Type.String, outLimit, outNum-1),
-		})
+	if e := c.checkInNumValid(x, pos, ins, ctx); e != nil {
+		return e
+	}
 
-	} else if !c.isOutNumValid(x, outs, err) {
-		x.AddIssue(&Issue{
-			Filename:  x.Name,
-			BeginLine: pos.Line,
-			EndLine:   pos.Line,
-			Level:     LevelError,
-			Description: fmt.Sprintf("the num of output parameters should not be more than %d, there are %d",
-				outLimit, outNum),
-		})
+	if e := c.checkOutNumValidWithoutError(x, pos, outs, err); e != nil {
+		return e
+	}
+
+	if e := c.checkOutNumValid(x, pos, outs, err); e != nil {
+		return e
 	}
 
 	return nil
@@ -224,93 +178,167 @@ func (c funcParamsChecker) indexParamByTypeName(params []*funcParamInfo, typeNam
 	return -1, nil
 }
 
-func (c funcParamsChecker) isContextFirst(params []*funcParamInfo, idx int) bool {
+func (c funcParamsChecker) checkContextFirst(x *Context, pos token.Position, params []*funcParamInfo, idx int) error {
 	if !c.cfg.ContextFirst {
-		return true
+		return nil
 	}
 
 	if idx < 0 {
-		return true
+		return nil
 	}
 
-	return idx == 0
+	if idx == 0 {
+		return nil
+	}
+
+	ctx := params[idx]
+
+	x.AddIssue(&Issue{
+		Filename:    x.Name,
+		BeginLine:   pos.Line,
+		EndLine:     pos.Line,
+		Level:       LevelError,
+		Description: fmt.Sprintf("the input parameter '%s' should be the first", ctx.Type.String),
+	})
+	return nil
 }
 
-func (c funcParamsChecker) isErrorLast(params []*funcParamInfo, idx int) bool {
+func (c funcParamsChecker) checkErrorLast(x *Context, pos token.Position, params []*funcParamInfo, idx int) error {
 	if !c.cfg.ErrorLast {
-		return true
+		return nil
 	}
 
 	if idx < 0 {
-		return true
+		return nil
 	}
 
-	return idx == len(params)-1
+	if idx == len(params)-1 {
+		return nil
+	}
+
+	err := params[idx]
+
+	x.AddIssue(&Issue{
+		Filename:    x.Name,
+		BeginLine:   pos.Line,
+		EndLine:     pos.Line,
+		Level:       LevelError,
+		Description: fmt.Sprintf("the output parameter '%s' should not be more last", err.Type.String),
+	})
+	return nil
 }
 
-func (c funcParamsChecker) isInNumValidWithoutContext(x *Context, params []*funcParamInfo, ctx *funcParamInfo) bool {
+func (c funcParamsChecker) checkInNumValidWithoutContext(x *Context, pos token.Position, params []*funcParamInfo, ctx *funcParamInfo) error {
 	limit := c.cfg.InputNum
 	num := len(params)
 
 	if limit <= 0 {
-		return true
+		return nil
 	}
 
 	if !c.cfg.InputNumWithoutContext || ctx == nil {
-		return true
+		return nil
 	}
 
 	num--
-	return num <= limit
+	if num <= limit {
+		return nil
+	}
+
+	x.AddIssue(&Issue{
+		Filename:  x.Name,
+		BeginLine: pos.Line,
+		EndLine:   pos.Line,
+		Level:     LevelError,
+		Description: fmt.Sprintf("the num of input parameters without '%s' should not be more than %d, there are %d",
+			ctx.Type.String, limit, num),
+	})
+	return nil
 }
 
-func (c funcParamsChecker) isInNumValid(x *Context, params []*funcParamInfo, ctx *funcParamInfo) bool {
+func (c funcParamsChecker) checkInNumValid(x *Context, pos token.Position, params []*funcParamInfo, ctx *funcParamInfo) error {
 	limit := c.cfg.InputNum
 	num := len(params)
 
 	if limit <= 0 {
-		return true
+		return nil
 	}
 
 	if c.cfg.InputNumWithoutContext && ctx != nil {
-		return true
+		return nil
 	}
 
-	return num <= limit
+	if num <= limit {
+		return nil
+	}
+
+	x.AddIssue(&Issue{
+		Filename:  x.Name,
+		BeginLine: pos.Line,
+		EndLine:   pos.Line,
+		Level:     LevelError,
+		Description: fmt.Sprintf("the num of input parameters should not be more than %d, there are %d",
+			limit, num),
+	})
+	return nil
 }
 
-func (c funcParamsChecker) isOutNumValidWithoutError(x *Context, params []*funcParamInfo, err *funcParamInfo) bool {
+func (c funcParamsChecker) checkOutNumValidWithoutError(x *Context, pos token.Position, params []*funcParamInfo, err *funcParamInfo) error {
 	limit := c.cfg.OutputNum
 	num := len(params)
 
 	if limit <= 0 {
-		return true
+		return nil
 	}
 
 	if !c.cfg.OutputNumWithoutError || err == nil {
-		return true
+		return nil
 	}
 
 	num--
-	return num <= limit
+	if num <= limit {
+		return nil
+	}
+
+	x.AddIssue(&Issue{
+		Filename:  x.Name,
+		BeginLine: pos.Line,
+		EndLine:   pos.Line,
+		Level:     LevelError,
+		Description: fmt.Sprintf("the num of output parameters without '%s' should not be more than %d, there are %d",
+			err.Type.String, limit, num),
+	})
+	return nil
 }
 
-func (c funcParamsChecker) isOutNumValid(x *Context, params []*funcParamInfo, err *funcParamInfo) bool {
+func (c funcParamsChecker) checkOutNumValid(x *Context, pos token.Position, params []*funcParamInfo, err *funcParamInfo) error {
 	limit := c.cfg.OutputNum
 	num := len(params)
 
 	if limit <= 0 {
-		return true
+		return nil
 	}
 
 	if c.cfg.OutputNumWithoutError && err != nil {
-		return true
+		return nil
 	}
 
-	return num <= limit
+	if num <= limit {
+		return nil
+	}
+
+	x.AddIssue(&Issue{
+		Filename:  x.Name,
+		BeginLine: pos.Line,
+		EndLine:   pos.Line,
+		Level:     LevelError,
+		Description: fmt.Sprintf("the num of output parameters should not be more than %d, there are %d",
+			limit, num),
+	})
+	return nil
 }
 
-func (c funcParamsChecker) isContextErrorMatch(x *Context, ctx, err *funcParamInfo) bool {
+func (c funcParamsChecker) checkContextErrorMatch(x *Context, pos token.Position, ctx, err *funcParamInfo) error {
 	// if ctx != nil {
 	// 	log.Printf(" === ctx:%s, %v", ctx.Type.String, c.isStdContext(x, ctx))
 	// }
@@ -319,13 +347,36 @@ func (c funcParamsChecker) isContextErrorMatch(x *Context, ctx, err *funcParamIn
 	// }
 
 	if ctx == nil || err == nil {
-		return true
+		return nil
 	}
 	if !c.cfg.ContextErrorMatch {
-		return true
+		return nil
 	}
 
-	return c.isStdContext(x, ctx) == c.isStdError(x, err)
+	isStdCtx := c.isStdContext(x, ctx)
+	isStdErr := c.isStdError(x, err)
+	if isStdCtx == isStdErr {
+		return nil
+	}
+
+	desc := ""
+	if isStdCtx {
+		desc = fmt.Sprintf("context '%s' is standard context, but error '%s' is not standard error",
+			ctx.Type.String, err.Type.String)
+	} else {
+		desc = fmt.Sprintf("context '%s' is not standard context, but error '%s' is standard error",
+			ctx.Type.String, err.Type.String)
+	}
+
+	x.AddIssue(&Issue{
+		Filename:    x.Name,
+		BeginLine:   pos.Line,
+		EndLine:     pos.Line,
+		Level:       LevelError,
+		Description: desc,
+	})
+
+	return nil
 }
 
 func (c funcParamsChecker) isStdContext(x *Context, ctx *funcParamInfo) bool {

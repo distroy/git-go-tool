@@ -137,7 +137,7 @@ func TestFunc(ctx *Context, a, b, c int) (o, p, q int, err error) {
 					BeginLine:   9,
 					EndLine:     9,
 					Level:       LevelError,
-					Description: "the context '*Context' is not matched the error 'error'",
+					Description: "context '*Context' is not standard context, but error 'error' is standard error",
 				},
 				{
 					Filename:    filename,
@@ -158,14 +158,14 @@ func TestFunc(ctx *Context, a, b, c int) (o, p, q int, err error) {
 					BeginLine:   16,
 					EndLine:     16,
 					Level:       LevelError,
-					Description: "the context 'context.Context' is not matched the error '*error'",
+					Description: "context 'context.Context' is standard context, but error '*error' is not standard error",
 				},
 				{
 					Filename:    filename,
 					BeginLine:   17,
 					EndLine:     17,
 					Level:       LevelError,
-					Description: "the context 'ctx.Context' is not matched the error 'Error'",
+					Description: "context 'ctx.Context' is standard context, but error 'Error' is not standard error",
 				},
 				{
 					Filename:    filename,

@@ -58,6 +58,7 @@ func (p *RegExps) Set(s string) error {
 }
 
 func (p *RegExps) String() string {
+	// return strings.Join(p.strings, "\n")
 	d, _ := json.Marshal(p.strings)
 	return string(d)
 	// return fmt.Sprint(p.strings)
