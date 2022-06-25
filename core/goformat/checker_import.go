@@ -32,7 +32,7 @@ func ImportChecker(enable bool) Checker {
 
 type importChecker struct{}
 
-func (c importChecker) Check(x *Context) error {
+func (c importChecker) Check(x *Context) Error {
 	f := x.MustParse()
 	if len(f.Imports) <= 0 {
 		return nil
@@ -42,7 +42,7 @@ func (c importChecker) Check(x *Context) error {
 	return c.checkImport(x, imps)
 }
 
-func (c importChecker) checkImport(x *Context, imps []*importInfo) error {
+func (c importChecker) checkImport(x *Context, imps []*importInfo) Error {
 	for _, imp := range imps {
 		// log.Printf(" === line:%d, name:%s, path:%s", imp.Line, imp.Name, imp.Path)
 		if imp.Name == "." {

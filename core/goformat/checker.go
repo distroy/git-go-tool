@@ -4,8 +4,10 @@
 
 package goformat
 
+type Error = error
+
 type Checker interface {
-	Check(x *Context) error
+	Check(x *Context) Error
 }
 
 type Config struct {

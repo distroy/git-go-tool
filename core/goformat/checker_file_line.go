@@ -22,7 +22,7 @@ type fileLineChecker struct {
 	fileLine int
 }
 
-func (c fileLineChecker) Check(x *Context) error {
+func (c fileLineChecker) Check(x *Context) Error {
 	if c.fileLine <= 0 {
 		return nil
 	}
@@ -31,7 +31,7 @@ func (c fileLineChecker) Check(x *Context) error {
 	return c.checkLines(x, lines)
 }
 
-func (c fileLineChecker) checkLines(x *Context, lines []string) error {
+func (c fileLineChecker) checkLines(x *Context, lines []string) Error {
 	if x.IsGoTest() {
 		return nil
 	}

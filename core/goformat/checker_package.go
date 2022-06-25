@@ -21,14 +21,14 @@ func PackageChecker(enable bool) Checker {
 
 type packageChecker struct{}
 
-func (c packageChecker) Check(x *Context) error {
+func (c packageChecker) Check(x *Context) Error {
 
 	file := x.MustParse()
 
 	return c.checkPackageName(x, file)
 }
 
-func (c packageChecker) checkPackageName(x *Context, file *ast.File) error {
+func (c packageChecker) checkPackageName(x *Context, file *ast.File) Error {
 	pkg := file.Name
 	pkgPos := x.Position(pkg.Pos())
 

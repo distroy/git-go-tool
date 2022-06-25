@@ -38,7 +38,7 @@ type funcParamsChecker struct {
 	cfg *FuncParamsConfig
 }
 
-func (c funcParamsChecker) Check(x *Context) error {
+func (c funcParamsChecker) Check(x *Context) Error {
 	file := x.MustParse()
 
 	for _, decl := range file.Decls {
@@ -59,7 +59,7 @@ func (c funcParamsChecker) Check(x *Context) error {
 	return nil
 }
 
-func (c funcParamsChecker) walkFunc(x *Context, fn *ast.FuncDecl) error {
+func (c funcParamsChecker) walkFunc(x *Context, fn *ast.FuncDecl) Error {
 	if fn.Body == nil {
 		return nil
 	}
@@ -122,7 +122,7 @@ func (c funcParamsChecker) convertParams(x *Context, params *ast.FieldList) []*f
 	return res
 }
 
-func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) error {
+func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) Error {
 	ins := c.convertParams(x, fn.Params)
 	outs := c.convertParams(x, fn.Results)
 
@@ -186,7 +186,7 @@ func (c funcParamsChecker) indexParamByTypeName(params []*funcParamInfo, typeNam
 	return -1, nil
 }
 
-func (c funcParamsChecker) checkContextFirst(x *Context, pos token.Position, params []*funcParamInfo, idx int) error {
+func (c funcParamsChecker) checkContextFirst(x *Context, pos token.Position, params []*funcParamInfo, idx int) Error {
 	if !c.cfg.ContextFirst {
 		return nil
 	}
@@ -211,7 +211,7 @@ func (c funcParamsChecker) checkContextFirst(x *Context, pos token.Position, par
 	return nil
 }
 
-func (c funcParamsChecker) checkErrorLast(x *Context, pos token.Position, params []*funcParamInfo, idx int) error {
+func (c funcParamsChecker) checkErrorLast(x *Context, pos token.Position, params []*funcParamInfo, idx int) Error {
 	if !c.cfg.ErrorLast {
 		return nil
 	}
@@ -236,7 +236,7 @@ func (c funcParamsChecker) checkErrorLast(x *Context, pos token.Position, params
 	return nil
 }
 
-func (c funcParamsChecker) checkInNumValidWithoutContext(x *Context, pos token.Position, params []*funcParamInfo, ctx *funcParamInfo) error {
+func (c funcParamsChecker) checkInNumValidWithoutContext(x *Context, pos token.Position, params []*funcParamInfo, ctx *funcParamInfo) Error {
 	limit := c.cfg.InputNum
 	num := len(params)
 
@@ -264,7 +264,7 @@ func (c funcParamsChecker) checkInNumValidWithoutContext(x *Context, pos token.P
 	return nil
 }
 
-func (c funcParamsChecker) checkInNumValid(x *Context, pos token.Position, params []*funcParamInfo, ctx *funcParamInfo) error {
+func (c funcParamsChecker) checkInNumValid(x *Context, pos token.Position, params []*funcParamInfo, ctx *funcParamInfo) Error {
 	limit := c.cfg.InputNum
 	num := len(params)
 
@@ -291,7 +291,7 @@ func (c funcParamsChecker) checkInNumValid(x *Context, pos token.Position, param
 	return nil
 }
 
-func (c funcParamsChecker) checkOutNumValidWithoutError(x *Context, pos token.Position, params []*funcParamInfo, err *funcParamInfo) error {
+func (c funcParamsChecker) checkOutNumValidWithoutError(x *Context, pos token.Position, params []*funcParamInfo, err *funcParamInfo) Error {
 	limit := c.cfg.OutputNum
 	num := len(params)
 
@@ -319,7 +319,7 @@ func (c funcParamsChecker) checkOutNumValidWithoutError(x *Context, pos token.Po
 	return nil
 }
 
-func (c funcParamsChecker) checkOutNumValid(x *Context, pos token.Position, params []*funcParamInfo, err *funcParamInfo) error {
+func (c funcParamsChecker) checkOutNumValid(x *Context, pos token.Position, params []*funcParamInfo, err *funcParamInfo) Error {
 	limit := c.cfg.OutputNum
 	num := len(params)
 
@@ -346,7 +346,7 @@ func (c funcParamsChecker) checkOutNumValid(x *Context, pos token.Position, para
 	return nil
 }
 
-func (c funcParamsChecker) checkContextErrorMatch(x *Context, pos token.Position, ctx, err *funcParamInfo) error {
+func (c funcParamsChecker) checkContextErrorMatch(x *Context, pos token.Position, ctx, err *funcParamInfo) Error {
 	// if ctx != nil {
 	// 	log.Printf(" === ctx:%s, %v", ctx.Type.String, c.isStdContext(x, ctx))
 	// }
@@ -439,7 +439,7 @@ func (c funcParamsChecker) getOutputTypeName(x *Context, out *funcParamInfo) str
 	return typeName
 }
 
-func (c funcParamsChecker) checkNamedOutput(x *Context, pos token.Position, outs []*funcParamInfo) error {
+func (c funcParamsChecker) checkNamedOutput(x *Context, pos token.Position, outs []*funcParamInfo) Error {
 	if !c.cfg.NamedOutput {
 		return nil
 	}

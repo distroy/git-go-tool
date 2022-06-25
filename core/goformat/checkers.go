@@ -13,7 +13,7 @@ import (
 
 type checkers []Checker
 
-func (c checkers) Check(ctx *Context) error {
+func (c checkers) Check(ctx *Context) Error {
 	for _, checker := range c {
 		err := checker.Check(ctx)
 		if err != nil {

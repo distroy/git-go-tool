@@ -21,12 +21,12 @@ func FormatChecker(enable bool) Checker {
 type formatChecker struct {
 }
 
-func (c formatChecker) Check(x *Context) error {
+func (c formatChecker) Check(x *Context) Error {
 	data := x.MustRead()
 	return c.checkData(x, data)
 }
 
-func (c formatChecker) checkData(x *Context, data []byte) error {
+func (c formatChecker) checkData(x *Context, data []byte) Error {
 	fmtData, err := format.Source(data)
 	if err != nil {
 		panic(fmt.Errorf("format file fail. file:%s, err:%v", x.Name, err))
