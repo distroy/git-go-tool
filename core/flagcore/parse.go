@@ -80,14 +80,18 @@ func splitStringWord(s string, sep rune) string {
 	return string(res)
 }
 
+func packMeta(meta string) string {
+	if !strings.HasPrefix(meta, "<") && !strings.HasPrefix(meta, ">") {
+		meta = fmt.Sprintf("<%s>", meta)
+	}
+	return meta
+}
+
 func unquoteUsage(f *Flag) (meta string, usage string) {
 	usage = f.Usage
 	meta = f.Meta
 	if meta != "" {
-		if !strings.HasPrefix(meta, "<") && !strings.HasPrefix(meta, ">") {
-			meta = fmt.Sprintf("<%s>", meta)
-		}
-
+		meta = packMeta(meta)
 		return meta, usage
 	}
 
@@ -97,6 +101,8 @@ func unquoteUsage(f *Flag) (meta string, usage string) {
 			for j := i + 1; j < len(usage); j++ {
 				if usage[j] == '`' {
 					meta = usage[i+1 : j]
+					meta = packMeta(meta)
+
 					usage = usage[:i] + meta + usage[j+1:]
 					return meta, usage
 				}

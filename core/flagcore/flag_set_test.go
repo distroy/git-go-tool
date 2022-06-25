@@ -5,6 +5,7 @@
 package flagcore
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
 )
@@ -22,6 +23,48 @@ func TestNewFlagSet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := NewFlagSet(); tt.want != (got != nil) {
 				t.Errorf("NewFlagSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFlagSet_printUsageHeader(t *testing.T) {
+	type fields struct {
+		name string
+		args *Flag
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		wantW  string
+	}{
+		{
+			name: `name == "" && no args`,
+			fields: fields{
+				name: "",
+				args: nil,
+			},
+			wantW: "Usage of <command>:\nFlags:\n",
+		},
+		{
+			name: `name == "abc" && args.meta == ""`,
+			fields: fields{
+				name: "abc",
+				args: &Flag{Meta: ""},
+			},
+			wantW: "Usage: abc [<flags>] [<arg>...]\n\nFlags:\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &FlagSet{
+				name: tt.fields.name,
+				args: tt.fields.args,
+			}
+			w := &bytes.Buffer{}
+			s.printUsageHeader(w)
+			if gotW := w.String(); gotW != tt.wantW {
+				t.Errorf("FlagSet.printUsageHeader() = %v, want %v", gotW, tt.wantW)
 			}
 		})
 	}
