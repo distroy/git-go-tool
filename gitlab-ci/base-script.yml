@@ -1,0 +1,65 @@
+.color-message:
+  script:
+    - |
+      ECHO_COLOR_RED=$'\E[31;1m'
+      ECHO_COLOR_GREEN=$'\E[32;1m'
+      ECHO_COLOR_YELLO=$'\E[33;1m'
+      ECHO_COLOR_BLUE=$'\E[34;1m'
+      ECHO_COLOR_MAGENTA=$'\E[35;1m'
+      ECHO_COLOR_CYAN=$'\E[36;1m'
+      ECHO_COLOR_RESET=$'\E[0m'
+
+      echo_msgr() { echo -n "$ECHO_COLOR_RED"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgg() { echo -n "$ECHO_COLOR_GREEN"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgy() { echo -n "$ECHO_COLOR_YELLO"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgb() { echo -n "$ECHO_COLOR_BLUE"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgm() { echo -n "$ECHO_COLOR_MAGENTA"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+      echo_msgc() { echo -n "$ECHO_COLOR_CYAN"; echo -n "$@"; echo "$ECHO_COLOR_RESET"; }
+
+.echo-and-run:
+  script:
+    - |
+      function echo_and_run() {
+        echo "$@"
+        "$@"
+        return $?
+      }
+
+.go-install-tools:
+  script:
+    - !reference [.echo-and-run, script]
+    # 输出一些信息
+    - echo "job:" "$CI_JOB_NAME"
+    - echo "CI_MERGE_REQUEST_PROJECT_URL:" "$CI_MERGE_REQUEST_PROJECT_URL"
+    - echo "CI_MERGE_REQUEST_SOURCE_PROJECT_URL:" "$CI_MERGE_REQUEST_SOURCE_PROJECT_URL"
+    # 切换到上级目录，安装golang检查认知复杂度的工具
+    # 在project目录执行go install时，会下载project所有的import
+    # 我们已经把import的依赖，放到了vendor，不需要下载了
+    - |
+      if [[ "$_GO_INSTALL_DIR" == "" ]]; then
+        _GO_INSTALL_DIR="$CI_PROJECT_DIR/.."
+      fi
+    - cd "$_GO_INSTALL_DIR"
+    - |
+      function go_install {
+        echo_and_run go install "github.com/distroy/git-go-tool/cmd/$1" || echo_and_run go install "github.com/distroy/git-go-tool/cmd/$1@latest"
+        return $?
+      }
+    - go_install git-diff-go-cognitive
+    - go_install git-diff-go-coverage
+    - go_install git-diff-go-format
+    - cd "$CI_PROJECT_DIR"
+
+.checkout-all-commits:
+  script:
+    # 因为job执行时，默认只会拉取最近的一些commit，为了对比MR的2个branch的差异
+    # 需要拉取所有的commit
+    - cd "$CI_PROJECT_DIR/.."
+    - rm -rf "$CI_PROJECT_DIR"
+    - echo_and_run git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
+    - cd "$CI_PROJECT_DIR"
+    # checkout 2 个分支
+    - echo_and_run git checkout "$GIT_MERGE_TARGET"
+    - echo_and_run git checkout "$GIT_MERGE_SOURCE"
+
+

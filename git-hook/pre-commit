@@ -31,8 +31,8 @@ function _echo_and_run() {
 function _go_install() {
     local cmd="$1"
     type "$cmd" \
-        || go install "github.com/distroy/git-go-tool/cmd/$cmd@latest" \
-        || go install "github.com/distroy/git-go-tool/cmd/$cmd"
+        || _echo_and_run go install github.com/distroy/git-go-tool/cmd/$cmd@latest \
+        || _echo_and_run go install github.com/distroy/git-go-tool/cmd/$cmd
     return $?
 }
 
