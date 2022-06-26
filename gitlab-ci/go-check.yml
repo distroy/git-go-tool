@@ -57,6 +57,7 @@ include:
       echo_and_run git-diff-go-format \
           -mode "$GIT_COMPARE_MODE" \
           -branch "$merge_base" \
+          -file-line "$GO_FORMAT_FILE_LINE_LIMIT" \
           -import "$GO_FORMAT_CHECK_IMPORT" \
           -formated "$GO_FORMAT_CHECK_SOURCE_FORMATED" \
           -package "$GO_FORMAT_CHECK_PACKAGE_NAME" \
