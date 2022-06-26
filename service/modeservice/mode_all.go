@@ -19,8 +19,11 @@ func (m *modeAll) mustInit(c *Config) {
 }
 
 func (m *modeAll) IsIn(file string, begin, end int) bool {
-	cache := m.cache
+	if m.isGitSub(file) {
+		return false
+	}
 
+	cache := m.cache
 	ok, err := cache.CheckFileRange(&cacheCheckFileRangeReq{
 		Filename:  file,
 		BeginLine: begin,
@@ -36,7 +39,7 @@ func (m *modeAll) IsIn(file string, begin, end int) bool {
 
 func (m *modeAll) Walk(fn WalkFunc) {
 	cache := m.cache
-	rootDir := m.rootDir
+	rootDir := m.gitRoot
 
 	err := cache.WalkFiles(func(file *filecore.File) error {
 		m.mustWalkFile(file, fn)

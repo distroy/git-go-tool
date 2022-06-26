@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/distroy/git-go-tool/core/execcore"
 )
 
 type Different struct {
@@ -29,22 +31,14 @@ func MustGetBranch() string {
 }
 
 func GetBranch() (string, error) {
-	cmd := exec.Command("git", "rev-parse", "--verify", "HEAD")
-	_, err := cmd.Output()
+	_, err := execcore.GetOutput("git", "rev-parse", "--verify", "HEAD")
 	if err == nil {
 		return "HEAD", nil
 	}
 
-	cmd = exec.Command("git", "hash-object", "-t", "tree", "/dev/null")
-	out, err := cmd.Output()
+	out, err := execcore.GetOutput("git", "hash-object", "-t", "tree", "/dev/null")
 	if err != nil {
-		switch v := err.(type) {
-		case *exec.ExitError:
-			return "", fmt.Errorf("exec command fail. cmd:%s, code:%d, err:%v",
-				getCommandString(cmd), v.ExitCode(), v.Error())
-		}
-
-		return "", fmt.Errorf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err.Error())
+		return "", err
 	}
 
 	return string(out), nil
@@ -59,16 +53,9 @@ func MustGetRootDir() string {
 }
 
 func GetRootDir() (string, error) {
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	out, err := cmd.Output()
+	out, err := execcore.GetOutput("git", "rev-parse", "--show-toplevel")
 	if err != nil {
-		switch v := err.(type) {
-		case *exec.ExitError:
-			return "", fmt.Errorf("exec command fail. cmd:%s, code:%d, err:%v",
-				getCommandString(cmd), v.ExitCode(), v.Error())
-		}
-
-		return "", fmt.Errorf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err.Error())
+		return "", err
 	}
 
 	return strings.TrimSpace(string(out)), nil
