@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/distroy/git-go-tool/core/execcore"
 	"github.com/distroy/git-go-tool/core/iocore"
 )
 
@@ -24,11 +25,11 @@ func parseNewLinesFromCommand(cmd *exec.Cmd) ([]Different, error) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatalf("start pipe for exec fail. cmd:%s, err:%v", getCommandString(cmd), err)
+		log.Fatalf("start pipe for exec fail. cmd:%s, err:%v", execcore.CmdString(cmd), err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err)
+		log.Fatalf("exec command fail. cmd:%s, err:%v", execcore.CmdString(cmd), err)
 	}
 
 	defer func() {
@@ -44,11 +45,11 @@ func parseNewLinesFromCommand(cmd *exec.Cmd) ([]Different, error) {
 	if err := cmd.Wait(); err != nil {
 		switch v := err.(type) {
 		default:
-			log.Fatalf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), v)
+			log.Fatalf("exec command fail. cmd:%s, err:%v", execcore.CmdString(cmd), v)
 
 		case *exec.ExitError:
 			log.Fatalf("exec command fail. cmd:%s, code:%d, err:%v",
-				getCommandString(cmd), v.ExitCode(), v)
+				execcore.CmdString(cmd), v.ExitCode(), v)
 		}
 		return nil, err
 	}

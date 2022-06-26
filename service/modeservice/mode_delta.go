@@ -49,7 +49,7 @@ func (m *modeDelta) Walk(fn WalkFunc) {
 		// 	continue
 		// }
 
-		filePath := path.Join(m.rootDir, filename)
+		filePath := path.Join(m.gitRoot, filename)
 		file := &filecore.File{
 			Path: filePath,
 			Name: filename,
