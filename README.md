@@ -53,6 +53,8 @@ variables:
   # GO_FORMAT_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
   # # 检查 go format 的源分支名
   # GO_FORMAT_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+  # # go 代码文件函数限制
+  # GO_FORMAT_FILE_LINE_LIMIT: "1000"
   # # 是否检查 import 格式
   # GO_FORMAT_CHECK_IMPORT: "true"
   # # 是否检查源代码被 go 提供的工具格式化了
