@@ -76,8 +76,10 @@
     - !reference [.echo-and-run, script]
     # 检查服务 build 是否都可以成功
     - |
-      if [[ -$GO_BUILD_TARGET_DIR == - ]]; then
+      if [[ "$GO_BUILD_TARGET_DIR" == "" ]]; then
         echo_msgg "no need run go build"
+      elif [ ! -d "$GO_BUILD_TARGET_DIR" ]; then
+        echo_msgr "can not find the directory: $GO_BUILD_TARGET_DIR"
       else
         for i in $(ls $GO_BUILD_TARGET_DIR/*/*.go); do
           _service_dir="$(dirname "$i")"
