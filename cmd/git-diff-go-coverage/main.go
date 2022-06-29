@@ -49,8 +49,9 @@ func main() {
 	flagcore.MustParse(flags)
 
 	mode := modeservice.New(&modeservice.Config{
-		Mode:   flags.Mode,
-		Branch: flags.Branch,
+		Mode:       flags.Mode,
+		Branch:     flags.Branch,
+		FileFilter: flags.Filter.Check,
 	})
 
 	coverages := analyzeCoverages(flags.File, func(file string, lineNo int) bool {
@@ -59,9 +60,6 @@ func main() {
 
 	mode.Walk(func(file string, begin, end int) {
 		if strings.HasSuffix(file, "_test.go") {
-			return
-		}
-		if !flags.Filter.Check(file) {
 			return
 		}
 		coverages.Add(gocoverage.Coverage{
