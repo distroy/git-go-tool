@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"sort"
-	"strings"
 
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
@@ -60,52 +59,21 @@ func main() {
 }
 
 func analyzePathes(pathes []string, filter *filter.Filter) []gocognitive.Complexity {
-	var res []gocognitive.Complexity
-	for _, path := range pathes {
-		if filecore.IsDir(path) {
-			res = analyzeDir(path, filter, res)
-		} else {
-			res = analyzeFile(path, filter, res)
+	complexities := make([]gocognitive.Complexity, 0, 16)
+	filecore.MustWalkFiles(".", func(f *filecore.File) error {
+		if !f.IsGo() || !filter.Check(f.Name) {
+			return nil
 		}
-	}
-	return res
-}
 
-func analyzeFile(filePath string, filter *filter.Filter, res []gocognitive.Complexity) []gocognitive.Complexity {
-	if !strings.HasSuffix(filePath, ".go") {
-		return res
-	}
-	if !filter.Check(filePath) {
-		return res
-	}
-
-	r, err := gocognitive.AnalyzeFileByPath(filePath)
-	if err != nil {
-		log.Fatalf("analyze file fail. err:%s", err)
-	}
-
-	res = append(res, r...)
-	return res
-}
-
-func analyzeDir(dirPath string, filter *filter.Filter, res []gocognitive.Complexity) []gocognitive.Complexity {
-	if !filter.Check(dirPath) {
-		return res
-	}
-
-	tmpRes, err := gocognitive.AnalyzeDirByPath(dirPath)
-	if err != nil {
-		log.Fatalf("analyze directory fail. err:%s", err)
-	}
-
-	for _, v := range tmpRes {
-		if !filter.Check(v.Filename) {
-			continue
+		res, err := gocognitive.AnalyzeFile(f)
+		if err != nil {
+			log.Fatalf("analyze file cognitive complexities fail. file:%s, err:%s", f.Name, err)
 		}
-		res = append(res, v)
-	}
 
-	return res
+		complexities = append(complexities, res...)
+		return nil
+	})
+	return complexities
 }
 
 func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
