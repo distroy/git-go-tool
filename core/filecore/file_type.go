@@ -28,6 +28,7 @@ func NewTestFile(path string, data []byte) *File {
 type File struct {
 	Path  string
 	Name  string
+	cache *Cache
 	fset  *token.FileSet
 	file  *ast.File
 	data  []byte

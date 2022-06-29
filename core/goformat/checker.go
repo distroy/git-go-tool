@@ -46,3 +46,6 @@ func BuildChecker(cfg *Config) Checker {
 
 	return Checkers(checkers...)
 }
+
+func WalkFiles(rootDir string, walkFunc func(x *Context) error) error {
+}
