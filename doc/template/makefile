@@ -77,9 +77,15 @@ rm_service = \
 go_install = \
 	go install $(1)@latest || go install $(1)
 
-go_install_cmd =  \
+go_install_cmd =  ( \
+	_work_dir="$$PWD"; \
+	cd /; \
+	echo go install github.com/distroy/git-go-tool/cmd/$(1) \
+		"||" go install github.com/distroy/git-go-tool/cmd/$(1)@latest; \
 	go install github.com/distroy/git-go-tool/cmd/$(1) \
-		|| go install github.com/distroy/git-go-tool/cmd/$(1)@latest
+		|| go install github.com/distroy/git-go-tool/cmd/$(1)@latest; \
+	cd "$$_work_dir"; \
+	)
 
 ifneq ($(goc_flag),)
 ifeq ($(ENV), $(filter $(ENV), dev test))
@@ -163,11 +169,11 @@ setup:
 	git submodule init
 	git submodule update
 	git config core.hooksPath "git-go-tool/git-hook"
-	$(call go_install_cmd,go-cognitive)
-	$(call go_install_cmd,go-format)
-	$(call go_install_cmd,git-diff-go-cognitive)
-	$(call go_install_cmd,git-diff-go-coverage)
-	$(call go_install_cmd,git-diff-go-format)
+	@$(call go_install_cmd,go-cognitive)
+	@$(call go_install_cmd,go-format)
+	@$(call go_install_cmd,git-diff-go-cognitive)
+	@$(call go_install_cmd,git-diff-go-coverage)
+	@$(call go_install_cmd,git-diff-go-format)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: cognitive
