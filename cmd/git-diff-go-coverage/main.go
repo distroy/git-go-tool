@@ -20,12 +20,11 @@ import (
 )
 
 type Flags struct {
-	Mode   string  `flag:"meta:mode; usage:compare mode: default=show the coverage with git diff. all=show all the coverage"`
-	Branch string  `flag:"meta:branch; usage:view the changes you have in your working tree relative to the named <branch>"`
-	Rate   float64 `flag:"default:0.65; usage:the lowest coverage rate. range: [0, 1.0)"`
-	Top    int     `flag:"meta:N; default:10; usage:show the top <N> least coverage rage file only"`
-	File   string  `flag:"meta:file; usage:the coverage file path, cannot be empty"`
-	Filter *filter.Filter
+	ModeConfig modeservice.Config
+	Rate       float64 `flag:"default:0.65; usage:the lowest coverage rate. range: [0, 1.0)"`
+	Top        int     `flag:"meta:N; default:10; usage:show the top <N> least coverage rage file only"`
+	File       string  `flag:"meta:file; usage:the coverage file path, cannot be empty"`
+	Filter     *filter.Filter
 }
 
 func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool) gocoverage.Files {
@@ -48,11 +47,8 @@ func main() {
 	}
 	flagcore.MustParse(flags)
 
-	mode := modeservice.New(&modeservice.Config{
-		Mode:       flags.Mode,
-		Branch:     flags.Branch,
-		FileFilter: flags.Filter.Check,
-	})
+	flags.ModeConfig.FileFilter = flags.Filter.Check
+	mode := modeservice.New(&flags.ModeConfig)
 
 	coverages := analyzeCoverages(flags.File, func(file string, lineNo int) bool {
 		return flags.Filter.Check(file) && mode.IsIn(file, lineNo, lineNo)
