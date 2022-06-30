@@ -72,5 +72,8 @@
         if (( GO_TEST_PROCESSOR > 16 )); then
           GO_TEST_PROCESSOR=16
         fi
+        if (( GO_TEST_PROCESSOR <= 0 )); then
+          GO_TEST_PROCESSOR=4
+        fi
         echo_msgg "get go test processor: $GO_TEST_PROCESSOR"
       fi
