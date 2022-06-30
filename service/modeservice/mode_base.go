@@ -13,15 +13,27 @@ import (
 )
 
 type modeBase struct {
+	config  *Config
 	gitRoot string
 	gitSubs []*git.SubModule
 	cache   *cache
 }
 
 func (m *modeBase) mustInit(c *Config) {
+	m.config = c
 	m.gitRoot = git.MustGetRootDir()
 	m.gitSubs = git.MustGetSubModules()
 	m.cache = newCache(m.gitRoot)
+}
+
+func (m *modeBase) isFileIgnored(file string) bool {
+	if m.isGitSub(file) {
+		return true
+	}
+	if m.config.FileFilter == nil {
+		return false
+	}
+	return !m.config.FileFilter(file)
 }
 
 func (m *modeBase) isLineIgnored(line string) bool {
@@ -46,7 +58,7 @@ func (m *modeBase) mustWalkFile(file *filecore.File, fn WalkFunc) {
 		return
 	}
 
-	if m.isGitSub(file.Name) {
+	if m.isFileIgnored(file.Name) {
 		return
 	}
 

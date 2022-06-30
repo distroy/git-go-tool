@@ -19,7 +19,7 @@ func (m *modeAll) mustInit(c *Config) {
 }
 
 func (m *modeAll) IsIn(file string, begin, end int) bool {
-	if m.isGitSub(file) {
+	if m.isFileIgnored(file) {
 		return false
 	}
 

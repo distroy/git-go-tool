@@ -35,6 +35,9 @@ func (m *modeDelta) mustInit(c *Config) {
 }
 
 func (m *modeDelta) IsIn(file string, begin, end int) bool {
+	if m.isFileIgnored(file) {
+		return false
+	}
 	return m.files.IsIn(file, begin, end)
 }
 
@@ -45,6 +48,9 @@ func (m *modeDelta) Walk(fn WalkFunc) {
 		}
 
 		filename := differents[0].Filename
+		if m.isFileIgnored(filename) {
+			continue
+		}
 		// if filename == "/dev/null" {
 		// 	continue
 		// }

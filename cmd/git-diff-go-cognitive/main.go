@@ -12,6 +12,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/gocognitive"
@@ -61,13 +62,23 @@ func filterComplexities(array []gocognitive.Complexity, f func(gocognitive.Compl
 }
 
 func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity {
-	complexities, err := gocognitive.AnalyzeDirByPath(".")
-	if err != nil {
-		log.Fatalf("analyze cognitive complexities fail. err:%s", err)
-	}
+	complexities := make([]gocognitive.Complexity, 0, 16)
+	filecore.MustWalkFiles(".", func(f *filecore.File) error {
+		if !f.IsGo() || !filter.Check(f.Name) {
+			return nil
+		}
+
+		res, err := gocognitive.AnalyzeFile(f)
+		if err != nil {
+			log.Fatalf("analyze file cognitive complexities fail. file:%s, err:%s", f.Name, err)
+		}
+
+		complexities = append(complexities, res...)
+		return nil
+	})
 
 	return filterComplexities(complexities, func(c gocognitive.Complexity) bool {
-		return c.Complexity > over && filter.Check(c.Filename)
+		return c.Complexity > over
 	})
 }
 
@@ -84,8 +95,9 @@ func main() {
 
 	// filters := getFilters(flags)
 	mode := modeservice.New(&modeservice.Config{
-		Mode:   flags.Mode,
-		Branch: flags.Branch,
+		Mode:       flags.Mode,
+		Branch:     flags.Branch,
+		FileFilter: flags.Filter.Check,
 	})
 
 	complexities := analyzeCognitive(flags.Over, flags.Filter)

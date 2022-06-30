@@ -20,8 +20,9 @@ type Mode interface {
 }
 
 type Config struct {
-	Mode   string `flag:"meta:mode; usage:compare mode: default=show the coverage with git diff. all=show all the coverage"`
-	Branch string `flag:"meta:branch; usage:view the changes you have in your working tree relative to the named <branch>"`
+	Mode       string                 `flag:"meta:mode; usage:compare mode: default=show the coverage with git diff. all=show all the coverage"`
+	Branch     string                 `flag:"meta:branch; usage:view the changes you have in your working tree relative to the named <branch>"`
+	FileFilter func(file string) bool `flag:"-"`
 }
 
 func New(c *Config) Mode {
