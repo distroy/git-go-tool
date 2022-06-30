@@ -26,8 +26,8 @@ variables:
   GO_FLAGS: "-mod=vendor"
   # go 单测的选项
   GO_TEST_FLAGS: "-gcflags=all=-l"
-  # go 单测时 processor 数量。默认会跟cpu核数相等，但是不超过16
-  GO_TEST_PROCESSOR: "0"
+  # go 单测时 processor 数量
+  GO_TEST_PROCESSOR: "16"
   # 检查 go 代码的认知复杂度和单测覆盖率时，排除的文件选项
   # 格式: -exclude <regexp 1> ... -exclude <regexp N>
   # 例如: -exclude '\.microkit\.go$' -exclude '^tool/'
