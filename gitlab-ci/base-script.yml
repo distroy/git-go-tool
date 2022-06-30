@@ -69,7 +69,7 @@
     - |
       if (( GO_TEST_PROCESSOR <= 0 )); then
         GO_TEST_PROCESSOR=$(cat /proc/cpuinfo | grep processor | wc -l)
-        if (( GO_TEST_PROCESSOR > 16 ));
+        if (( GO_TEST_PROCESSOR > 16 )); then
           GO_TEST_PROCESSOR=16
         fi
         echo_msgg "get go test processor: $GO_TEST_PROCESSOR"
