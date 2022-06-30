@@ -13,7 +13,7 @@ import (
 func MustWalkFiles(dirPath string, walkFunc func(f *File) error) {
 	err := WalkFiles(dirPath, walkFunc)
 	if err != nil {
-		panic(fmt.Errorf("work dir fail. dir:%s, err%v", dirPath, err))
+		panic(fmt.Errorf("walk dir fail. dir:%s, err%v", dirPath, err))
 	}
 }
 
@@ -37,7 +37,7 @@ func WalkFiles(dirPath string, walkFunc func(f *File) error) error {
 func MustWalkPathes(pathes []string, walkFunc func(f *File) error) {
 	for _, path := range pathes {
 		if err := walkOnePath(path, walkFunc); err != nil {
-			panic(fmt.Errorf("work path fail. path:%s, err%v", path, err))
+			panic(fmt.Errorf("walk path fail. path:%s, err%v", path, err))
 		}
 	}
 }
