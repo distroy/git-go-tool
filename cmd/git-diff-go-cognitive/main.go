@@ -5,7 +5,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -22,38 +21,10 @@ import (
 )
 
 type Flags struct {
-	Mode   string `flag:"meta:mode; usage:compare mode: default=show the coverage with git diff. all=show all the coverage"`
-	Branch string `flag:"meta:branch; usage:view the changes you have in your working tree relative to the named <branch>"`
-	Over   int    `flag:"name:over; meta:N; default:15; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
-	Top    int    `flag:"name:top; meta:N; default:10; usage:show the top <N> most complex functions only"`
-	Filter *filter.Filter
-}
-
-func parseFlags() *Flags {
-	f := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
-	}
-
-	flag.StringVar(&f.Mode, "mode", "", "compare mode: default=show the cognitive with git diff; all=show all the cognitive")
-
-	flag.StringVar(&f.Branch, "branch", "", "view the changes you have in your working tree relative to the named <branch>")
-
-	flag.IntVar(&f.Over, "over", 15, "show functions with complexity > N only")
-	flag.IntVar(&f.Top, "top", 10, "show the top N most complex functions only")
-
-	flag.Var(f.Filter.Includes, "include", "the regexp for include pathes")
-	flag.Var(f.Filter.Excludes, "exclude", "the regexp for exclude pathes")
-
-	flag.Parse()
-
-	if f.Top <= 0 {
-		f.Top = 10
-	}
-
-	return f
+	ModeConfig modeservice.Config
+	Over       int `flag:"name:over; meta:N; default:15; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
+	Top        int `flag:"name:top; meta:N; default:10; usage:show the top <N> most complex functions only"`
+	Filter     *filter.Filter
 }
 
 func filterComplexities(array []gocognitive.Complexity, f func(gocognitive.Complexity) bool) []gocognitive.Complexity {
@@ -94,11 +65,8 @@ func main() {
 	flagcore.MustParse(flags)
 
 	// filters := getFilters(flags)
-	mode := modeservice.New(&modeservice.Config{
-		Mode:       flags.Mode,
-		Branch:     flags.Branch,
-		FileFilter: flags.Filter.Check,
-	})
+	flags.ModeConfig.FileFilter = flags.Filter.Check
+	mode := modeservice.New(&flags.ModeConfig)
 
 	complexities := analyzeCognitive(flags.Over, flags.Filter)
 
