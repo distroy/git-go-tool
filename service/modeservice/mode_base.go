@@ -58,7 +58,7 @@ func (m *modeBase) mustWalkFile(file *filecore.File, fn WalkFunc) {
 		return
 	}
 
-	if m.isGitSub(file.Name) {
+	if m.isFileIgnored(file.Name) {
 		return
 	}
 
