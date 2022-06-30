@@ -24,8 +24,10 @@ variables:
   # *** go flags begin ***
   # go 编译和单测的选项
   GO_FLAGS: "-mod=vendor"
-  # # go 单测的选项
+  # go 单测的选项
   GO_TEST_FLAGS: "-gcflags=all=-l"
+  # go 单测时 processor 数量
+  GO_TEST_PROCESSOR: "16"
   # 检查 go 代码的认知复杂度和单测覆盖率时，排除的文件选项
   # 格式: -exclude <regexp 1> ... -exclude <regexp N>
   # 例如: -exclude '\.microkit\.go$' -exclude '^tool/'
@@ -44,7 +46,7 @@ variables:
   GO_FORMAT_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
   # 检查 go format 的源分支名
   GO_FORMAT_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
-  # go 代码文件函数限制
+  # go 代码文件行数限制
   GO_FORMAT_FILE_LINE_LIMIT: "1000"
   # 是否检查 import 格式
   GO_FORMAT_CHECK_IMPORT: "true"

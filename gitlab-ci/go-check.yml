@@ -121,7 +121,7 @@ include:
   script:
     - !reference [.echo-and-run, script]
     # 检查单元测试是否都可以通过
-    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./...
+    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./...
 
 .go-test-coverage:
   # 相同stage的job并行执行
@@ -143,7 +143,7 @@ include:
     - !reference [.checkout-all-commits, script]
     # 检查单元测试是否都可以通过
     - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
-    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} ./... -coverprofile="$GO_COVERAGE_FILE"
+    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
     - |
       if [[ -$GO_COVERAGE_EXCLUDES == - ]]; then
         GO_COVERAGE_EXCLUDES="$GO_EXCLUDE_OPTIONS"

@@ -62,5 +62,3 @@
     # checkout 2 个分支
     - echo_and_run git checkout "$GIT_MERGE_TARGET"
     - echo_and_run git checkout "$GIT_MERGE_SOURCE"
-
-
