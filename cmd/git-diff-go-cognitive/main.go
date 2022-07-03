@@ -65,6 +65,7 @@ func main() {
 	flagcore.MustParse(flags)
 
 	// filters := getFilters(flags)
+	flags.ModeConfig.FileFilter = flags.Filter.Check
 	mode := modeservice.New(&flags.ModeConfig)
 
 	complexities := analyzeCognitive(flags.Over, flags.Filter)

@@ -33,6 +33,7 @@ func main() {
 	}
 	flagcore.MustParse(flags)
 
+	flags.ModeConfig.FileFilter = flags.Filter.Check
 	mode := modeservice.New(&flags.ModeConfig)
 
 	checker := goformat.BuildChecker(&flags.CheckerConfig)

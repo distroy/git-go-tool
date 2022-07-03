@@ -47,6 +47,7 @@ func main() {
 	}
 	flagcore.MustParse(flags)
 
+	flags.ModeConfig.FileFilter = flags.Filter.Check
 	mode := modeservice.New(&flags.ModeConfig)
 
 	coverages := analyzeCoverages(flags.File, func(file string, lineNo int) bool {
