@@ -23,15 +23,16 @@ type formatChecker struct {
 
 func (c formatChecker) Check(x *Context) Error {
 	data := x.MustRead()
-	return c.checkData(x, data)
-}
+	file := x.MustParse()
+	fset := x.FileSet()
 
-func (c formatChecker) checkData(x *Context, data []byte) Error {
-	fmtData, err := format.Source(data)
-	if err != nil {
+	buffer := &bytes.Buffer{}
+	buffer.Grow(len(data))
+	if err := format.Node(buffer, fset, file); err != nil {
 		panic(fmt.Errorf("format file fail. file:%s, err:%v", x.Name, err))
 	}
 
+	fmtData := buffer.Bytes()
 	if !bytes.Equal(data, fmtData) {
 		x.AddIssue(&Issue{
 			Filename:    x.Name,
