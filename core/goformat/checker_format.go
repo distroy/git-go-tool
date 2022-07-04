@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+
+	"github.com/distroy/git-go-tool/core/mathcore"
 )
 
 func FormatChecker(enable bool) Checker {
@@ -27,7 +29,7 @@ func (c formatChecker) Check(x *Context) Error {
 	fset := x.FileSet()
 
 	buffer := &bytes.Buffer{}
-	buffer.Grow(len(data))
+	buffer.Grow(c.getBufferSize(x, data))
 	if err := format.Node(buffer, fset, file); err != nil {
 		panic(fmt.Errorf("format file fail. file:%s, err:%v", x.Name, err))
 	}
@@ -42,4 +44,11 @@ func (c formatChecker) Check(x *Context) Error {
 	}
 
 	return nil
+}
+
+func (c formatChecker) getBufferSize(x *Context, data []byte) int {
+	size := len(data)
+	size = size + size/10
+	size = mathcore.MaxInt(size, 4096)
+	return size
 }
