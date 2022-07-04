@@ -191,6 +191,35 @@ func TestFunc(ctx *Context, a, b, c int) (o, p, q int, err error) {
 				},
 			},
 		},
+		{
+			args: args{
+				cfg: &FuncParamsConfig{
+					InputNum:               3,
+					OutputNum:              3,
+					InputNumWithoutContext: true,
+					OutputNumWithoutError:  true,
+					ContextFirst:           true,
+					ErrorLast:              true,
+					ContextErrorMatch:      true,
+					NamedOutput:            true,
+				},
+				data: `
+package test
+
+func TestFunc(f func (x *Context) error) {
+}
+`,
+			},
+			want: []*Issue{
+				// {
+				// 	Filename:    filename,
+				// 	BeginLine:   4,
+				// 	EndLine:     4,
+				// 	Level:       LevelError,
+				// 	Description: "context '*Context' is not standard context, but error 'error' is standard error",
+				// },
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

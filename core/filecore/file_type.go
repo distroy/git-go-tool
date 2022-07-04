@@ -26,13 +26,12 @@ func NewTestFile(path string, data []byte) *File {
 }
 
 type File struct {
-	Path  string
-	Name  string
-	cache *Cache
-	fset  *token.FileSet
-	file  *ast.File
-	data  []byte
-	lines []string
+	Path    string
+	Name    string
+	FileSet *token.FileSet
+	file    *ast.File
+	data    []byte
+	lines   []string
 }
 
 func (f *File) IsGo() bool     { return strings.HasSuffix(f.Name, ".go") }
@@ -107,11 +106,11 @@ func (f *File) MustParse() *ast.File {
 	return file
 }
 
-func (f *File) FileSet() *token.FileSet {
-	fset := f.fset
+func (f *File) mustGetFileSet() *token.FileSet {
+	fset := f.FileSet
 	if fset == nil {
 		fset = token.NewFileSet()
-		f.fset = fset
+		f.FileSet = fset
 	}
 	return fset
 }
@@ -126,7 +125,7 @@ func (f *File) Parse() (*ast.File, error) {
 		return nil, err
 	}
 
-	fset := f.FileSet()
+	fset := f.mustGetFileSet()
 
 	mode := parser.ParseComments
 	file, err := parser.ParseFile(fset, f.Path, data, mode)
@@ -139,9 +138,9 @@ func (f *File) Parse() (*ast.File, error) {
 }
 
 func (f *File) WriteCode(w io.Writer, n ast.Node) {
-	printer.Fprint(w, f.fset, n)
+	printer.Fprint(w, f.FileSet, n)
 }
 
 func (f *File) Position(p token.Pos) token.Position {
-	return f.fset.Position(p)
+	return f.FileSet.Position(p)
 }

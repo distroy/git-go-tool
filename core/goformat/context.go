@@ -8,6 +8,8 @@ import "github.com/distroy/git-go-tool/core/filecore"
 
 type Context struct {
 	*filecore.File
+
+	cache  *Cache
 	issues []*Issue
 }
 
@@ -18,10 +20,10 @@ func NewContext(f *filecore.File) *Context {
 	}
 }
 
-func (c *Context) Issues() []*Issue {
-	return c.issues
+func (x *Context) Issues() []*Issue {
+	return x.issues
 }
 
-func (c *Context) AddIssue(issue *Issue) {
-	c.issues = append(c.issues, issue)
+func (x *Context) AddIssue(issue *Issue) {
+	x.issues = append(x.issues, issue)
 }

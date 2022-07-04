@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/goformat"
@@ -38,12 +37,11 @@ func main() {
 	checker := goformat.BuildChecker(&flags.CheckerConfig)
 	writer := goformat.NewIssueWriter(os.Stdout)
 
-	filecore.MustWalkFiles(".", func(f *filecore.File) error {
-		if !f.IsGo() || !flags.Filter.Check(f.Name) {
+	goformat.NewCache().MustWalkDir(".", func(x *goformat.Context) goformat.Error {
+		if !flags.Filter.Check(x.Name) {
 			return nil
 		}
 
-		x := goformat.NewContext(f)
 		if err := checker.Check(x); err != nil {
 			log.Fatalf("check file format fail. file:%s, err:%v", x.Name, err)
 		}
