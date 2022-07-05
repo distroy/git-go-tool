@@ -69,6 +69,7 @@ func (c funcParamsChecker) walkFunc(x *Context, fn *ast.FuncDecl) Error {
 	}
 
 	var err error
+
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
 		// log.Printf(" === %T %#v", n, n)
 
@@ -82,6 +83,7 @@ func (c funcParamsChecker) walkFunc(x *Context, fn *ast.FuncDecl) Error {
 
 		return err == nil
 	})
+
 	return err
 }
 

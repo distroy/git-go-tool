@@ -5,6 +5,7 @@
 package modeservice
 
 import (
+	"fmt"
 	"go/ast"
 	"strings"
 
@@ -12,18 +13,22 @@ import (
 	"github.com/distroy/git-go-tool/core/git"
 )
 
+var (
+	errInvalidRange = fmt.Errorf("invalid file range")
+)
+
 type modeBase struct {
 	config  *Config
 	gitRoot string
 	gitSubs []*git.SubModule
-	cache   *cache
+	cache   *filecore.Cache
 }
 
 func (m *modeBase) mustInit(c *Config) {
 	m.config = c
 	m.gitRoot = git.MustGetRootDir()
 	m.gitSubs = git.MustGetSubModules()
-	m.cache = newCache(m.gitRoot)
+	m.cache = filecore.NewCache(m.gitRoot)
 }
 
 func (m *modeBase) isFileIgnored(file string) bool {
@@ -49,6 +54,33 @@ func (m *modeBase) isGitSub(filename string) bool {
 		}
 	}
 	return false
+}
+
+func (m *modeBase) isIn(filename string, begin, end int) (bool, error) {
+	f := m.cache.Get(filename)
+
+	lines, err := f.ReadLines()
+	if err != nil {
+		return false, err
+	}
+
+	if begin == 0 && end == 0 {
+		return true, nil
+	}
+
+	begin--
+	if begin < 0 || end > len(lines) {
+		// log.Printf(" === %s, %s, %#v", f.Path, f.Name, lines)
+		return false, errInvalidRange
+	}
+
+	for _, line := range lines[begin:end] {
+		if m.isLineIgnored(line) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (m *modeBase) mustWalkFile(file *filecore.File, fn WalkFunc) {

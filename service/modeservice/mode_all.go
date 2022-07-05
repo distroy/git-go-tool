@@ -23,13 +23,7 @@ func (m *modeAll) IsIn(file string, begin, end int) bool {
 		return false
 	}
 
-	cache := m.cache
-	ok, err := cache.CheckFileRange(&cacheCheckFileRangeReq{
-		Filename:  file,
-		BeginLine: begin,
-		EndLine:   end,
-		Check:     func(line string) bool { return !m.isLineIgnored(line) },
-	})
+	ok, err := m.modeBase.isIn(file, begin, end)
 	if err != nil {
 		log.Fatalf("check file range fail. file:%s, begin:%d, end:%d, err:%v",
 			file, begin, end, err)
