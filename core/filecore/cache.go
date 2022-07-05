@@ -26,15 +26,16 @@ func NewCache(rootPath string) *Cache {
 }
 
 func (c *Cache) Get(filename string) *File {
-	f := c.files[filename]
+	filePath := path.Join(c.root, filename)
+
+	f := c.files[filePath]
 	if f == nil {
-		filePath := path.Join(c.root, filename)
 		f = &File{
 			Path: filePath,
 			Name: filename,
 		}
 
-		c.files[filename] = f
+		c.files[filePath] = f
 	}
 
 	return f
