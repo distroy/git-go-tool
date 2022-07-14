@@ -46,7 +46,7 @@ include:
     - !reference [.go-install-tools, script]
     - !reference [.checkout-all-commits, script]
     - |
-      if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
+      if [[ "$GO_FORMAT_EXCLUDES" == "" ]]; then
         GO_FORMAT_EXCLUDES="$GO_EXCLUDE_OPTIONS"
       fi
     # 检查单元测试是否都可以通过
