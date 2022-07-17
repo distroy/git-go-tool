@@ -15,12 +15,12 @@ import (
 	"github.com/distroy/git-go-tool/core/iocore"
 )
 
-func ParseNewLines(branch string) ([]Different, error) {
+func ParseNewLines(branch string) ([]*Different, error) {
 	cmd := exec.Command("git", "diff", "--unified=0", branch)
 	return parseNewLinesFromCommand(cmd)
 }
 
-func parseNewLinesFromCommand(cmd *exec.Cmd) ([]Different, error) {
+func parseNewLinesFromCommand(cmd *exec.Cmd) ([]*Different, error) {
 	cmd.Stderr = os.Stderr
 
 	stdout, err := cmd.StdoutPipe()
@@ -57,8 +57,8 @@ func parseNewLinesFromCommand(cmd *exec.Cmd) ([]Different, error) {
 	return res, nil
 }
 
-func ParseNewLinesFromReader(r io.Reader) ([]Different, error) {
-	res := make([]Different, 0, 1024)
+func ParseNewLinesFromReader(r io.Reader) ([]*Different, error) {
+	res := make([]*Different, 0, 1024)
 
 	reader := iocore.NewLineReader(r)
 	for {

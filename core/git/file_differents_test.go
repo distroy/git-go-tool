@@ -86,7 +86,7 @@ func TestDifferents_IsIn(t *testing.T) {
 
 func TestNewFileDifferents(t *testing.T) {
 	type args struct {
-		slice []Different
+		slice []*Different
 	}
 	tests := []struct {
 		name string

@@ -22,11 +22,19 @@ type Coverage struct {
 	Count     int
 }
 
-func (c Coverage) String() string {
+func (c *Coverage) clone() *Coverage {
+	if c == nil {
+		return nil
+	}
+	cp := *c
+	return &cp
+}
+
+func (c *Coverage) String() string {
 	return fmt.Sprintf("%s:%d,%d#%d", c.Filename, c.BeginLine, c.EndLine, c.Count)
 }
 
-func MustParseFile(filePath string) []Coverage {
+func MustParseFile(filePath string) []*Coverage {
 	res, err := ParseFile(filePath)
 	if err != nil {
 		panic(fmt.Errorf("open coverage file fail. file:%s, err:%v", filePath, err))
@@ -34,7 +42,7 @@ func MustParseFile(filePath string) []Coverage {
 	return res
 }
 
-func ParseFile(filePath string) ([]Coverage, error) {
+func ParseFile(filePath string) ([]*Coverage, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -49,15 +57,15 @@ func ParseFile(filePath string) ([]Coverage, error) {
 	return res, err
 }
 
-func ParseReader(reader io.Reader) ([]Coverage, error) {
+func ParseReader(reader io.Reader) ([]*Coverage, error) {
 	modPrefix := gocore.MustGetModPrefix()
 	return parseReader(modPrefix, reader)
 }
 
-func parseReader(prefix string, reader io.Reader) ([]Coverage, error) {
+func parseReader(prefix string, reader io.Reader) ([]*Coverage, error) {
 	r := iocore.NewLineReader(reader)
 
-	res := make([]Coverage, 0, 32)
+	res := make([]*Coverage, 0, 32)
 	for {
 		line, err := r.ReadLineString()
 		if err != nil {
@@ -75,7 +83,7 @@ func parseReader(prefix string, reader io.Reader) ([]Coverage, error) {
 			continue
 		}
 
-		res = append(res, *c)
+		res = append(res, c)
 	}
 }
 

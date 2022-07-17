@@ -35,7 +35,7 @@ func (f File) GetNonCoverageLineNos() string {
 	return buffer.String()
 }
 
-type Files []File
+type Files []*File
 
 func (s Files) Len() int      { return len(s) }
 func (s Files) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
@@ -55,7 +55,7 @@ func getTopNonCoverageFiles(files gocoverage.Files, top int) Files {
 			continue
 		}
 
-		res = append(res, File{
+		res = append(res, &File{
 			Count: count,
 			File:  f,
 		})

@@ -65,7 +65,7 @@ func indexLines(lines []string, f func(line string) bool) int {
 	return len(lines)
 }
 
-func parseNewLinesFromFileLines(lines []string) ([]Different, error) {
+func parseNewLinesFromFileLines(lines []string) ([]*Different, error) {
 	i, l := 0, len(lines)
 
 	var file string
@@ -86,13 +86,13 @@ func parseNewLinesFromFileLines(lines []string) ([]Different, error) {
 	// rename to script/git-tool/core/__init__.py diff --git a/script/complexity/core/exec.py b/script/git-tool/core/exec.py
 	// ...
 	if len(file) == 0 {
-		return []Different{}, nil
+		return []*Different{}, nil
 	}
 
 	// skip the header lines
 	i = indexLines(lines, func(line string) bool { return strings.HasPrefix(line, "@@ ") })
 
-	res := make([]Different, 0, 32)
+	res := make([]*Different, 0, 32)
 	for i < l {
 		j := indexLines(lines[i+1:], func(line string) bool { return strings.HasPrefix(line, "@@ ") })
 		j = i + 1 + j
@@ -109,7 +109,7 @@ func parseNewLinesFromFileLines(lines []string) ([]Different, error) {
 	return res, nil
 }
 
-func parseNewLinesFromStatmentLines(filename string, lines []string) ([]Different, error) {
+func parseNewLinesFromStatmentLines(filename string, lines []string) ([]*Different, error) {
 	if len(lines) == 0 {
 		return nil, nil
 	}
@@ -125,7 +125,7 @@ func parseNewLinesFromStatmentLines(filename string, lines []string) ([]Differen
 		return nil, nil
 	}
 
-	diff := Different{
+	diff := &Different{
 		Filename:  filename,
 		BeginLine: begin,
 		EndLine:   end,
@@ -136,7 +136,7 @@ func parseNewLinesFromStatmentLines(filename string, lines []string) ([]Differen
 	return removeLineNoFromDifferent(diff, blankLineNos), nil
 }
 
-func parseBlankLineNosFromStatmentLines(lines []string, diff Different) []int {
+func parseBlankLineNosFromStatmentLines(lines []string, diff *Different) []int {
 	begin := diff.BeginLine
 
 	blankLineNos := make([]int, 0, 32)
@@ -158,16 +158,16 @@ func parseBlankLineNosFromStatmentLines(lines []string, diff Different) []int {
 	return blankLineNos
 }
 
-func removeLineNoFromDifferent(diff Different, lineNos []int) []Different {
+func removeLineNoFromDifferent(diff *Different, lineNos []int) []*Different {
 	if len(lineNos) == 0 {
-		return []Different{diff}
+		return []*Different{diff}
 	}
 
 	file := diff.Filename
 	pos := diff.BeginLine
 	end := diff.EndLine
 
-	res := make([]Different, 0, len(lineNos))
+	res := make([]*Different, 0, len(lineNos))
 
 	lastIdx := pos
 	for _, idx := range lineNos {
@@ -176,7 +176,7 @@ func removeLineNoFromDifferent(diff Different, lineNos []int) []Different {
 			continue
 		}
 
-		res = append(res, Different{
+		res = append(res, &Different{
 			Filename:  file,
 			BeginLine: lastIdx,
 			EndLine:   idx - 1,
@@ -185,7 +185,7 @@ func removeLineNoFromDifferent(diff Different, lineNos []int) []Different {
 	}
 
 	if lastIdx <= end {
-		res = append(res, Different{
+		res = append(res, &Different{
 			Filename:  file,
 			BeginLine: lastIdx,
 			EndLine:   end,

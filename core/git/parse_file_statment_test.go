@@ -91,21 +91,21 @@ func Test_parsePositionFromSummaryLine(t *testing.T) {
 
 func Test_removeLineNoFromDifferent(t *testing.T) {
 	type args struct {
-		diff    Different
+		diff    *Different
 		lineNos []int
 	}
 	tests := []struct {
 		name string
 		args args
-		want []Different
+		want []*Different
 	}{
 		{
 			name: "remove head and tail",
 			args: args{
-				diff:    Different{BeginLine: 1, EndLine: 100},
+				diff:    &Different{BeginLine: 1, EndLine: 100},
 				lineNos: []int{1, 2, 4, 5, 6, 50, 51, 99, 100},
 			},
-			want: []Different{
+			want: []*Different{
 				{BeginLine: 3, EndLine: 3},
 				{BeginLine: 7, EndLine: 49},
 				{BeginLine: 52, EndLine: 98},
@@ -114,10 +114,10 @@ func Test_removeLineNoFromDifferent(t *testing.T) {
 		{
 			name: "reserve head and tail",
 			args: args{
-				diff:    Different{BeginLine: 1, EndLine: 100},
+				diff:    &Different{BeginLine: 1, EndLine: 100},
 				lineNos: []int{2, 4, 5, 6, 50, 51, 99},
 			},
-			want: []Different{
+			want: []*Different{
 				{BeginLine: 1, EndLine: 1},
 				{BeginLine: 3, EndLine: 3},
 				{BeginLine: 7, EndLine: 49},
@@ -143,7 +143,7 @@ func Test_parseNewLinesFromStatmentLines(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []Different
+		want    []*Different
 		wantErr bool
 	}{
 		{
@@ -165,7 +165,7 @@ func Test_parseNewLinesFromStatmentLines(t *testing.T) {
 					`+}`,
 				},
 			},
-			want: []Different{
+			want: []*Different{
 				{BeginLine: 114, EndLine: 117},
 				{BeginLine: 119, EndLine: 124},
 			},
@@ -189,7 +189,7 @@ func Test_parseNewLinesFromStatmentLines(t *testing.T) {
 func Test_parseBlankLineNosFromStatmentLines(t *testing.T) {
 	type args struct {
 		lines []string
-		diff  Different
+		diff  *Different
 	}
 	tests := []struct {
 		name string
@@ -199,7 +199,7 @@ func Test_parseBlankLineNosFromStatmentLines(t *testing.T) {
 		{
 			name: "",
 			args: args{
-				diff: Different{BeginLine: 100},
+				diff: &Different{BeginLine: 100},
 				lines: []string{
 					`@@ -0,0 +100,7 @@`,
 					`-aaa`,
@@ -232,7 +232,7 @@ func Test_parseNewLinesFromFileLines(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []Different
+		want    []*Different
 		wantErr bool
 	}{
 		{
@@ -247,7 +247,7 @@ func Test_parseNewLinesFromFileLines(t *testing.T) {
 					`+/cmd/git-diff-go-cognitive/git-diff-go-cognitive`,
 				},
 			},
-			want: []Different{
+			want: []*Different{
 				{Filename: ".gitignore", BeginLine: 19, EndLine: 19},
 			},
 			wantErr: false,

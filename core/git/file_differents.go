@@ -6,7 +6,7 @@ package git
 
 import "sort"
 
-type Differents []Different
+type Differents []*Different
 
 func (s Differents) Len() int      { return len(s) }
 func (s Differents) Swap(i, j int) { s[i], s[j] = s[j], s[i] }

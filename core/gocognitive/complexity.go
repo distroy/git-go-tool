@@ -16,12 +16,12 @@ type Complexity struct {
 	EndLine    int
 }
 
-func (s Complexity) String() string {
+func (s *Complexity) String() string {
 	filePos := fmt.Sprintf("%s:%d,%d", s.Filename, s.BeginLine, s.EndLine)
 	return fmt.Sprintf("%d %s %s %s", s.Complexity, s.PkgName, s.FuncName, filePos)
 }
 
-type Complexites []Complexity
+type Complexites []*Complexity
 
 func (s Complexites) Len() int      { return len(s) }
 func (s Complexites) Swap(i, j int) { s[i], s[j] = s[j], s[i] }

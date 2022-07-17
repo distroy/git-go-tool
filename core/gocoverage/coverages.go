@@ -10,7 +10,7 @@ import (
 	"github.com/distroy/git-go-tool/core/mathcore"
 )
 
-type Coverages []Coverage
+type Coverages []*Coverage
 
 func (s Coverages) Len() int      { return len(s) }
 func (s Coverages) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
@@ -53,7 +53,7 @@ func (s Coverages) GetCount() int {
 	return count
 }
 
-func (s Coverages) Add(c Coverage) Coverages {
+func (s Coverages) Add(c *Coverage) Coverages {
 	begin := c.BeginLine
 	end := c.EndLine
 
@@ -66,7 +66,7 @@ func (s Coverages) Add(c Coverage) Coverages {
 		return s.merge(idx)
 	}
 
-	c0 := s[idx]
+	c0 := s[idx].clone()
 	if begin > c0.EndLine+1 || end < c0.BeginLine-1 {
 		s = append(s, c)
 		copy(s[idx+1:], s[idx:])
@@ -82,7 +82,7 @@ func (s Coverages) Add(c Coverage) Coverages {
 }
 
 func (s Coverages) merge(idx int) Coverages {
-	c := s[idx]
+	c := s[idx].clone()
 
 	idxLeft := idx - 1
 	for ; idxLeft >= 0; idxLeft-- {

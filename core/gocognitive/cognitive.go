@@ -18,7 +18,7 @@ var (
 func SetDebug(enable bool) { _debug = enable }
 
 // AnalyzeFileByPath builds the complexity statistics.
-func AnalyzeFileByPath(filePath string) ([]Complexity, error) {
+func AnalyzeFileByPath(filePath string) ([]*Complexity, error) {
 	f := &filecore.File{
 		Path: filePath,
 		Name: filePath,
@@ -28,8 +28,8 @@ func AnalyzeFileByPath(filePath string) ([]Complexity, error) {
 }
 
 // AnalyzeDirByPath builds the complexity statistics.
-func AnalyzeDirByPath(dirPath string) ([]Complexity, error) {
-	complexites := make([]Complexity, 0, 32)
+func AnalyzeDirByPath(dirPath string) ([]*Complexity, error) {
+	complexites := make([]*Complexity, 0, 32)
 	err := filecore.WalkFiles(dirPath, func(file *filecore.File) error {
 		if !file.IsGo() {
 			return nil
@@ -44,12 +44,12 @@ func AnalyzeDirByPath(dirPath string) ([]Complexity, error) {
 }
 
 // AnalyzeFile builds the complexity statistics.
-func AnalyzeFile(f *filecore.File) ([]Complexity, error) {
+func AnalyzeFile(f *filecore.File) ([]*Complexity, error) {
 	file, err := f.Parse()
 	if err != nil {
 		return nil, err
 	}
-	res := make([]Complexity, 0, len(file.Decls))
+	res := make([]*Complexity, 0, len(file.Decls))
 	for _, decl := range file.Decls {
 		if fn, ok := decl.(*ast.FuncDecl); ok {
 			res = append(res, AnalyzeFunction(f, fn))
@@ -87,7 +87,7 @@ func typeName(i interface{}) string {
 }
 
 // AnalyzeFunction calculates the cognitive complexity of a function.
-func AnalyzeFunction(file *filecore.File, fn *ast.FuncDecl) Complexity {
+func AnalyzeFunction(file *filecore.File, fn *ast.FuncDecl) *Complexity {
 	l := log.New(iocore.Discard(), "", 0)
 	if _debug {
 		l = log.New(os.Stdout, fmt.Sprintf("debug %s ", funcName(fn)),
@@ -109,7 +109,7 @@ func AnalyzeFunction(file *filecore.File, fn *ast.FuncDecl) Complexity {
 	v.log.Print("")
 
 	pos, end := file.Position(fn.Pos()), file.Position(fn.End())
-	return Complexity{
+	return &Complexity{
 		PkgName:    f.Name.Name,
 		FuncName:   funcName(fn),
 		Filename:   pos.Filename,

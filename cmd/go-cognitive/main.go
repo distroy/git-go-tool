@@ -58,9 +58,9 @@ func main() {
 	}
 }
 
-func analyzePathes(pathes []string, filter *filter.Filter) []gocognitive.Complexity {
-	complexities := make([]gocognitive.Complexity, 0, 16)
-	filecore.MustWalkFiles(".", func(f *filecore.File) error {
+func analyzePathes(pathes []string, filter *filter.Filter) []*gocognitive.Complexity {
+	complexities := make([]*gocognitive.Complexity, 0, 1024)
+	filecore.MustWalkPathes(pathes, func(f *filecore.File) error {
 		if !f.IsGo() || !filter.Check(f.Name) {
 			return nil
 		}
@@ -76,7 +76,7 @@ func analyzePathes(pathes []string, filter *filter.Filter) []gocognitive.Complex
 	return complexities
 }
 
-func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
+func writeResult(w io.Writer, res []*gocognitive.Complexity, flags *Flags) int {
 	top := flags.Top
 	over := flags.Over
 	if top <= 0 {
@@ -95,11 +95,11 @@ func writeResult(w io.Writer, res []gocognitive.Complexity, flags *Flags) int {
 	return len(res)
 }
 
-func showAverage(w io.Writer, cplxes []gocognitive.Complexity) {
+func showAverage(w io.Writer, cplxes []*gocognitive.Complexity) {
 	fmt.Fprintf(w, "Average: %.3g\n", average(cplxes))
 }
 
-func average(arr []gocognitive.Complexity) float64 {
+func average(arr []*gocognitive.Complexity) float64 {
 	total := 0
 	for _, s := range arr {
 		total += s.Complexity
