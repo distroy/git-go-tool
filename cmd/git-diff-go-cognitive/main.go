@@ -27,13 +27,13 @@ type Flags struct {
 	Filter     *filter.Filter
 }
 
-func filterComplexities(array []gocognitive.Complexity, f func(gocognitive.Complexity) bool) []gocognitive.Complexity {
+func filterComplexities(array []*gocognitive.Complexity, f func(*gocognitive.Complexity) bool) []*gocognitive.Complexity {
 	n := filter.FilterSlice(array, f)
 	return array[:n]
 }
 
-func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity {
-	complexities := make([]gocognitive.Complexity, 0, 16)
+func analyzeCognitive(over int, filter *filter.Filter) []*gocognitive.Complexity {
+	complexities := make([]*gocognitive.Complexity, 0, 1024)
 	filecore.MustWalkFiles(".", func(f *filecore.File) error {
 		if !f.IsGo() || !filter.Check(f.Name) {
 			return nil
@@ -48,7 +48,7 @@ func analyzeCognitive(over int, filter *filter.Filter) []gocognitive.Complexity 
 		return nil
 	})
 
-	return filterComplexities(complexities, func(c gocognitive.Complexity) bool {
+	return filterComplexities(complexities, func(c *gocognitive.Complexity) bool {
 		return c.Complexity > over
 	})
 }
@@ -70,11 +70,11 @@ func main() {
 
 	complexities := analyzeCognitive(flags.Over, flags.Filter)
 
-	overs := filterComplexities(complexities, func(c gocognitive.Complexity) bool {
+	overs := filterComplexities(complexities, func(c *gocognitive.Complexity) bool {
 		return c.Complexity > flags.Over && flags.Filter.Check(c.Filename)
 	})
 
-	newOvers := filterComplexities(overs, func(c gocognitive.Complexity) bool {
+	newOvers := filterComplexities(overs, func(c *gocognitive.Complexity) bool {
 		return mode.IsIn(c.Filename, c.BeginLine, c.EndLine)
 	})
 
@@ -86,7 +86,7 @@ func main() {
 	printOldOvers(os.Stdout, flags, overs)
 }
 
-func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
+func printForGitNews(w io.Writer, flags *Flags, cplxes []*gocognitive.Complexity) {
 	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) > flags.Top {
 		cplxes = cplxes[:flags.Top]
@@ -103,7 +103,7 @@ func printForGitNews(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity)
 	fmt.Fprint(w, "\n")
 }
 
-func printOldOvers(w io.Writer, flags *Flags, cplxes []gocognitive.Complexity) {
+func printOldOvers(w io.Writer, flags *Flags, cplxes []*gocognitive.Complexity) {
 	sort.Sort(gocognitive.Complexites(cplxes))
 	if len(cplxes) == 0 {
 		fmt.Fprint(w, termcolor.Green)

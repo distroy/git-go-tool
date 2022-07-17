@@ -17,7 +17,7 @@ func (f *FileCoverages) GetCount() Count {
 	}
 }
 
-func (f *FileCoverages) Add(c Coverage, filters ...filter) {
+func (f *FileCoverages) Add(c *Coverage, filters ...filter) {
 	if c.Count > 0 {
 		f.Coverages = f.addToCoverages(f.Coverages, c, filters)
 		return
@@ -29,14 +29,14 @@ func (f *FileCoverages) Add(c Coverage, filters ...filter) {
 	f.NonCoverages = f.addToCoverages(f.NonCoverages, c, filters)
 }
 
-func (f *FileCoverages) addToCoverages(s Coverages, c Coverage, filters []filter) Coverages {
+func (f *FileCoverages) addToCoverages(s Coverages, c *Coverage, filters []filter) Coverages {
 	// log.Printf(" === before. coverages:%v, coverage:%v", s, c)
 	for i := c.BeginLine; i <= c.EndLine; i++ {
 		if !doFilters(c.Filename, i, filters) {
 			continue
 		}
 
-		s = s.Add(Coverage{
+		s = s.Add(&Coverage{
 			Filename:  c.Filename,
 			BeginLine: i,
 			EndLine:   i,
@@ -49,7 +49,7 @@ func (f *FileCoverages) addToCoverages(s Coverages, c Coverage, filters []filter
 
 type Files map[string]*FileCoverages
 
-func NewFileCoverages(coverages []Coverage, filters ...filter) Files {
+func NewFileCoverages(coverages []*Coverage, filters ...filter) Files {
 	res := make(Files)
 	for _, c := range coverages {
 		if c.Count > 0 {
@@ -69,7 +69,7 @@ func NewFileCoverages(coverages []Coverage, filters ...filter) Files {
 	return res
 }
 
-func (f Files) Add(c Coverage, filters ...filter) *FileCoverages {
+func (f Files) Add(c *Coverage, filters ...filter) *FileCoverages {
 	v := f[c.Filename]
 	if v == nil {
 		v = &FileCoverages{

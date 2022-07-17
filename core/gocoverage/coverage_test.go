@@ -20,7 +20,7 @@ func Test_parseReader(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []Coverage
+		want    []*Coverage
 		wantErr bool
 	}{
 		{
@@ -36,7 +36,7 @@ func Test_parseReader(t *testing.T) {
 					`github.com/distroy/git-go-tool/core/iocore/line_reader.go:80.16,82.3 1 1`,
 				}, "\n")),
 			},
-			want: []Coverage{
+			want: []*Coverage{
 				{Filename: "cmd/git-diff-go-cognitive/main.go", BeginLine: 29, EndLine: 46, Count: 0},
 				{Filename: "cmd/git-diff-go-cognitive/main.go", BeginLine: 49, EndLine: 49, Count: 1},
 				{Filename: "cmd/git-diff-go-cognitive/main.go", BeginLine: 53, EndLine: 53, Count: 0},

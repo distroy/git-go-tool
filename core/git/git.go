@@ -18,7 +18,7 @@ type Different struct {
 	EndLine   int
 }
 
-func (d Different) String() string {
+func (d *Different) String() string {
 	return fmt.Sprintf("%s:%d,%d", d.Filename, d.BeginLine, d.EndLine)
 }
 

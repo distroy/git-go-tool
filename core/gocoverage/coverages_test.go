@@ -11,7 +11,7 @@ import (
 
 func TestCoverages_Add(t *testing.T) {
 	type args struct {
-		c Coverage
+		c *Coverage
 	}
 	s := Coverages{
 		{BeginLine: 100, EndLine: 110},
@@ -29,7 +29,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add before head",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 90, EndLine: 95}},
+			args: args{c: &Coverage{BeginLine: 90, EndLine: 95}},
 			want: Coverages{
 				{BeginLine: 90, EndLine: 95},
 				{BeginLine: 100, EndLine: 110},
@@ -42,7 +42,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add after tail",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 200, EndLine: 210}},
+			args: args{c: &Coverage{BeginLine: 200, EndLine: 210}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 120, EndLine: 130},
@@ -55,7 +55,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle without overlap 1",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 112, EndLine: 117}},
+			args: args{c: &Coverage{BeginLine: 112, EndLine: 117}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 112, EndLine: 117},
@@ -68,7 +68,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle without overlap 2",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 111, EndLine: 119}},
+			args: args{c: &Coverage{BeginLine: 111, EndLine: 119}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 130},
 				{BeginLine: 140, EndLine: 140},
@@ -79,7 +79,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with overlap without merge 1",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 123, EndLine: 127}},
+			args: args{c: &Coverage{BeginLine: 123, EndLine: 127}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 120, EndLine: 130},
@@ -91,7 +91,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with overlap without merge 2",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 135, EndLine: 145}},
+			args: args{c: &Coverage{BeginLine: 135, EndLine: 145}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 120, EndLine: 130},
@@ -103,7 +103,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with merge left 1",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 125, EndLine: 145}},
+			args: args{c: &Coverage{BeginLine: 125, EndLine: 145}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 120, EndLine: 145},
@@ -114,7 +114,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with merge left 2",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 111, EndLine: 145}},
+			args: args{c: &Coverage{BeginLine: 111, EndLine: 145}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 145},
 				{BeginLine: 160, EndLine: 170},
@@ -124,7 +124,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with merge right 1",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 135, EndLine: 160}},
+			args: args{c: &Coverage{BeginLine: 135, EndLine: 160}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 120, EndLine: 130},
@@ -135,7 +135,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with merge right 2",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 135, EndLine: 179}},
+			args: args{c: &Coverage{BeginLine: 135, EndLine: 179}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 110},
 				{BeginLine: 120, EndLine: 130},
@@ -145,7 +145,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with merge left and right 1",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 111, EndLine: 179}},
+			args: args{c: &Coverage{BeginLine: 111, EndLine: 179}},
 			want: Coverages{
 				{BeginLine: 100, EndLine: 180},
 			},
@@ -153,7 +153,7 @@ func TestCoverages_Add(t *testing.T) {
 		{
 			name: "add in middle with merge left and right 2",
 			s:    append(Coverages(nil), s...),
-			args: args{c: Coverage{BeginLine: 90, EndLine: 200}},
+			args: args{c: &Coverage{BeginLine: 90, EndLine: 200}},
 			want: Coverages{
 				{BeginLine: 90, EndLine: 200},
 			},

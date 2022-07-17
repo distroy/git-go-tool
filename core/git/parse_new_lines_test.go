@@ -18,7 +18,7 @@ func Test_parseNewLinesFromCommand(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []Different
+		want    []*Different
 		wantErr bool
 	}{
 		{
@@ -50,7 +50,7 @@ func Test_parseNewLinesFromCommand(t *testing.T) {
 					``,
 				}, "\n")),
 			},
-			want: []Different{
+			want: []*Different{
 				{Filename: ".gitignore", BeginLine: 19, EndLine: 19},
 				{Filename: "cmd/git-diff-go-cognitive/main.go", BeginLine: 9, EndLine: 9},
 				{Filename: "cmd/git-diff-go-cognitive/main.go", BeginLine: 19, EndLine: 19},
