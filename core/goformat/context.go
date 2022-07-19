@@ -6,6 +6,10 @@ package goformat
 
 import "github.com/distroy/git-go-tool/core/filecore"
 
+const (
+	defaultBufferSize = 32
+)
+
 type Context struct {
 	*filecore.File
 	issues []*Issue
@@ -14,7 +18,7 @@ type Context struct {
 func NewContext(f *filecore.File) *Context {
 	return &Context{
 		File:   f,
-		issues: make([]*Issue, 0, 16),
+		issues: make([]*Issue, 0, defaultBufferSize),
 	}
 }
 
