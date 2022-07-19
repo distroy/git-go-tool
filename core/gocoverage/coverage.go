@@ -15,6 +15,10 @@ import (
 	"github.com/distroy/git-go-tool/core/iocore"
 )
 
+const (
+	defaultBufferSize = 64
+)
+
 type Coverage struct {
 	Filename  string
 	BeginLine int
@@ -65,7 +69,7 @@ func ParseReader(reader io.Reader) ([]*Coverage, error) {
 func parseReader(prefix string, reader io.Reader) ([]*Coverage, error) {
 	r := iocore.NewLineReader(reader)
 
-	res := make([]*Coverage, 0, 32)
+	res := make([]*Coverage, 0, defaultBufferSize)
 	for {
 		line, err := r.ReadLineString()
 		if err != nil {

@@ -15,6 +15,10 @@ import (
 	"github.com/distroy/git-go-tool/core/regexpcore"
 )
 
+const (
+	defaultBufferSize = 10240
+)
+
 type Flags struct {
 	Over  int  `flag:"name:over; meta:N; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
 	Top   int  `flag:"name:top; meta:N; usage:show the top <N> most complex functions only"`
@@ -59,7 +63,7 @@ func main() {
 }
 
 func analyzePathes(pathes []string, filter *filter.Filter) []*gocognitive.Complexity {
-	files := make([]*filecore.File, 0, 1024)
+	files := make([]*filecore.File, 0, defaultBufferSize)
 	count := 0
 	filecore.MustWalkPathes(pathes, func(f *filecore.File) error {
 		if !f.IsGo() || !filter.Check(f.Name) {

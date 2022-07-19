@@ -58,7 +58,7 @@ func parseNewLinesFromCommand(cmd *exec.Cmd) ([]*Different, error) {
 }
 
 func ParseNewLinesFromReader(r io.Reader) ([]*Different, error) {
-	res := make([]*Different, 0, 1024)
+	res := make([]*Different, 0, defaultBufferSize)
 
 	reader := iocore.NewLineReader(r)
 	for {
@@ -93,7 +93,7 @@ func readFileLines(r *iocore.LineReader) ([]string, error) {
 		log.Fatalf("unexpected line prefix for file begin. line:%s", line)
 	}
 
-	buffer := make([]string, 0, 32)
+	buffer := make([]string, 0, defaultBufferSize)
 	buffer = append(buffer, line)
 	for {
 		line, err = r.PeekLineString()

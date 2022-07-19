@@ -16,6 +16,7 @@ var (
 
 var (
 	defaultBufferSize = 4096 * 100
+	defaultLinesCount = 64
 )
 
 type LineReader struct {
@@ -64,7 +65,7 @@ func (r *LineReader) setBytes(data []byte) {
 }
 
 func (r *LineReader) ReadAllLineStrings() ([]string, error) {
-	res := make([]string, 0, 10)
+	res := make([]string, 0, defaultLinesCount)
 
 	for {
 		l, err := r.ReadLineString()

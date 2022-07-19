@@ -92,7 +92,7 @@ func parseNewLinesFromFileLines(lines []string) ([]*Different, error) {
 	// skip the header lines
 	i = indexLines(lines, func(line string) bool { return strings.HasPrefix(line, "@@ ") })
 
-	res := make([]*Different, 0, 32)
+	res := make([]*Different, 0, defaultBufferSize)
 	for i < l {
 		j := indexLines(lines[i+1:], func(line string) bool { return strings.HasPrefix(line, "@@ ") })
 		j = i + 1 + j
@@ -139,7 +139,7 @@ func parseNewLinesFromStatmentLines(filename string, lines []string) ([]*Differe
 func parseBlankLineNosFromStatmentLines(lines []string, diff *Different) []int {
 	begin := diff.BeginLine
 
-	blankLineNos := make([]int, 0, 32)
+	blankLineNos := make([]int, 0, defaultBufferSize)
 	i := 0
 	for _, line := range lines {
 		if !strings.HasPrefix(line, "+") {

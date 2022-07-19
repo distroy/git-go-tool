@@ -20,6 +20,10 @@ import (
 	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
+const (
+	defaultBufferSize = 10240
+)
+
 type Flags struct {
 	ModeConfig modeservice.Config
 	Over       int `flag:"name:over; meta:N; default:15; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
@@ -33,7 +37,7 @@ func filterComplexities(array []*gocognitive.Complexity, f func(*gocognitive.Com
 }
 
 func analyzeCognitive(over int, filter *filter.Filter) []*gocognitive.Complexity {
-	files := make([]*filecore.File, 0, 1024)
+	files := make([]*filecore.File, 0, defaultBufferSize)
 	count := 0
 	filecore.MustWalkFiles(".", func(f *filecore.File) error {
 		if !f.IsGo() || !filter.Check(f.Name) {
