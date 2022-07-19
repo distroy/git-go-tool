@@ -33,20 +33,32 @@ func filterComplexities(array []*gocognitive.Complexity, f func(*gocognitive.Com
 }
 
 func analyzeCognitive(over int, filter *filter.Filter) []*gocognitive.Complexity {
-	complexities := make([]*gocognitive.Complexity, 0, 1024)
+	files := make([]*filecore.File, 0, 1024)
+	count := 0
 	filecore.MustWalkFiles(".", func(f *filecore.File) error {
 		if !f.IsGo() || !filter.Check(f.Name) {
 			return nil
 		}
 
-		res, err := gocognitive.AnalyzeFile(f)
+		n, err := gocognitive.GetCount(f)
 		if err != nil {
 			log.Fatalf("analyze file cognitive complexities fail. file:%s, err:%s", f.Name, err)
 		}
 
-		complexities = append(complexities, res...)
+		count += n
+		files = append(files, f)
 		return nil
 	})
+
+	complexities := make([]*gocognitive.Complexity, 0, count)
+	for _, f := range files {
+		res, err := gocognitive.AnalyzeFile(complexities, f)
+		if err != nil {
+			log.Fatalf("analyze file cognitive complexities fail. file:%s, err:%s", f.Name, err)
+		}
+
+		complexities = res
+	}
 
 	return filterComplexities(complexities, func(c *gocognitive.Complexity) bool {
 		return c.Complexity > over

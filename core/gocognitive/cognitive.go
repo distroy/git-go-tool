@@ -18,38 +18,33 @@ var (
 func SetDebug(enable bool) { _debug = enable }
 
 // AnalyzeFileByPath builds the complexity statistics.
-func AnalyzeFileByPath(filePath string) ([]*Complexity, error) {
+func AnalyzeFileByPath(res []*Complexity, filePath string) ([]*Complexity, error) {
 	f := &filecore.File{
 		Path: filePath,
 		Name: filePath,
 	}
 
-	return AnalyzeFile(f)
+	return AnalyzeFile(res, f)
 }
 
-// AnalyzeDirByPath builds the complexity statistics.
-func AnalyzeDirByPath(dirPath string) ([]*Complexity, error) {
-	complexites := make([]*Complexity, 0, 32)
-	err := filecore.WalkFiles(dirPath, func(file *filecore.File) error {
-		if !file.IsGo() {
-			return nil
-		}
-
-		res, err := AnalyzeFile(file)
-		complexites = append(complexites, res...)
-		return err
-	})
-
-	return complexites, err
+func GetCount(f *filecore.File) (int, error) {
+	file, err := f.Parse()
+	if err != nil {
+		return 0, err
+	}
+	return len(file.Decls), nil
 }
 
 // AnalyzeFile builds the complexity statistics.
-func AnalyzeFile(f *filecore.File) ([]*Complexity, error) {
+func AnalyzeFile(res []*Complexity, f *filecore.File) ([]*Complexity, error) {
 	file, err := f.Parse()
 	if err != nil {
 		return nil, err
 	}
-	res := make([]*Complexity, 0, len(file.Decls))
+
+	if res == nil {
+		res = make([]*Complexity, 0, len(file.Decls))
+	}
 	for _, decl := range file.Decls {
 		if fn, ok := decl.(*ast.FuncDecl); ok {
 			res = append(res, AnalyzeFunction(f, fn))

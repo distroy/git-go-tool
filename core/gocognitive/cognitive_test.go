@@ -40,7 +40,7 @@ func TestExample(t *testing.T) {
 	file = fmt.Sprintf("%s/%s", path.Dir(file), "example_for_test.go")
 	t.Logf("example file: %s", file)
 
-	res, err := AnalyzeFileByPath(file)
+	res, err := AnalyzeFileByPath(nil, file)
 	if err != nil {
 		t.Fatalf("analyze file fail. err:%s", err)
 	}
