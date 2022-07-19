@@ -10,8 +10,7 @@ import (
 )
 
 var DefaultExcludes = []string{
-	`^vendor/`,
-	`/vendor/`,
+	`(^|/)vendor/`,
 	`\.pb\.go$`,
 }
 
