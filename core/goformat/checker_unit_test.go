@@ -12,5 +12,9 @@ type unitTestChecker struct {
 }
 
 func (c unitTestChecker) Check(x *Context) Error {
+	if !x.IsGoTest() {
+		return nil
+	}
+
 	return nil
 }
