@@ -1,5 +1,9 @@
 include:
-  - '/gitlab-ci/go-check.yml'
+  - '/gitlab-ci/go-build.yml'
+  - '/gitlab-ci/go-format.yml'
+  - '/gitlab-ci/go-cognitive.yml'
+  - '/gitlab-ci/go-test.yml'
+  - '/gitlab-ci/check-for-test.yml'
 
 stages:
   # stage 和 stage 之间按照顺序串行执行
@@ -34,11 +38,11 @@ variables:
   GO_EXCLUDE_OPTIONS: -exclude '^vendor/'
   # *** go flags end ***
 
-  # *** go buile variables begin ***
+  # *** go build variables begin ***
   # 会检查这个目录下的子目录（只向下检查一级）的go代码是否可以编译通过
   # 设置成空字符，不检查
   GO_BUILD_TARGET_DIR: "$CI_PROJECT_DIR/app"
-  # *** go buile variables end ***
+  # *** go build variables end ***
 
   # *** go format variables begin ***
   # 检查 go format 度的目标分支名

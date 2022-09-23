@@ -1,0 +1,56 @@
+include:
+  - '/gitlab-ci/base-script.yml'
+
+.go-test:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - "**/**.go"
+  except:
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
+  script:
+    - !reference [.echo-and-run, script]
+    # 检查单元测试是否都可以通过
+    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./...
+
+.go-test-coverage:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
+    changes:
+      - "**/**.go"
+  script:
+    - !reference [.echo-and-run, script]
+    - |
+      GIT_MERGE_TARGET="$GO_COVERAGE_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_COVERAGE_DIFF_SOURCE"
+    - !reference [.go-install-tools, script]
+    - !reference [.checkout-all-commits, script]
+    # 检查单元测试是否都可以通过
+    - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
+    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
+    - |
+      if [[ -$GO_COVERAGE_EXCLUDES == - ]]; then
+        GO_COVERAGE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
+      fi
+    # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+      echo "merge base: $merge_base"
+    - |
+      echo_and_run git-diff-go-coverage \
+          -rate "$GO_COVERAGE_RATE" \
+          -mode "$GIT_COMPARE_MODE" \
+          -branch "$merge_base" \
+          -file "$GO_COVERAGE_FILE" \
+          ${GO_COVERAGE_EXCLUDES}

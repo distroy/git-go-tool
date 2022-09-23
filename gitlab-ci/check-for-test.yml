@@ -1,0 +1,33 @@
+include:
+  - '/gitlab-ci/base-script.yml'
+
+.check-for-test:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
+  script:
+    - !reference [.color-message, script]
+    - !reference [.echo-and-run, script]
+    - |
+      function check_for_test() {
+        local count=$(grep -r -i -E -n "$FOR_TEST_KEYWORD" . | wc -l)
+        if (( count <= 0 )); then
+          echo_msgg "do not find the keyword: \"$FOR_TEST_KEYWORD\""
+          return
+        fi
+
+        echo_msgr "found the keyword: \"$FOR_TEST_KEYWORD\""
+        echo_and_run grep -r -i -E -n "$FOR_TEST_KEYWORD" .
+        return 1
+      }
+    - |
+      if [[ -$FOR_TEST_KEYWORD == - ]]; then
+        echo_msgg "no need check for test keyword"
+      else
+        check_for_test
+      fi

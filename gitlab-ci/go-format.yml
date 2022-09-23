@@ -1,0 +1,46 @@
+include:
+  - '/gitlab-ci/base-script.yml'
+
+.go-format:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - "**/**.go"
+  script:
+    - !reference [.echo-and-run, script]
+    - |
+      GIT_MERGE_TARGET="$GO_FORMAT_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_FORMAT_DIFF_SOURCE"
+    - !reference [.go-install-tools, script]
+    - !reference [.checkout-all-commits, script]
+    - |
+      if [[ "$GO_FORMAT_EXCLUDES" == "" ]]; then
+        GO_FORMAT_EXCLUDES="$GO_EXCLUDE_OPTIONS"
+      fi
+    # 检查单元测试是否都可以通过
+    # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+      echo "merge base: $merge_base"
+    # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
+    - |
+      echo_and_run git-diff-go-format \
+          -mode "$GIT_COMPARE_MODE" \
+          -branch "$merge_base" \
+          -file-line "$GO_FORMAT_FILE_LINE_LIMIT" \
+          -import "$GO_FORMAT_CHECK_IMPORT" \
+          -formated "$GO_FORMAT_CHECK_SOURCE_FORMATED" \
+          -package "$GO_FORMAT_CHECK_PACKAGE_NAME" \
+          -func-input-num "$GO_FORMAT_FUNC_INPUT_NUM_LIMIT" \
+          -func-output-num "$GO_FORMAT_FUNC_OUTPUT_NUM_LIMIT" \
+          -func-named-output "$GO_FORMAT_FUNC_OUTPUT_IF_NEED_NAMED" \
+          -func-input-num-without-context "$GO_FORMAT_FUNC_INPUT_NUM_WITHOUT_CONTEXT" \
+          -func-output-num-without-error "$GO_FORMAT_FUNC_OUTPUT_NUM_WITHOUT_ERROR" \
+          -func-context-first "$GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST" \
+          -func-error-last "$GO_FORMAT_FUNC_OUTPUT_ERROR_LAST" \
+          -func-context-error-match="$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH" \
+          ${GO_FORMAT_EXCLUDES}

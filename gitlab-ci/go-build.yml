@@ -1,0 +1,30 @@
+include:
+  - '/gitlab-ci/base-script.yml'
+
+.go-build:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - "**/**.go"
+  script:
+    - !reference [.color-message, script]
+    - !reference [.echo-and-run, script]
+    # 检查服务 build 是否都可以成功
+    - |
+      if [[ "$GO_BUILD_TARGET_DIR" == "" ]]; then
+        echo_msgg "no need run go build"
+      elif [ ! -d "$GO_BUILD_TARGET_DIR" ]; then
+        echo_msgr "can not find the directory: $GO_BUILD_TARGET_DIR"
+      else
+        for i in $(ls $GO_BUILD_TARGET_DIR/*/*.go); do
+          _service_dir="$(dirname "$i")"
+          echo "=== building service: $_service_dir"
+          _service_name="$(basename "$_service_dir")"
+          cd "$_service_dir"
+          echo_and_run go build ${GO_FLAGS} -o "$_service_name" || exit $?
+        done
+      fi
