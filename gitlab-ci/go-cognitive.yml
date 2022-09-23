@@ -1,0 +1,35 @@
+include:
+  - '/gitlab-ci/base-script.yml'
+
+.go-cognitive:
+  # 相同stage的job并行执行
+  stage: go-check-stage
+  image: "$GO_CHECK_IMAGE"
+  only:
+    refs:
+      - merge_requests
+    # changes:
+    #   - "**/**.go"
+  script:
+    - !reference [.echo-and-run, script]
+    - |
+      GIT_MERGE_TARGET="$GO_COGNITIVE_DIFF_TARGET"
+      GIT_MERGE_SOURCE="$GO_COGNITIVE_DIFF_SOURCE"
+    - !reference [.go-install-tools, script]
+    - !reference [.checkout-all-commits, script]
+    - |
+      if [[ "$GO_COGNITIVE_EXCLUDES" == "" ]]; then
+        GO_COGNITIVE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
+      fi
+    # 检查单元测试是否都可以通过
+    # 获取 MR 2 个branch 的公共的 commit 节点(merge_base)
+    - |
+      merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
+      echo "merge base: $merge_base"
+    # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
+    - |
+      echo_and_run git-diff-go-cognitive \
+          -over "$GO_COGNITIVE_OVER" \
+          -mode "$GIT_COMPARE_MODE" \
+          -branch "$merge_base" \
+          ${GO_COGNITIVE_EXCLUDES}

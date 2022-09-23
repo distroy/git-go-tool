@@ -76,9 +76,14 @@ jobs:
       - run: go mod download
       - run: make setup
       - run: make go-test-coverage
-      # - run: git-diff-go-coverage -mode all -rate 0.65 -file log/coverage.out
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: go-coverage
+          path: log/go-coverage.html
+      # - run: git-diff-go-coverage -mode all -rate 0.65 -file log/go-coverage.out
       - run: |
           # merge_base=$(git merge-base "$GITHUB_BASE_REF" "$GITHUB_HEAD_REF")
           # echo "merge base: $merge_base"
-          # git-diff-go-coverage -branch $merge_base -rate 0.35 -file log/coverage.out
-          git-diff-go-coverage -mode all -rate 0.5 -file log/coverage.out
+          # git-diff-go-coverage -branch $merge_base -rate 0.35 -file log/go-coverage.out
+          git-diff-go-coverage -mode all -rate 0.5 -file log/go-coverage.out
