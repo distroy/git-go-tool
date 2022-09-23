@@ -1,4 +1,5 @@
 include:
+  - '/gitlab-ci/base-script.yml'
   - '/gitlab-ci/go-build.yml'
   - '/gitlab-ci/go-format.yml'
   - '/gitlab-ci/go-cognitive.yml'

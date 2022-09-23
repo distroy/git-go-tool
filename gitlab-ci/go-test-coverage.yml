@@ -1,6 +1,3 @@
-include:
-  - '/gitlab-ci/base-script.yml'
-
 .go-test-coverage:
   # 相同stage的job并行执行
   stage: go-check-stage
