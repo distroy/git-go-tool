@@ -3,6 +3,7 @@ include:
   - '/gitlab-ci/go-format.yml'
   - '/gitlab-ci/go-cognitive.yml'
   - '/gitlab-ci/go-test.yml'
+  - '/gitlab-ci/go-test-coverage.yml'
   - '/gitlab-ci/check-for-test.yml'
 
 stages:
@@ -88,7 +89,8 @@ variables:
   GO_COVERAGE_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
   # 检查单测覆盖率的源分支名
   GO_COVERAGE_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
-  GO_COVERAGE_FILE: "$CI_PROJECT_DIR/log/coverage.out"
+  GO_COVERAGE_FILE: "$CI_PROJECT_DIR/log/go-coverage.out"
+  GO_COVERAGE_HTML: "$CI_PROJECT_DIR/log/go-coverage.html"
   # 单测覆盖率的阈值，取值范围 0.0 ~ 1.0
   GO_COVERAGE_RATE: "0.65"
   # 检查 go 代码的单测覆盖率时，排除的文件选项
