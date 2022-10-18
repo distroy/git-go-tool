@@ -11,6 +11,13 @@ import (
 	"strings"
 )
 
+type orderType int
+
+const (
+	orderType_Asc orderType = iota + 1
+	orderType_Desc
+)
+
 type FuncParamsConfig struct {
 	InputNum               int
 	OutputNum              int
@@ -136,12 +143,12 @@ func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) Error {
 	// log.Printf(" === file:%s:%d", x.Name, pos.Line)
 	// log.Printf(" === file:%s:%d, ins:%s, outs:%s", x.Name, pos.Line, mustJsonMarshal(ins), mustJsonMarshal(outs))
 
-	ctxIdx, ctx := c.indexParamByTypeName(ins, "context")
+	ctxIdx, ctx := c.indexParamByTypeName(ins, "context", orderType_Asc)
 	if e := c.checkContextFirst(x, pos, ins, ctxIdx); e != nil {
 		return e
 	}
 
-	errIdx, err := c.indexParamByTypeName(outs, "error")
+	errIdx, err := c.indexParamByTypeName(outs, "error", orderType_Desc)
 	if e := c.checkErrorLast(x, pos, outs, errIdx); e != nil {
 		return e
 	}
@@ -173,14 +180,20 @@ func (c funcParamsChecker) checkFuncParams(x *Context, fn *ast.FuncType) Error {
 	return nil
 }
 
-func (c funcParamsChecker) indexParamByTypeName(params []*funcParamInfo, typeName string) (int, *funcParamInfo) {
-	for i, v := range params {
-		typ := v.Type
+func (c funcParamsChecker) indexParamByTypeName(params []*funcParamInfo, typeName string, order orderType) (int, *funcParamInfo) {
+	for i, l := 0, len(params); i < l; i++ {
+		idx := i
+		if order == orderType_Desc {
+			idx = l - i - 1
+		}
+
+		param := params[idx]
+		typ := param.Type
 		// log.Printf(" === %s", mustJsonMarshal(typ))
 		isSpecial := typ.IsEllipsis || typ.IsFunc || typ.IsSlice
-		if !isSpecial && strings.EqualFold(typ.Name, typeName) {
-			// log.Printf(" === return %d %s", i, mustJsonMarshal(typ))
-			return i, v
+		if !isSpecial && strings.Contains(strings.ToLower(typ.Name), typeName) {
+			// log.Printf(" === return %d %s", idx, mustJsonMarshal(typ))
+			return idx, param
 		}
 	}
 	return -1, nil
