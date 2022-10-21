@@ -24,8 +24,8 @@ temp_*
 temp.*
 
 # commands
-/cmd/go-cognitive/go-cognitive
-/cmd/go-format/go-format
 /cmd/git-diff-go-cognitive/git-diff-go-cognitive
 /cmd/git-diff-go-coverage/git-diff-go-coverage
 /cmd/git-diff-go-format/git-diff-go-format
+/cmd/go-cognitive/go-cognitive
+/cmd/go-format/go-format
