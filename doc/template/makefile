@@ -87,6 +87,13 @@ go_install_cmd =  ( \
 	cd "$$_work_dir"; \
 	)
 
+git_ignore_service = ( \
+	_ignore_file="$(PROJECT_ROOT)/.gitignore"; \
+	_service_bin="/app/$(1)/$(1)"; \
+	_count=$$(grep "$$_service_bin" "$$_ignore_file" | wc -l); \
+	test $$_count -ne 0 || echo "$$_service_bin" >> "$$_ignore_file"; \
+	);
+
 ifneq ($(goc_flag),)
 ifeq ($(ENV), $(filter $(ENV), dev test))
 
@@ -106,7 +113,7 @@ pb:
 	@$(foreach i, $(PROTOS), $(call protobuf,$(i)))
 
 .PHONY: $(TARGETS)
-$(TARGETS): $(GO_DEP)
+$(TARGETS): git-ignore $(GO_DEP)
 	@$(call mk_service,$@)
 
 .PHONY: goc-download
@@ -115,7 +122,7 @@ goc-download:
 	# chmod u+x $(GOC)
 
 .PHONY: clean
-clean:
+clean: git-ignore
 	@$(foreach service, $(TARGETS), $(call rm_service,$(service)))
 
 .PHONY: dep
@@ -164,8 +171,12 @@ block-hosts:
 		done >> /etc/hosts
 	cat /etc/hosts
 
+.PHONY: git-ignore
+git-ignore:
+	@$(foreach service, $(TARGETS), $(call git_ignore_service,$(service)))
+
 .PHONY: setup
-setup:
+setup: git-ignore
 	git submodule init
 	git submodule update
 	git config core.hooksPath "git-go-tool/git-hook"

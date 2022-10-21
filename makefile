@@ -54,15 +54,22 @@ go_install_cmd =  \
 	go install github.com/distroy/git-go-tool/cmd/$(1) \
 		|| go install github.com/distroy/git-go-tool/cmd/$(1)@latest
 
+git_ignore_service = ( \
+	_ignore_file="$(PROJECT_ROOT)/.gitignore"; \
+	_service_bin="/cmd/$(1)/$(1)"; \
+	_count=$$(grep "$$_service_bin" "$$_ignore_file" | wc -l); \
+	test $$_count -ne 0 || echo "$$_service_bin" >> "$$_ignore_file"; \
+	);
+
 .PHONY: all
 all: setup $(COMMANDS)
 
 .PHONY: $(COMMANDS)
-$(COMMANDS):
+$(COMMANDS): git-ignore
 	@$(call mk_command,$@)
 
 .PHONY: clean
-clean:
+clean: git-ignore
 	@$(foreach service, $(COMMANDS), $(call rm_command,$(service)))
 
 .PHONY: dep
@@ -96,8 +103,12 @@ go-test-report: go-test-report-dir
 go-test:
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./...
 
+.PHONY: git-ignore
+git-ignore:
+	@$(foreach service, $(COMMANDS), $(call git_ignore_service,$(service)))
+
 .PHONY: setup
-setup:
+setup: git-ignore
 	git config core.hooksPath "git-hook"
 	$(call go_install_cmd,go-cognitive)
 	$(call go_install_cmd,go-format)
