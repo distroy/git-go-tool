@@ -10,6 +10,7 @@
     changes:
       - "**/**.go"
   artifacts:
+    when: always
     paths:
       - "$GO_COVERAGE_HTML"
   script:
