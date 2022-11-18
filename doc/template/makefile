@@ -149,13 +149,17 @@ go-test-report-dir:
 .PHONY: go-test-coverage
 go-test-coverage: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
-		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out"
+		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out"
+	$(GO) tool cover -html $(GO_TEST_REPORT_DIR)/go-coverage.out \
+		-o $(GO_TEST_REPORT_DIR)/go-coverage.html
 
 .PHONY: go-test-report
 go-test-report: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
-		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out" \
-		-json > "$(GO_TEST_REPORT_DIR)/test.json"
+		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out" \
+		-json > "$(GO_TEST_REPORT_DIR)/go-test.json"
+	$(GO) tool cover -html $(GO_TEST_REPORT_DIR)/go-coverage.out \
+		-o $(GO_TEST_REPORT_DIR)/go-coverage.html
 
 .PHONY: go-test
 go-test:
