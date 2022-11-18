@@ -23,7 +23,7 @@
     - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
     - mkdir -pv "$(dirname "$GO_COVERAGE_HTML")"
     - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
-    - echo_and_run go tool cover -html "$GO_COVERAGE_FILE" -o "$GO_COVERAGE_HTML"
+    - echo_and_run env GOFLAGS="${GO_FLAGS}" go tool cover -html "$GO_COVERAGE_FILE" -o "$GO_COVERAGE_HTML"
     - |
       if [[ -$GO_COVERAGE_EXCLUDES == - ]]; then
         GO_COVERAGE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
