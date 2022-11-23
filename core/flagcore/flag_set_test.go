@@ -151,7 +151,7 @@ func TestFlagSet_Parse(t *testing.T) {
 			convey.Convey("no set default", func() {
 				flags := &Flags{}
 				s := NewFlagSet()
-				s.noDefault = true
+				s.EnableDefault(false)
 				s.Model(flags)
 
 				err := s.Parse([]string{
@@ -173,7 +173,7 @@ func TestFlagSet_Parse(t *testing.T) {
 			convey.Convey("set default", func() {
 				flags := &Flags{}
 				s := NewFlagSet()
-				s.noDefault = false
+				s.EnableDefault(true)
 				s.Model(flags)
 
 				err := s.Parse([]string{
@@ -207,7 +207,7 @@ func TestFlagSet_Parse(t *testing.T) {
 			convey.Convey("no set default", func() {
 				flags := &Flags{}
 				s := NewFlagSet()
-				s.noDefault = true
+				s.EnableDefault(false)
 				s.Model(flags)
 
 				err := s.Parse([]string{
@@ -230,7 +230,7 @@ func TestFlagSet_Parse(t *testing.T) {
 			convey.Convey("set default", func() {
 				flags := &Flags{}
 				s := NewFlagSet()
-				s.noDefault = false
+				s.EnableDefault(true)
 				s.Model(flags)
 
 				err := s.Parse([]string{

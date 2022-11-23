@@ -59,6 +59,11 @@ func (s *FlagSet) init() {
 	s.noDefault = true
 }
 
+func (s *FlagSet) EnableDefault(on bool) {
+	s.init()
+	s.noDefault = !on
+}
+
 func (s *FlagSet) printUsage() {
 	// log.Printf("flags: %s", jsoncore.MustMarshalToString(s.model.Interface()))
 
