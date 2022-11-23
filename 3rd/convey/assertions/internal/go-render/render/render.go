@@ -346,7 +346,11 @@ func (s sortableValueSlice) Len() int {
 }
 
 func (s sortableValueSlice) Less(i, j int) bool {
-	return s.cmp(s.elements[i], s.elements[j]) < 0
+	a := s.elements[i]
+	b := s.elements[j]
+	r := s.cmp(a, b)
+	// log.Printf(" === %v[%T], %v[%T], %d", a.Interface(), a.Interface(), b.Interface(), b.Interface(), r)
+	return r < 0
 }
 
 func (s sortableValueSlice) Swap(i, j int) {
@@ -416,11 +420,21 @@ func cmpForType(t reflect.Type) cmpFn {
 	case reflect.Interface:
 		return func(av, bv reflect.Value) int {
 			a, b := av.InterfaceData(), bv.InterfaceData()
+			// log.Printf(" === a: %d %d", a[0], a[1])
+			// log.Printf(" === b: %d %d", b[0], b[1])
 			if a[0] < b[0] {
 				return -1
 			} else if a[0] > b[0] {
 				return 1
 			}
+
+			cmpFn := cmpForType(reflect.TypeOf(av.Interface()))
+			if cmpFn != nil {
+				av = reflect.ValueOf(av.Interface())
+				bv = reflect.ValueOf(bv.Interface())
+				return cmpFn(av, bv)
+			}
+
 			if a[1] < b[1] {
 				return -1
 			} else if a[1] > b[1] {

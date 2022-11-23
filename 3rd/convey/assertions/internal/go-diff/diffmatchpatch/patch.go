@@ -324,7 +324,8 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 	paddingLength := dmp.PatchMargin
 	nullPadding := ""
 	for x := 1; x <= paddingLength; x++ {
-		nullPadding += string(x)
+		// nullPadding += string(x)
+		nullPadding += strconv.Itoa(x)
 	}
 
 	// Bump all the patches forward.
