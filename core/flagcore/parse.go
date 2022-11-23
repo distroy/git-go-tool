@@ -114,25 +114,42 @@ func unquoteUsage(f *Flag) (meta string, usage string) {
 	// No explicit name, so use type if we can find one.
 	meta = "<value>"
 	switch f.Value.(type) {
-	case *boolFlag:
+	case *boolFlag, boolPtrFlag:
 		meta = ""
-	case *boolValue:
+	case *boolValue, boolPtrValue:
 		meta = "<bool>"
-	case *durationValue:
+	case *durationValue, durationPtrValue:
 		meta = "<duration>"
-	case *float32Value, *float64Value, *float32sValue, *float64sValue:
+	case *float32Value, *float64Value, *float32sValue, *float64sValue,
+		float32PtrValue, float64PtrValue:
 		meta = "<float>"
-	case *intValue, *int64Value, *intsValue, *int64sValue:
+	case *intValue, *int64Value, *intsValue, *int64sValue,
+		intPtrValue, int64PtrValue:
 		meta = "<int>"
-	case *stringValue, *stringsValue:
+	case *stringValue, *stringsValue, stringPtrValue:
 		meta = "<string>"
-	case *uintValue, *uint64Value, *uintsValue, *uint64sValue:
+
+	case *uintValue, *uint64Value, *uintsValue, *uint64sValue,
+		uintPtrValue, uint64PtrValue:
 		meta = "<uint>"
 	}
 	return meta, usage
 }
 
-func isZeroValue(value Value, defValue string) bool {
+func isFlagDefaultZero(f *Flag) bool {
+	value := f.Value
+	defaultValue := f.Default
+
+	val := f.val
+	if val.Kind() == reflect.Ptr {
+		typ := val.Type()
+		v := reflect.New(typ).Elem()
+		v.Set(reflect.New(typ.Elem()))
+		// v := reflect.New(typ.Elem())
+		z := fillFlagFuncMap[typ](v)
+		return defaultValue == z.String()
+	}
+
 	// Build a zero value of the flag's Value type, and see if the
 	// result of calling its String method equals the value passed in.
 	// This works unless the Value type is itself an interface type.
@@ -143,5 +160,5 @@ func isZeroValue(value Value, defValue string) bool {
 	} else {
 		z = reflect.Zero(typ)
 	}
-	return defValue == z.Interface().(Value).String()
+	return defaultValue == z.Interface().(Value).String()
 }

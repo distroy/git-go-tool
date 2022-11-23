@@ -5,80 +5,59 @@
 package flagcore
 
 import (
-	"bytes"
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/distroy/git-go-tool/3rd/convey"
 )
 
 func TestNewFlagSet(t *testing.T) {
-	tests := []struct {
-		name string
-		want bool
-	}{
-		{
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewFlagSet(); tt.want != (got != nil) {
-				t.Errorf("NewFlagSet() = %v, want %v", got, tt.want)
-			}
+	convey.Convey(t.Name(), t, func() {
+		convey.Convey("", func() {
+			s := NewFlagSet()
+			convey.So(s, convey.ShouldNotBeNil)
 		})
-	}
+	})
 }
 
 func TestFlagSet_printUsageHeader(t *testing.T) {
-	type fields struct {
-		name string
-		args *Flag
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		wantW  string
-	}{
-		{
-			name: `name == "" && no args`,
-			fields: fields{
+	convey.Convey(t.Name(), t, func() {
+		convey.Convey(`name == "" && no args`, func() {
+			s := &FlagSet{
 				name: "",
 				args: nil,
-			},
-			wantW: "Usage of <command>:\nFlags:\n",
-		},
-		{
-			name: `name == "abc" && args.meta == ""`,
-			fields: fields{
+			}
+			b := &strings.Builder{}
+			s.printUsageHeader(b)
+			convey.So(b.String(), convey.ShouldEqual, "Usage of <command>:\nFlags:\n")
+		})
+		convey.Convey(`name == "abc" && args.meta == ""`, func() {
+			s := &FlagSet{
 				name: "abc",
 				args: &Flag{Meta: ""},
-			},
-			wantW: "Usage: abc [<flags>] [<arg>...]\n\nFlags:\n",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &FlagSet{
-				name: tt.fields.name,
-				args: tt.fields.args,
 			}
-			w := &bytes.Buffer{}
-			s.printUsageHeader(w)
-			if gotW := w.String(); gotW != tt.wantW {
-				t.Errorf("FlagSet.printUsageHeader() = %v, want %v", gotW, tt.wantW)
-			}
+			b := &strings.Builder{}
+			s.printUsageHeader(b)
+			convey.So(b.String(), convey.ShouldEqual, "Usage: abc [<flags>] [<arg>...]\n\nFlags:\n")
 		})
-	}
-}
-
-func testClearFlagsUnexportedField(s []*Flag) {
-	for _, v := range s {
-		v.tags = nil
-		v.val = reflect.Value{}
-		v.Value = nil
-	}
+	})
 }
 
 func TestFlagSet_Model(t *testing.T) {
+	testClearFlagSet := func(s *FlagSet) {
+		for _, v := range s.flagSlice {
+			v.tags = nil
+			v.val = reflect.Value{}
+			v.Value = nil
+		}
+		if args := s.args; args != nil {
+			args.tags = nil
+			args.val = reflect.Value{}
+			args.Value = nil
+		}
+	}
+
 	type Flags struct {
 		Top      int      `flag:"name:top; meta:N; usage:show the top <N>"`
 		Avg      bool     `flag:"usage:show the average complexity"`
@@ -88,17 +67,15 @@ func TestFlagSet_Model(t *testing.T) {
 		Pathes   []string `flag:"args; meta:path; default:."`
 	}
 
-	type args struct {
-		v interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want []*Flag
-	}{
-		{
-			args: args{v: &Flags{}},
-			want: []*Flag{
+	convey.Convey(t.Name(), t, func() {
+		convey.Convey("", func() {
+			flags := &Flags{}
+
+			s := NewFlagSet()
+			s.Model(flags)
+			testClearFlagSet(s)
+
+			convey.So(s.flagSlice, convey.ShouldResemble, []*Flag{
 				{
 					lvl:     0,
 					Name:    "top",
@@ -137,24 +114,23 @@ func TestFlagSet_Model(t *testing.T) {
 				},
 				{
 					lvl:     0,
-					Name:    "pathes",
-					Meta:    "path",
-					Default: ".",
-					Usage:   "",
+					Name:    "branch",
+					Meta:    "branch",
+					Default: "",
+					Usage:   "git branch name",
 					IsArgs:  false,
 					Bool:    false,
 				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := NewFlagSet()
-			s.Model(tt.args.v)
-
-			if got := s.flagSlice; reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FlagSet.Model() = %#v, want %#v", got, tt.want)
-			}
+			})
+			convey.So(s.args, convey.ShouldResemble, &Flag{
+				lvl:     0,
+				Name:    "pathes",
+				Meta:    "path",
+				Default: ".",
+				Usage:   "",
+				IsArgs:  true,
+				Bool:    false,
+			})
 		})
-	}
+	})
 }
