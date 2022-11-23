@@ -20,7 +20,7 @@ const (
 )
 
 type Flags struct {
-	Over  int  `flag:"name:over; meta:N; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
+	Over  int  `flag:"name:over; meta:N; usage:show functions with complexity <N> only and return exit code 1 if the set is non-empty"`
 	Top   int  `flag:"name:top; meta:N; usage:show the top <N> most complex functions only"`
 	Avg   bool `flag:"usage:show the average complexity over all functions, not depending on whether -over or -top are set"`
 	Debug bool `flag:"usage:print debug log"`
