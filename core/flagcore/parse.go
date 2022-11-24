@@ -16,18 +16,39 @@ const (
 	tagName = "flag"
 )
 
+var (
+	defaultOptions = ([]func(s *FlagSet))(nil)
+)
+
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
-func MustParse(v interface{}, args ...[]string) {
+func newDefaultFlagSet() *FlagSet {
 	s := NewFlagSet()
+	s.init()
+
+	for _, opt := range defaultOptions {
+		opt(s)
+	}
+
+	return s
+}
+
+func EnableDefault(on bool) {
+	defaultOptions = append(defaultOptions, func(s *FlagSet) {
+		s.EnableDefault(on)
+	})
+}
+
+func MustParse(v interface{}, args ...[]string) {
+	s := newDefaultFlagSet()
 	s.Model(v)
 	s.MustParse(args...)
 }
 
 func Parse(v interface{}, args ...[]string) error {
-	s := NewFlagSet()
+	s := newDefaultFlagSet()
 	s.Model(v)
 	return s.Parse(args...)
 }

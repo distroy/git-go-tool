@@ -56,7 +56,7 @@ func (s *FlagSet) init() {
 	s.name = name
 	s.flagMap = make(map[string]*Flag)
 	s.command.Usage = s.printUsage
-	s.noDefault = true
+	s.noDefault = false
 }
 
 func (s *FlagSet) EnableDefault(on bool) {
