@@ -7,7 +7,6 @@ package flagcore
 import (
 	"flag"
 	"fmt"
-	"go/ast"
 	"io"
 	"os"
 	"reflect"
@@ -37,21 +36,37 @@ type FlagSet struct {
 	flagSlice []*Flag
 	flagMap   map[string]*Flag
 	args      *Flag
+	model     reflect.Value
+	noDefault bool
 }
 
 func NewFlagSet() *FlagSet {
-	name := os.Args[0]
-	s := &FlagSet{
-		command: flag.NewFlagSet(name, flag.ExitOnError),
-		name:    name,
-		flagMap: make(map[string]*Flag),
-	}
-
-	s.command.Usage = s.printUsage
+	s := &FlagSet{}
+	s.init()
 	return s
 }
 
+func (s *FlagSet) init() {
+	if s.flagMap != nil {
+		return
+	}
+
+	name := os.Args[0]
+	s.command = flag.NewFlagSet(name, flag.ExitOnError)
+	s.name = name
+	s.flagMap = make(map[string]*Flag)
+	s.command.Usage = s.printUsage
+	s.noDefault = false
+}
+
+func (s *FlagSet) EnableDefault(on bool) {
+	s.init()
+	s.noDefault = !on
+}
+
 func (s *FlagSet) printUsage() {
+	// log.Printf("flags: %s", jsoncore.MustMarshalToString(s.model.Interface()))
+
 	w := s.command.Output()
 
 	s.printUsageHeader(w)
@@ -116,7 +131,7 @@ func (s *FlagSet) printFlagUsage(w io.Writer, f *Flag) {
 
 	fmt.Fprint(b, strings.ReplaceAll(usage, "\n", usagePrefix))
 
-	if isZeroValue(f.Value, f.Default) {
+	if isFlagDefaultZero(f) {
 		fmt.Fprint(w, b.String(), "\n")
 		return
 	}
@@ -130,7 +145,7 @@ func (s *FlagSet) printFlagUsage(w io.Writer, f *Flag) {
 			fmt.Fprintf(b, " (default: %v)", f.Default)
 		}
 
-	case *stringValue:
+	case *stringValue, *stringPtrValue:
 		fmt.Fprintf(b, " (default: %q)", f.Default)
 
 	case *stringsValue:
@@ -154,6 +169,8 @@ func (s *FlagSet) sortedFlags() []*Flag {
 }
 
 func (s *FlagSet) MustParse(args ...[]string) {
+	s.init()
+
 	a := os.Args[1:]
 	if len(args) > 0 {
 		a = args[0]
@@ -166,6 +183,8 @@ func (s *FlagSet) MustParse(args ...[]string) {
 }
 
 func (s *FlagSet) Parse(args ...[]string) error {
+	s.init()
+
 	if len(args) > 0 {
 		return s.parse(args[0])
 	}
@@ -182,7 +201,7 @@ func (s *FlagSet) parse(args []string) error {
 	// log.Printf(" === %#v", s.args)
 	if s.args != nil {
 		args := s.command.Args()
-		if len(args) == 0 && s.args.Default != "" {
+		if !s.noDefault && len(args) == 0 && s.args.Default != "" {
 			args = []string{s.args.Default}
 		}
 		// log.Printf(" === %v", args)
@@ -192,12 +211,15 @@ func (s *FlagSet) parse(args []string) error {
 }
 
 func (s *FlagSet) Model(v interface{}) {
+	s.init()
+
 	val := reflect.ValueOf(v)
 	typ := val.Type()
 	if typ.Kind() != reflect.Ptr && typ.Elem().Kind() != reflect.Struct {
 		panic(fmt.Errorf("input flags must be pointer to struct. %s", typ.String()))
 	}
 	val = val.Elem()
+	s.model = val
 
 	s.parseStruct(0, val)
 }
@@ -216,19 +238,19 @@ func (s *FlagSet) addFlag(f *Flag) {
 		return
 	}
 
-	// if v := s.flags[f.Name]; v != nil {
-	// }
-
 	v, val := s.getFlagValue(f)
 	if v == nil {
 		return
 	}
 	f.Value = v
 
-	if len(f.Default) > 0 && (val.Kind() != reflect.Slice || val.Len() == 0) {
+	if !s.noDefault && f.Default != "" && (val.Kind() != reflect.Slice || val.Len() == 0) {
 		v.Set(f.Default)
 	}
-	f.Default = v.String()
+
+	if f.Default == "" {
+		f.Default = v.String()
+	}
 
 	s.command.Var(v, f.Name, f.Usage)
 	s.flagSlice = append(s.flagSlice, f)
@@ -242,9 +264,9 @@ func (s *FlagSet) getFlagValue(f *Flag) (flagVal Value, refVal reflect.Value) {
 		return v, val
 	}
 
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
+	// if val.Kind() == reflect.Ptr {
+	// 	val = val.Elem()
+	// }
 
 	typ := val.Type()
 	// log.Printf(" === 2222 %#v", m)
@@ -255,8 +277,14 @@ func (s *FlagSet) getFlagValue(f *Flag) (flagVal Value, refVal reflect.Value) {
 	}
 
 	v := fn(val)
-	if vv, ok := v.(*boolValue); ok && f.Bool {
-		return newBoolFlag(vv), val
+	if f.Bool {
+		switch vv := v.(type) {
+		case *boolValue:
+			return newBoolFlag(vv), val
+
+		case boolPtrValue:
+			return newBoolPtrFlag(vv), val
+		}
 	}
 
 	return v, val
@@ -264,12 +292,11 @@ func (s *FlagSet) getFlagValue(f *Flag) (flagVal Value, refVal reflect.Value) {
 
 func (s *FlagSet) parseStruct(lvl int, val reflect.Value) {
 	typ := val.Type()
-
 	// log.Printf(" === %s", typ.String())
 
 	for i, l := 0, typ.NumField(); i < l; i++ {
 		field := typ.Field(i)
-		if !ast.IsExported(field.Name) {
+		if field.Anonymous {
 			continue
 		}
 
@@ -327,7 +354,7 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 func (s *FlagSet) parseStructField(lvl int, fVal reflect.Value, field reflect.StructField) {
 	val := fVal
 	typ := field.Type
-	if typ.Kind() == reflect.Ptr {
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Struct {
 		typ = typ.Elem()
 		if val.IsNil() {
 			val.Set(reflect.New(typ))

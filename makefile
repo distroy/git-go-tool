@@ -119,5 +119,4 @@ setup: git-ignore
 
 .PHONY: cognitive
 cognitive: setup
-	go-cognitive -over 15 .
-	go-cognitive -top 10 .
+	go-cognitive

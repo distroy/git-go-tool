@@ -8,39 +8,49 @@ import (
 	"log"
 	"os"
 
+	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
-	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/flagcore"
+	filtercore "github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/goformat"
-	"github.com/distroy/git-go-tool/core/regexpcore"
+	"github.com/distroy/git-go-tool/service/configservice"
 	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
 type Flags struct {
-	ModeConfig    modeservice.Config
-	CheckerConfig goformat.Config
+	GitDiff  *config.GitDiffConfig  `yaml:"git-diff"`
+	Filter   *config.FilterConfig   `yaml:",inline"`
+	GoFormat *config.GoFormatConfig `yaml:",inline"`
 
-	Filter *filter.Filter
 	// Pathes []string `flag:"args; meta:path; default:."`
 }
 
-func main() {
-	flags := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
+func parseFlags() *Flags {
+	cfg := &Flags{
+		GitDiff:  config.DefaultGitDiff,
+		Filter:   config.DefaultFilter,
+		GoFormat: config.DefaultGoFormat,
 	}
-	flagcore.MustParse(flags)
 
-	flags.ModeConfig.FileFilter = flags.Filter.Check
-	mode := modeservice.New(&flags.ModeConfig)
+	flags := &Flags{
+		Filter: config.DefaultFilter,
+	}
 
-	checker := goformat.BuildChecker(&flags.CheckerConfig)
+	configservice.MustParse(cfg, flags, "go-format")
+	return cfg
+}
+
+func main() {
+	flags := parseFlags()
+
+	filter := flags.Filter.ToFilter()
+
+	mode := modeservice.New(flags.GitDiff.ToConfig(filter.Check))
+
+	checker := goformat.BuildChecker(flags.GoFormat.ToConfig())
 	writer := goformat.NewIssueWriter(os.Stdout)
 
 	filecore.MustWalkFiles(".", func(f *filecore.File) error {
-		if !f.IsGo() || !flags.Filter.Check(f.Name) {
+		if !f.IsGo() || !filter.Check(f.Name) {
 			return nil
 		}
 
@@ -50,7 +60,7 @@ func main() {
 		}
 
 		issues := x.Issues()
-		n := filter.FilterSlice(issues, func(issue *goformat.Issue) bool {
+		n := filtercore.FilterSlice(issues, func(issue *goformat.Issue) bool {
 			return mode.IsIn(issue.Filename, issue.BeginLine, issue.EndLine)
 		})
 		issues = issues[:n]

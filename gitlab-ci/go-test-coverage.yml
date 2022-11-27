@@ -23,20 +23,28 @@
     # 检查单元测试是否都可以通过
     - mkdir -pv "$(dirname "$GO_COVERAGE_FILE")"
     - mkdir -pv "$(dirname "$GO_COVERAGE_HTML")"
-    - echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
+    - |
+      echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
     - echo_and_run env GOFLAGS="${GO_FLAGS}" go tool cover -html "$GO_COVERAGE_FILE" -o "$GO_COVERAGE_HTML"
     - |
-      if [[ -$GO_COVERAGE_EXCLUDES == - ]]; then
+      if [[ "$GO_COVERAGE_EXCLUDES" == "" ]]; then
         GO_COVERAGE_EXCLUDES="$GO_EXCLUDE_OPTIONS"
       fi
+    # cmd options
+    - |
+      _cmd_options=""
+      test -z "$GIT_COMPARE_MODE" || \
+        _cmd_options="$_cmd_options -mode $GIT_COMPARE_MODE"
+      test -z "$GO_COVERAGE_RATE" || \
+        _cmd_options="$_cmd_options -rate $GO_COVERAGE_RATE"
+      test -z "$GO_COVERAGE_EXCLUDES" || \
+        _cmd_options="$_cmd_options $GO_COVERAGE_EXCLUDES"
     # 获取 MR 2个branch 的公共的 commit 节点(merge_base)
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
       echo "merge base: $merge_base"
     - |
       echo_and_run git-diff-go-coverage \
-          -rate "$GO_COVERAGE_RATE" \
-          -mode "$GIT_COMPARE_MODE" \
-          -branch "$merge_base" \
           -file "$GO_COVERAGE_FILE" \
-          ${GO_COVERAGE_EXCLUDES}
+          -branch "$merge_base" \
+          ${_cmd_options}

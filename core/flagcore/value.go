@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,8 +17,11 @@ type Value interface {
 }
 
 func mustMarshalJson(v interface{}) string {
-	d, _ := json.Marshal(v)
-	return string(d)
+	b := &strings.Builder{}
+	e := json.NewEncoder(b)
+	e.SetEscapeHTML(false)
+	e.Encode(v)
+	return b.String()
 }
 
 // duration

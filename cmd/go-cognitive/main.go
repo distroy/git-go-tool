@@ -8,11 +8,12 @@ import (
 	"os"
 	"sort"
 
+	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/gocognitive"
-	"github.com/distroy/git-go-tool/core/regexpcore"
+	"github.com/distroy/git-go-tool/core/termcolor"
+	"github.com/distroy/git-go-tool/service/configservice"
 )
 
 const (
@@ -20,44 +21,54 @@ const (
 )
 
 type Flags struct {
-	Over  int  `flag:"name:over; meta:N; usage:show functions with complexity > <N> only and return exit code 1 if the set is non-empty"`
-	Top   int  `flag:"name:top; meta:N; usage:show the top <N> most complex functions only"`
-	Avg   bool `flag:"usage:show the average complexity over all functions, not depending on whether -over or -top are set"`
-	Debug bool `flag:"usage:print debug log"`
+	Filter      *config.FilterConfig      `yaml:",inline"`
+	GoCognitive *config.GoCognitiveConfig `yaml:",inline"`
 
-	Filter *filter.Filter
-	Pathes []string `flag:"args; meta:path; default:."`
+	Avg    bool     `yaml:"-"  flag:"usage:show the average complexity over all functions, not depending on whether -over or -top are set"`
+	Debug  bool     `yaml:"-"  flag:"usage:print debug log"`
+	Pathes []string `yaml:"-"  flag:"args; meta:path; default:."`
+}
+
+func parseFlags() *Flags {
+	cfg := &Flags{
+		Filter:      config.DefaultFilter,
+		GoCognitive: config.DefaultGoCognitive,
+	}
+
+	flags := &Flags{
+		Filter: config.DefaultFilter,
+	}
+
+	configservice.MustParse(cfg, flags, "go-cognitive")
+
+	if len(cfg.Pathes) == 0 {
+		cfg.Pathes = []string{"."}
+	}
+	return cfg
 }
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	// log.SetPrefix("go-cognitive: ")
 
-	flags := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
-	}
-
-	flagcore.MustParse(flags)
-	// log.Printf(" === %#v", flags)
+	flags := parseFlags()
+	filter := flags.Filter.ToFilter()
 
 	gocognitive.SetDebug(flags.Debug)
 
-	res := analyzePathes(flags.Pathes, flags.Filter)
+	res := analyzePathes(flags.Pathes, filter)
 	// log.Printf(" === %#v", res)
 
 	out := os.Stdout
 
 	sort.Sort(gocognitive.Complexites(res))
-	written := writeResult(out, res, flags)
+	isOver := writeResult(out, res, flags)
 
 	if flags.Avg {
 		showAverage(out, res)
 	}
 
-	if flags.Over > 0 && written > 0 {
+	if *flags.GoCognitive.Over > 0 && isOver {
 		os.Exit(1)
 	}
 }
@@ -93,23 +104,32 @@ func analyzePathes(pathes []string, filter *filter.Filter) []*gocognitive.Comple
 	return complexities
 }
 
-func writeResult(w io.Writer, res []*gocognitive.Complexity, flags *Flags) int {
-	top := flags.Top
-	over := flags.Over
+func writeResult(w io.Writer, res []*gocognitive.Complexity, flags *Flags) bool {
+	if len(res) == 0 {
+		return false
+	}
+
+	top := *flags.GoCognitive.Top
+	over := *flags.GoCognitive.Over
 	if top <= 0 {
 		top = math.MaxInt32
 	}
 
+	isOver := res[0].Complexity > over
 	for i, stat := range res {
 		if i >= top {
-			return i
+			break
 		}
-		if stat.Complexity <= over {
-			return i
+		if isOver && stat.Complexity <= over {
+			break
 		}
-		fmt.Fprintln(w, stat)
+		if isOver {
+			fmt.Fprintf(w, "%s%s%s\n", termcolor.Red, stat.String(), termcolor.Reset)
+		} else {
+			fmt.Fprintf(w, "%s\n", stat.String())
+		}
 	}
-	return len(res)
+	return isOver
 }
 
 func showAverage(w io.Writer, cplxes []*gocognitive.Complexity) {
@@ -117,6 +137,10 @@ func showAverage(w io.Writer, cplxes []*gocognitive.Complexity) {
 }
 
 func average(arr []*gocognitive.Complexity) float64 {
+	if len(arr) == 0 {
+		return 0
+	}
+
 	total := 0
 	for _, s := range arr {
 		total += s.Complexity

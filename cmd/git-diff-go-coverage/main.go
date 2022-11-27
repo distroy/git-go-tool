@@ -11,20 +11,32 @@ import (
 	"os"
 	"strings"
 
-	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/flagcore"
+	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/gocoverage"
-	"github.com/distroy/git-go-tool/core/regexpcore"
 	"github.com/distroy/git-go-tool/core/termcolor"
+	"github.com/distroy/git-go-tool/service/configservice"
 	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
 type Flags struct {
-	ModeConfig modeservice.Config
-	Rate       float64 `flag:"default:0.65; usage:the lowest coverage rate. range: [0, 1.0)"`
-	Top        int     `flag:"meta:N; default:10; usage:show the top <N> least coverage rage file only"`
-	File       string  `flag:"meta:file; usage:the coverage file path, cannot be empty"`
-	Filter     *filter.Filter
+	GitDiff  *config.GitDiffConfig  `yaml:"git-diff"`
+	Filter   *config.FilterConfig   `yaml:",inline"`
+	Coverage *config.CoverageConfig `yaml:",inline"`
+}
+
+func parseFlags() *Flags {
+	cfg := &Flags{
+		GitDiff:  config.DefaultGitDiff,
+		Filter:   config.DefaultFilter,
+		Coverage: config.DefaultCoverage,
+	}
+
+	flags := &Flags{
+		Filter: config.DefaultFilter,
+	}
+
+	configservice.MustParse(cfg, flags, "go-coverage")
+	return cfg
 }
 
 func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool) gocoverage.Files {
@@ -39,19 +51,13 @@ func analyzeCoverages(file string, filters ...func(file string, lineNo int) bool
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	flags := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
-	}
-	flagcore.MustParse(flags)
+	flags := parseFlags()
 
-	flags.ModeConfig.FileFilter = flags.Filter.Check
-	mode := modeservice.New(&flags.ModeConfig)
+	filter := flags.Filter.ToFilter()
+	mode := modeservice.New(flags.GitDiff.ToConfig(filter.Check))
 
-	coverages := analyzeCoverages(flags.File, func(file string, lineNo int) bool {
-		return flags.Filter.Check(file) && mode.IsIn(file, lineNo, lineNo)
+	coverages := analyzeCoverages(*flags.Coverage.File, func(file string, lineNo int) bool {
+		return filter.Check(file) && mode.IsIn(file, lineNo, lineNo)
 	})
 
 	mode.Walk(func(file string, begin, end int) {
@@ -77,20 +83,20 @@ func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
 	}
 
 	rate := count.GetRate()
-	if rate >= flags.Rate {
+	if rate >= *flags.Coverage.Rate {
 		fmt.Fprintf(w, "coverage rate: %.04g, coverages:%d, non coverages:%d\n",
 			rate, count.Coverages, count.NonCoverages)
 		return
 	}
 
-	files := getTopNonCoverageFiles(coverages, flags.Top)
+	files := getTopNonCoverageFiles(coverages, *flags.Coverage.Top)
 
 	fmt.Fprintf(w, "%smust improve coverage rate. rate:%.04g, threshold:%g coverages:%d, non coverages:%d%s\n",
-		termcolor.Red, rate, flags.Rate, count.Coverages, count.NonCoverages, termcolor.Reset)
+		termcolor.Red, rate, *flags.Coverage.Rate, count.Coverages, count.NonCoverages, termcolor.Reset)
 
 	fmt.Fprint(w, termcolor.Red)
 	fmt.Fprint(w, "\n")
-	if top := flags.Top; top > 0 {
+	if top := *flags.Coverage.Top; top > 0 {
 		fmt.Fprintf(w, "Non coverage files (top %d):\n", top)
 	} else {
 		fmt.Fprintf(w, "Non coverage files (all):\n")

@@ -7,6 +7,8 @@ package flagcore
 import (
 	"reflect"
 	"time"
+
+	"github.com/distroy/git-go-tool/core/ptrcore"
 )
 
 var (
@@ -24,6 +26,21 @@ var (
 
 	typeFloat32 = reflect.TypeOf(float32(0))
 	typeFloat64 = reflect.TypeOf(float64(0))
+)
+
+var (
+	typeDurationPtr = reflect.TypeOf(ptrcore.NewDuration(0))
+
+	typeBoolPtr   = reflect.TypeOf(ptrcore.NewBool(false))
+	typeStringPtr = reflect.TypeOf(ptrcore.NewString(""))
+
+	typeIntPtr    = reflect.TypeOf(ptrcore.NewInt(0))
+	typeInt64Ptr  = reflect.TypeOf(ptrcore.NewInt64(0))
+	typeUintPtr   = reflect.TypeOf(ptrcore.NewUint(0))
+	typeUint64Ptr = reflect.TypeOf(ptrcore.NewUint64(0))
+
+	typeFloat32Ptr = reflect.TypeOf(ptrcore.NewFloat32(0))
+	typeFloat64Ptr = reflect.TypeOf(ptrcore.NewFloat64(0))
 )
 
 var (
@@ -62,4 +79,16 @@ var fillFlagFuncMap = map[reflect.Type]fillFlagFuncType{
 	typeUint64s:  func(val reflect.Value) Value { return newUint64sValue(val.Addr().Interface().(*[]uint64)) },
 	typeFloat32s: func(val reflect.Value) Value { return newFloat32sValue(val.Addr().Interface().(*[]float32)) },
 	typeFloat64s: func(val reflect.Value) Value { return newFloat64sValue(val.Addr().Interface().(*[]float64)) },
+
+	typeDurationPtr: func(val reflect.Value) Value { return newDurationPtrValue(val.Addr().Interface().(**time.Duration)) },
+
+	typeBoolPtr:   func(val reflect.Value) Value { return newBoolPtrValue(val.Addr().Interface().(**bool)) },
+	typeStringPtr: func(val reflect.Value) Value { return newStringPtrValue(val.Addr().Interface().(**string)) },
+
+	typeIntPtr:     func(val reflect.Value) Value { return newIntPtrValue(val.Addr().Interface().(**int)) },
+	typeInt64Ptr:   func(val reflect.Value) Value { return newInt64PtrValue(val.Addr().Interface().(**int64)) },
+	typeUintPtr:    func(val reflect.Value) Value { return newUintPtrValue(val.Addr().Interface().(**uint)) },
+	typeUint64Ptr:  func(val reflect.Value) Value { return newUint64PtrValue(val.Addr().Interface().(**uint64)) },
+	typeFloat32Ptr: func(val reflect.Value) Value { return newFloat32PtrValue(val.Addr().Interface().(**float32)) },
+	typeFloat64Ptr: func(val reflect.Value) Value { return newFloat64PtrValue(val.Addr().Interface().(**float64)) },
 }
