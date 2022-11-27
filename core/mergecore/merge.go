@@ -7,6 +7,8 @@ package mergecore
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/distroy/git-go-tool/core/refcore"
 )
 
 type any interface{}
@@ -96,7 +98,7 @@ func mergeInterface(target, source reflect.Value) error {
 }
 
 func mergeBaseType(target, source reflect.Value) error {
-	if !source.IsZero() {
+	if !refcore.IsValZero(source) {
 		target.Set(source)
 	}
 	return nil
