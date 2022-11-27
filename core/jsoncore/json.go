@@ -11,9 +11,9 @@ import (
 	"github.com/distroy/git-go-tool/core/strcore"
 )
 
-type Any interface{}
+type any interface{}
 
-func Marshal(v Any) ([]byte, error) {
+func Marshal(v any) ([]byte, error) {
 	b := bytes.NewBuffer(nil)
 	e := json.NewEncoder(b)
 	e.SetEscapeHTML(false)
@@ -23,7 +23,7 @@ func Marshal(v Any) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func MarshalToString(v Any) (string, error) {
+func MarshalToString(v any) (string, error) {
 	d, err := Marshal(v)
 	if err != nil {
 		return "", err
@@ -31,7 +31,7 @@ func MarshalToString(v Any) (string, error) {
 	return strcore.BytesToStrUnsafe(d), nil
 }
 
-func MustMarshal(v Any) []byte {
+func MustMarshal(v any) []byte {
 	d, err := Marshal(v)
 	if err != nil {
 		panic(err)
@@ -39,14 +39,14 @@ func MustMarshal(v Any) []byte {
 	return d
 }
 
-func MustMarshalToString(v Any) string {
+func MustMarshalToString(v any) string {
 	return strcore.BytesToStrUnsafe(MustMarshal(v))
 }
 
-func Unmarshal(d []byte, v Any) error {
+func Unmarshal(d []byte, v any) error {
 	return json.Unmarshal(d, v)
 }
 
-func UnmarshalFromString(d string, v Any) error {
+func UnmarshalFromString(d string, v any) error {
 	return json.Unmarshal(strcore.StrToBytesUnsafe(d), v)
 }
