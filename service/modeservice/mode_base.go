@@ -26,7 +26,12 @@ func (m *modeBase) mustInit(c *Config) {
 	m.cache = newCache(m.gitRoot)
 }
 
+func (m *modeBase) IsGitSub(file string) bool {
+	return m.isGitSub(file)
+}
+
 func (m *modeBase) isFileIgnored(file string) bool {
+	// log.Printf("file:%s, is git sub:%v", file, m.isGitSub(file))
 	if m.isGitSub(file) {
 		return true
 	}

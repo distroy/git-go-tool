@@ -13,7 +13,7 @@ import (
 
 	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
-	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/filtercore"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/termcolor"
 	"github.com/distroy/git-go-tool/service/configservice"
@@ -46,11 +46,12 @@ func parseFlags() *Flags {
 }
 
 func filterComplexities(array []*gocognitive.Complexity, f func(*gocognitive.Complexity) bool) []*gocognitive.Complexity {
-	n := filter.FilterSlice(array, f)
+	n := filtercore.FilterSlice(array, f)
+	// log.Printf(" === %d", n)
 	return array[:n]
 }
 
-func analyzeCognitive(over int, filter *filter.Filter) []*gocognitive.Complexity {
+func analyzeCognitive(over int, filter *filtercore.Filter) []*gocognitive.Complexity {
 	files := make([]*filecore.File, 0, defaultBufferSize)
 	count := 0
 	filecore.MustWalkFiles(".", func(f *filecore.File) error {
@@ -95,10 +96,12 @@ func main() {
 	complexities := analyzeCognitive(*flags.GoCognitive.Over, filter)
 
 	overs := filterComplexities(complexities, func(c *gocognitive.Complexity) bool {
-		return c.Complexity > *flags.GoCognitive.Over && filter.Check(c.Filename)
+		return c.Complexity > *flags.GoCognitive.Over && !mode.IsGitSub(c.Filename)
 	})
 
+	// log.Printf(" === ")
 	newOvers := filterComplexities(overs, func(c *gocognitive.Complexity) bool {
+		// log.Printf(" === ")
 		return mode.IsIn(c.Filename, c.BeginLine, c.EndLine)
 	})
 

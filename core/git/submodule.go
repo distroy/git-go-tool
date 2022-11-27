@@ -20,6 +20,7 @@ func MustGetSubModules() []*SubModule {
 	if err != nil {
 		panic(err)
 	}
+	// log.Printf("submodules: %s", jsoncore.MustMarshal(res))
 	return res
 }
 

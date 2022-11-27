@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/filtercore"
 	"github.com/distroy/git-go-tool/core/mathcore"
 )
 
@@ -62,7 +62,7 @@ func (c importChecker) checkImport(x *Context, imps []*importInfo) Error {
 
 	begin, end := c.getImportRange(imps)
 
-	n := filter.FilterSlice(imps, func(v *importInfo) bool { return v.StdLib })
+	n := filtercore.FilterSlice(imps, func(v *importInfo) bool { return v.StdLib })
 	stds := imps[:n]
 	others := imps[n:]
 
