@@ -21,10 +21,10 @@ variables:
   GO_CHECK_IMAGE: 'ubuntu-latest'
 
   # *** git flags begin ***
-  # git 的比较模式
+  # git 的比较模式, default: diff
   #   diff: 增量模式，只检查新增代码的认知复杂度和单测覆盖率
   #   all: 全量模式，检查所有代码的认知复杂度和单测覆盖率
-  GIT_COMPARE_MODE: "diff"
+  GIT_COMPARE_MODE: ""
   # *** git flags end ***
 
   # *** go flags begin ***
