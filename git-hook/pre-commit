@@ -44,7 +44,4 @@ git-diff-go-cognitive \
     -over $GO_COGNITIVE_OVER \
     -branch "$against" || exit $?
 
-git-diff-go-format \
-    ${GO_EXCLUDE_OPTIONS} \
-    -func-context-error-match \
-    -branch "$against" || exit $?
+git-diff-go-format -branch "$against" || exit $?

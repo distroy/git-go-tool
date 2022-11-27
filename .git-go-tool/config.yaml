@@ -1,0 +1,29 @@
+# go-coverage:
+#   rate: 0.65
+#   top: 10
+go-coverage:
+  git-diff:
+    mode: all
+  exclude:
+    - '(^|/)3rd/'
+  rate: 0.5
+
+# go-format:
+#   file-line: 1000
+#   import: true
+#   formated: true
+#   package: true
+#   func-input-num: 3
+#   func-output-num: 3
+#   func-named-output: true
+#   func-input-num-without-context: true
+#   func-output-num-without-error: true
+#   func-context-first: true
+#   func-error-last: true
+#   func-context-error-match: false
+go-format:
+  git-diff:
+    mode: all
+  exclude:
+    - '(^|/)3rd/'
+  func-context-error-match: true

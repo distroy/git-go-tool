@@ -12,7 +12,8 @@ import (
 // FilterSlice filters the slice with filter
 // slice type must be slice or array
 // filter type must be:
-//		func (v TypeOfSliceElement) bool
+//
+//	func (v TypeOfSliceElement) bool
 func FilterSlice(slice interface{}, filter interface{}) int {
 	sliceVal := reflect.ValueOf(slice)
 	sliceTyp := sliceVal.Type()

@@ -8,36 +8,46 @@ import (
 	"log"
 	"os"
 
+	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
-	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/goformat"
-	"github.com/distroy/git-go-tool/core/regexpcore"
+	"github.com/distroy/git-go-tool/service/configservice"
 )
 
 type Flags struct {
-	CheckerConfig goformat.Config
+	Filter   *config.FilterConfig   `yaml:",inline"`
+	GoFormat *config.GoFormatConfig `yaml:",inline"`
+	Pathes   []string               `yaml:"-"    flag:"args; meta:path; default:."`
+}
 
-	Filter *filter.Filter
-	Pathes []string `flag:"args; meta:path; default:."`
+func parseFlags() *Flags {
+	cfg := &Flags{
+		Filter:   config.DefaultFilter,
+		GoFormat: config.DefaultGoFormat,
+	}
+
+	flags := &Flags{
+		Filter: config.DefaultFilter,
+	}
+
+	configservice.MustParse(cfg, flags, "go-format")
+	if len(cfg.Pathes) == 0 {
+		cfg.Pathes = []string{"."}
+	}
+	return cfg
 }
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	flags := &Flags{
-		Filter: &filter.Filter{
-			Includes: regexpcore.MustNewRegExps(nil),
-			Excludes: regexpcore.MustNewRegExps(regexpcore.DefaultExcludes),
-		},
-	}
-	flagcore.MustParse(flags)
+	flags := parseFlags()
 
-	checker := goformat.BuildChecker(&flags.CheckerConfig)
+	filter := flags.Filter.ToFilter()
+	checker := goformat.BuildChecker(flags.GoFormat.ToConfig())
 	writer := goformat.NewIssueWriter(os.Stdout)
 
 	filecore.MustWalkPathes(flags.Pathes, func(f *filecore.File) error {
-		if !f.IsGo() || !flags.Filter.Check(f.Name) {
+		if !f.IsGo() || !filter.Check(f.Name) {
 			return nil
 		}
 
