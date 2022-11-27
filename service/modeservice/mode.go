@@ -16,6 +16,8 @@ type Mode interface {
 	// if begin == 0 && end == 0, check the whole file
 	IsIn(file string, begin, end int) bool
 
+	IsGitSub(file string) bool
+
 	Walk(fn WalkFunc)
 }
 

@@ -5,7 +5,7 @@
 package config
 
 import (
-	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/filtercore"
 	"github.com/distroy/git-go-tool/core/regexpcore"
 )
 
@@ -19,8 +19,8 @@ type FilterConfig struct {
 	Excludes []string `yaml:"exclude"  flag:"name:exclude; meta:regexp; usage:the regexp for exclude pathes"`
 }
 
-func (c *FilterConfig) ToFilter() *filter.Filter {
-	return &filter.Filter{
+func (c *FilterConfig) ToFilter() *filtercore.Filter {
+	return &filtercore.Filter{
 		Includes: regexpcore.MustNewRegExps(c.unique(c.Includes)),
 		Excludes: regexpcore.MustNewRegExps(c.unique(c.Excludes)),
 	}

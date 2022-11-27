@@ -10,7 +10,7 @@ import (
 
 	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
-	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/filtercore"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/termcolor"
 	"github.com/distroy/git-go-tool/service/configservice"
@@ -73,7 +73,7 @@ func main() {
 	}
 }
 
-func analyzePathes(pathes []string, filter *filter.Filter) []*gocognitive.Complexity {
+func analyzePathes(pathes []string, filter *filtercore.Filter) []*gocognitive.Complexity {
 	files := make([]*filecore.File, 0, defaultBufferSize)
 	count := 0
 	filecore.MustWalkPathes(pathes, func(f *filecore.File) error {

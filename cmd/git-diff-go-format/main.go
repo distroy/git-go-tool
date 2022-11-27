@@ -10,7 +10,7 @@ import (
 
 	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
-	filtercore "github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/filtercore"
 	"github.com/distroy/git-go-tool/core/goformat"
 	"github.com/distroy/git-go-tool/service/configservice"
 	"github.com/distroy/git-go-tool/service/modeservice"

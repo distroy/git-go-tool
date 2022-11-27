@@ -7,7 +7,7 @@ package goformat
 import (
 	"encoding/json"
 
-	"github.com/distroy/git-go-tool/core/filter"
+	"github.com/distroy/git-go-tool/core/filtercore"
 	"github.com/distroy/git-go-tool/core/strcore"
 )
 
@@ -24,7 +24,7 @@ func (c checkers) Check(ctx *Context) Error {
 }
 
 func Checkers(args ...Checker) Checker {
-	n := filter.FilterSlice(args, func(v Checker) bool {
+	n := filtercore.FilterSlice(args, func(v Checker) bool {
 		if v == nil {
 			return false
 		}

@@ -39,8 +39,8 @@ function _go_install() {
 _go_install git-diff-go-cognitive
 _go_install git-diff-go-format
 
-git-diff-go-cognitive \
+_echo_and_run git-diff-go-cognitive \
     -branch "$against" || exit $?
 
-git-diff-go-format \
+_echo_and_run git-diff-go-format \
     -branch "$against" || exit $?
