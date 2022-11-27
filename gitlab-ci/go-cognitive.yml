@@ -23,10 +23,17 @@
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
       echo "merge base: $merge_base"
+    # cmd options
+    - |
+      _cmd_options=""
+      test -z "$GIT_COMPARE_MODE" || \
+        _cmd_options="$_cmd_options -mode $GIT_COMPARE_MODE"
+      test -z "$GO_COGNITIVE_OVER" || \
+        _cmd_options="$_cmd_options -over $GO_COGNITIVE_OVER"
+      test -z "$GO_COGNITIVE_EXCLUDES" || \
+        _cmd_options="$_cmd_options $GO_COGNITIVE_EXCLUDES"
     # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
     - |
       echo_and_run git-diff-go-cognitive \
-          -over "$GO_COGNITIVE_OVER" \
-          -mode "$GIT_COMPARE_MODE" \
-          -branch "$merge_base" \
-          ${GO_COGNITIVE_EXCLUDES}
+        -branch "$merge_base" \
+        ${_cmd_options}

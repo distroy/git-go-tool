@@ -23,21 +23,39 @@
     - |
       merge_base=$(git merge-base $GIT_MERGE_TARGET $GIT_MERGE_SOURCE)
       echo "merge base: $merge_base"
+    # cmd options
+    - |
+      _cmd_options=""
+      test -z "$GIT_COMPARE_MODE" || \
+        _cmd_options="$_cmd_options -mode $GIT_COMPARE_MODE"
+      test -z "$GO_FORMAT_FILE_LINE_LIMIT" || \
+        _cmd_options="$_cmd_options -file-line $GO_FORMAT_FILE_LINE_LIMIT"
+      test -z "$GO_FORMAT_CHECK_IMPORT" || \
+        _cmd_options="$_cmd_options -import $GO_FORMAT_CHECK_IMPORT"
+      test -z "$GO_FORMAT_CHECK_SOURCE_FORMATED" || \
+        _cmd_options="$_cmd_options -formated $GO_FORMAT_CHECK_SOURCE_FORMATED"
+      test -z "$GO_FORMAT_CHECK_PACKAGE_NAME" || \
+        _cmd_options="$_cmd_options -package $GO_FORMAT_CHECK_PACKAGE_NAME"
+      test -z "$GO_FORMAT_FUNC_INPUT_NUM_LIMIT" || \
+        _cmd_options="$_cmd_options -func-input-num $GO_FORMAT_FUNC_INPUT_NUM_LIMIT"
+      test -z "$GO_FORMAT_FUNC_OUTPUT_NUM_LIMIT" || \
+        _cmd_options="$_cmd_options -func-output-num $GO_FORMAT_FUNC_OUTPUT_NUM_LIMIT"
+      test -z "$GO_FORMAT_FUNC_OUTPUT_IF_NEED_NAMED" || \
+        _cmd_options="$_cmd_options -func-named-output $GO_FORMAT_FUNC_OUTPUT_IF_NEED_NAMED"
+      test -z "$GO_FORMAT_FUNC_INPUT_NUM_WITHOUT_CONTEXT" || \
+        _cmd_options="$_cmd_options -func-input-num-without-context $GO_FORMAT_FUNC_INPUT_NUM_WITHOUT_CONTEXT"
+      test -z "$GO_FORMAT_FUNC_OUTPUT_NUM_WITHOUT_ERROR" || \
+        _cmd_options="$_cmd_options -func-output-num-without-error $GO_FORMAT_FUNC_OUTPUT_NUM_WITHOUT_ERROR"
+      test -z "$GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST" || \
+        _cmd_options="$_cmd_options -func-context-first $GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST"
+      test -z "$GO_FORMAT_FUNC_OUTPUT_ERROR_LAST" || \
+        _cmd_options="$_cmd_options -func-error-last $GO_FORMAT_FUNC_OUTPUT_ERROR_LAST"
+      test -z "$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH" || \
+        _cmd_options="$_cmd_options -func-context-error-match=$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH"
+      test -z "$GO_FORMAT_EXCLUDES" || \
+        _cmd_options="$_cmd_options $GO_FORMAT_EXCLUDES"
     # 调用脚本，检查当前代码到 merge_base 的差异，并检查新代码中是否有复杂度过高的代码
     - |
       echo_and_run git-diff-go-format \
-          -mode "$GIT_COMPARE_MODE" \
-          -branch "$merge_base" \
-          -file-line "$GO_FORMAT_FILE_LINE_LIMIT" \
-          -import "$GO_FORMAT_CHECK_IMPORT" \
-          -formated "$GO_FORMAT_CHECK_SOURCE_FORMATED" \
-          -package "$GO_FORMAT_CHECK_PACKAGE_NAME" \
-          -func-input-num "$GO_FORMAT_FUNC_INPUT_NUM_LIMIT" \
-          -func-output-num "$GO_FORMAT_FUNC_OUTPUT_NUM_LIMIT" \
-          -func-named-output "$GO_FORMAT_FUNC_OUTPUT_IF_NEED_NAMED" \
-          -func-input-num-without-context "$GO_FORMAT_FUNC_INPUT_NUM_WITHOUT_CONTEXT" \
-          -func-output-num-without-error "$GO_FORMAT_FUNC_OUTPUT_NUM_WITHOUT_ERROR" \
-          -func-context-first "$GO_FORMAT_FUNC_INPUT_CONTEXT_FIRST" \
-          -func-error-last "$GO_FORMAT_FUNC_OUTPUT_ERROR_LAST" \
-          -func-context-error-match="$GO_FORMAT_FUNC_CONTEXT_ERROR_MATCH" \
-          ${GO_FORMAT_EXCLUDES}
+        -branch "$merge_base" \
+        ${_cmd_options}

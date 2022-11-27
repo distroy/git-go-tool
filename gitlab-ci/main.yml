@@ -107,7 +107,7 @@ variables:
   GO_COGNITIVE_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
   # 检查认知复杂度的源分支名
   GO_COGNITIVE_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
-  # 函数认知复杂度的阈值
+  # 函数认知复杂度的阈值，default: 15
   GO_COGNITIVE_OVER: "15"
   # 检查 go 代码的认知复杂度时，排除的文件选项
   # 请参照 GO_EXCLUDE_OPTIONS 说明
