@@ -40,8 +40,7 @@ _go_install git-diff-go-cognitive
 _go_install git-diff-go-format
 
 git-diff-go-cognitive \
-    ${GO_EXCLUDE_OPTIONS} \
-    -over $GO_COGNITIVE_OVER \
     -branch "$against" || exit $?
 
-git-diff-go-format -branch "$against" || exit $?
+git-diff-go-format \
+    -branch "$against" || exit $?

@@ -27,3 +27,12 @@ go-format:
   exclude:
     - '(^|/)3rd/'
   func-context-error-match: true
+
+# go-cognitive:
+#   over: 15
+#   top: 10
+go-cognitive:
+  git-diff:
+    mode: all
+  exclude:
+    - '(^|/)3rd/'

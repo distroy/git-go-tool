@@ -6,7 +6,6 @@ package configservice
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"reflect"
@@ -14,7 +13,6 @@ import (
 	"github.com/distroy/git-go-tool/3rd/yaml"
 	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/git"
-	"github.com/distroy/git-go-tool/core/jsoncore"
 	"github.com/distroy/git-go-tool/core/mergecore"
 )
 
@@ -37,7 +35,7 @@ func MustParse(cfg, flags any, fieldName string) {
 		mergecore.Merge(cfg, tmp)
 	}
 	mergecore.Merge(cfg, flags)
-	log.Printf("config: %s", jsoncore.MustMarshal(cfg))
+	// log.Printf("config: %s", jsoncore.MustMarshal(cfg))
 }
 
 func mustUnmarshalFileWithField(res any, fieldName string) bool {
