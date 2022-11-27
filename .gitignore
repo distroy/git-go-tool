@@ -3,6 +3,7 @@
 !.gitignore
 !.gitlab-ci.yml
 !.github
+!.git-go-tool
 
 # python
 *.pyc
