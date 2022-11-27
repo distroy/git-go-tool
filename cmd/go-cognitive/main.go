@@ -7,10 +7,11 @@ import (
 	"math"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
-	"github.com/distroy/git-go-tool/core/filtercore"
+	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/termcolor"
 	"github.com/distroy/git-go-tool/service/configservice"
@@ -53,10 +54,13 @@ func main() {
 
 	flags := parseFlags()
 	filter := flags.Filter.ToFilter()
+	isGitSub := getIsGitSub()
 
 	gocognitive.SetDebug(flags.Debug)
 
-	res := analyzePathes(flags.Pathes, filter)
+	res := analyzePathes(flags.Pathes, func(filename string) bool {
+		return !isGitSub(filename) && filter.Check(filename)
+	})
 	// log.Printf(" === %#v", res)
 
 	out := os.Stdout
@@ -73,11 +77,23 @@ func main() {
 	}
 }
 
-func analyzePathes(pathes []string, filter *filtercore.Filter) []*gocognitive.Complexity {
+func getIsGitSub() func(filename string) bool {
+	gitSubs := git.MustGetSubModules()
+	return func(filename string) bool {
+		for _, sub := range gitSubs {
+			if strings.HasPrefix(filename, sub.Path) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func analyzePathes(pathes []string, filter func(filename string) bool) []*gocognitive.Complexity {
 	files := make([]*filecore.File, 0, defaultBufferSize)
 	count := 0
 	filecore.MustWalkPathes(pathes, func(f *filecore.File) error {
-		if !f.IsGo() || !filter.Check(f.Name) {
+		if !f.IsGo() || !filter(f.Name) {
 			return nil
 		}
 
