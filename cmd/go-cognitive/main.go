@@ -12,6 +12,7 @@ import (
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/filter"
 	"github.com/distroy/git-go-tool/core/gocognitive"
+	"github.com/distroy/git-go-tool/core/termcolor"
 	"github.com/distroy/git-go-tool/service/configservice"
 )
 
@@ -61,13 +62,13 @@ func main() {
 	out := os.Stdout
 
 	sort.Sort(gocognitive.Complexites(res))
-	written := writeResult(out, res, flags)
+	isOver := writeResult(out, res, flags)
 
 	if flags.Avg {
 		showAverage(out, res)
 	}
 
-	if *flags.GoCognitive.Over > 0 && written > 0 {
+	if *flags.GoCognitive.Over > 0 && isOver {
 		os.Exit(1)
 	}
 }
@@ -103,23 +104,32 @@ func analyzePathes(pathes []string, filter *filter.Filter) []*gocognitive.Comple
 	return complexities
 }
 
-func writeResult(w io.Writer, res []*gocognitive.Complexity, flags *Flags) int {
+func writeResult(w io.Writer, res []*gocognitive.Complexity, flags *Flags) bool {
+	if len(res) == 0 {
+		return false
+	}
+
 	top := *flags.GoCognitive.Top
 	over := *flags.GoCognitive.Over
 	if top <= 0 {
 		top = math.MaxInt32
 	}
 
+	isOver := res[0].Complexity > over
 	for i, stat := range res {
 		if i >= top {
-			return i
+			break
 		}
-		if stat.Complexity <= over {
-			return i
+		if isOver && stat.Complexity <= over {
+			break
 		}
-		fmt.Fprintln(w, stat)
+		if isOver {
+			fmt.Fprintf(w, "%s%s%s\n", termcolor.Red, stat.String(), termcolor.Reset)
+		} else {
+			fmt.Fprintf(w, "%s\n", stat.String())
+		}
 	}
-	return len(res)
+	return isOver
 }
 
 func showAverage(w io.Writer, cplxes []*gocognitive.Complexity) {
@@ -127,6 +137,10 @@ func showAverage(w io.Writer, cplxes []*gocognitive.Complexity) {
 }
 
 func average(arr []*gocognitive.Complexity) float64 {
+	if len(arr) == 0 {
+		return 0
+	}
+
 	total := 0
 	for _, s := range arr {
 		total += s.Complexity
