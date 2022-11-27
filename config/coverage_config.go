@@ -4,22 +4,16 @@
 
 package config
 
-import (
-	"github.com/distroy/git-go-tool/core/filter"
-	"github.com/distroy/git-go-tool/core/regexpcore"
-)
+import "github.com/distroy/git-go-tool/core/ptrcore"
 
-type CoverageConfig struct {
-	Rate     *float64 `yaml:"rate"`
-	Top      *int     `yaml:"top"`
-	File     *string  `yaml:"file"`
-	Includes []string `yaml:"include"`
-	Excludes []string `yaml:"exclude"`
+var DefaultCoverage = &CoverageConfig{
+	Rate: ptrcore.NewFloat64(0.65),
+	Top:  ptrcore.NewInt(10),
+	File: ptrcore.NewString(""),
 }
 
-func (c *CoverageConfig) ToFilter() *filter.Filter {
-	return &filter.Filter{
-		Includes: regexpcore.MustNewRegExps(c.Includes),
-		Excludes: regexpcore.MustNewRegExps(c.Excludes),
-	}
+type CoverageConfig struct {
+	Rate *float64 `yaml:"rate"  flag:"default:0.65; usage:the lowest coverage rate. range: [0, 1.0)"`
+	Top  *int     `yaml:"top"   flag:"meta:N; default:10; usage:show the top <N> least coverage rage file only"`
+	File *string  `yaml:"file"  flag:"meta:file; usage:the coverage file path, cannot be empty"`
 }

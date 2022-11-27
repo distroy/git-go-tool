@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+var DefaultIncludes = []string{}
+
 var DefaultExcludes = []string{
 	`(^|/)vendor/`,
 	`\.pb\.go$`,
