@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package filter
+package filtercore
 
 type Values interface {
 	Set(s string) error
