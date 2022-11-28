@@ -111,6 +111,8 @@ go-coverage:
     # #   diff: 增量模式，只检查新增代码的认知复杂度和单测覆盖率
     # #   all: 全量模式，检查所有代码的认知复杂度和单测覆盖率
     # mode: diff
+  # # 检查 go 代码的单测覆盖率时，包含的文件选项, 优先级高于 exclude。正则表达式的列表
+  include:
   # # 检查 go 代码的单测覆盖率时，排除的文件选项。正则表达式的列表
   exclude:
     # - '(^|/)vendor/'
@@ -125,6 +127,8 @@ go-cognitive:
   git-diff:
     # # git 的比较模式, default: diff
     # mode: diff
+  # # 检查 go 代码的认知复杂度时，包含的文件选项, 优先级高于 exclude。正则表达式的列表
+  include:
   # # 检查 go 代码的认知复杂度时，排除的文件选项。正则表达式的列表
   exclude:
   # # 函数认知复杂度的阈值, default: 15
@@ -137,6 +141,8 @@ go-format:
   git-diff:
     # # git 的比较模式, default: diff
     # mode: diff
+  # # 检查 go 代码的格式时，包含的文件选项, 优先级高于 exclude。正则表达式的列表
+  include:
   # # 检查 go 代码的格式时，排除的文件选项。正则表达式的列表
   exclude:
   # # go 代码文件函数限制, default: 1000
@@ -171,9 +177,11 @@ go-format:
 ## Installation
 
 ```shell
-go install github.com/distroy/git-go-tool/cmd/go-cognitive@latest
 go install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive@latest
 go install github.com/distroy/git-go-tool/cmd/git-diff-go-coverage@latest
+go install github.com/distroy/git-go-tool/cmd/git-diff-go-format@latest
+go install github.com/distroy/git-go-tool/cmd/go-cognitive@latest
+go install github.com/distroy/git-go-tool/cmd/go-format@latest
 ```
 
 ## go-cognitive
