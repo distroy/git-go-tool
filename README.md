@@ -37,28 +37,29 @@ variables:
   # *** go buile variables end ***
 
   # *** go format variables begin ***
-  # # 检查 go format 度的目标分支名
+  # # 检查 go format 度的目标分支名。增量模式使用
   # # 默认: MR 的目标分支
   # GO_FORMAT_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-  # # 检查 go format 的源分支名
+  # # 检查 go format 的源分支名。增量模式使用
   # GO_FORMAT_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
   # *** go format variables end ***
 
   # *** go coverage variables begin ***
-  # # 检查单测覆盖率的目标分支名
+  # # 检查单测覆盖率的目标分支名。增量模式使用
   # # 默认: MR 的目标分支
   # # 也可以选择固定 release 分支，比如在提测之后修改Bug，单测可能覆盖不到改动的代码
   # GO_COVERAGE_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-  # # 检查单测覆盖率的源分支名
+  # # 检查单测覆盖率的源分支名。增量模式使用
   # GO_COVERAGE_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+  # # go 单测输出的文件，一般不用修改
   # GO_COVERAGE_FILE: "$CI_PROJECT_DIR/log/coverage.out"
   # *** go coverage variables end ***
 
   # *** go cognitive variables begin ***
-  # # 检查认知复杂度的目标分支名
+  # # 检查认知复杂度的目标分支名。增量模式使用
   # # 默认: MR 的目标分支
   # GO_COGNITIVE_DIFF_TARGET: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-  # # 检查认知复杂度的源分支名
+  # # 检查认知复杂度的源分支名。增量模式使用
   # GO_COGNITIVE_DIFF_SOURCE: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
   # *** go cognitive variables end ***
 
