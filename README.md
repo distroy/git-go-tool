@@ -137,7 +137,7 @@ go-cognitive:
   # # 展示 Top N 复杂度过高的函数, default: 10
   # top: 10
 
-# go-format:
+# go 代码格式检查相关的配置
 go-format:
   git-diff:
     # # git 的比较模式, default: diff
