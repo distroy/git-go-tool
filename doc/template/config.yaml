@@ -1,0 +1,67 @@
+# 路径: .git-go-tool/config.yaml
+
+# 单测覆盖率相关的配置
+go-coverage:
+  git-diff:
+    # # git 的比较模式, default: diff
+    # #   diff: 增量模式，只检查新增代码的认知复杂度和单测覆盖率
+    # #   all: 全量模式，检查所有代码的认知复杂度和单测覆盖率
+    # mode: diff
+  # # 检查 go 代码的单测覆盖率时，包含的文件选项, 优先级高于 exclude。正则表达式的列表
+  include:
+  # # 检查 go 代码的单测覆盖率时，排除的文件选项。正则表达式的列表
+  exclude:
+    # - '(^|/)vendor/'
+    # - '\.pb\.go$'
+  # # 单测覆盖率的阈值，取值范围 0.0 ~ 1.0, default: 0.65
+  # rate: 0.65
+  # # 展示 Top N 没有被覆盖的代码文件, default: 10
+  # top: 10
+
+# go 认知复杂度相关的配置
+go-cognitive:
+  git-diff:
+    # # git 的比较模式, default: diff
+    # mode: diff
+  # # 检查 go 代码的认知复杂度时，包含的文件选项, 优先级高于 exclude。正则表达式的列表
+  include:
+  # # 检查 go 代码的认知复杂度时，排除的文件选项。正则表达式的列表
+  exclude:
+  # # 函数认知复杂度的阈值, default: 15
+  # over: 15
+  # # 展示 Top N 复杂度过高的函数, default: 10
+  # top: 10
+
+# go 代码格式检查相关的配置
+go-format:
+  git-diff:
+    # # git 的比较模式, default: diff
+    # mode: diff
+  # # 检查 go 代码的格式时，包含的文件选项, 优先级高于 exclude。正则表达式的列表
+  include:
+  # # 检查 go 代码的格式时，排除的文件选项。正则表达式的列表
+  exclude:
+  # # go 代码文件函数限制, default: 1000
+  # file-line: 1000
+  # # 是否检查 import 格式, default: true
+  # import: true
+  # # 是否检查源代码被 go 提供的工具格式化了, default: true
+  # formated: true
+  # # 是否检查 package 命名, default: true
+  # package: true
+  # 函数参数的数量限制，0-不检查, default: 3
+  # func-input-num: 3
+  # # 函数返回值的数量限制，0-不检查, default: 3
+  # func-output-num: 3
+  # # 是否检查函数返回值，是否需要被命名, default: true
+  # func-named-output: true
+  # # 检查函数参数数量限制时，是否需要排除 context, default: true
+  # func-input-num-without-context: true
+  # # 检查函数返回值数量限制时，是否需要排除 error, default: true
+  # func-output-num-without-error: true
+  # # 是否检查 context 时函数的第一个参数, default: true
+  # func-context-first: true
+  # # 是否检查 error 时函数的最后一个返回值, default: true
+  # func-error-last: true
+  # # 是否检查函数参数的 context 和 返回值的 error，是否同时为 go 标准的类型，或者同时为自定义的类型, default: false
+  # func-context-error-match: false

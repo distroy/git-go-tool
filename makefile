@@ -117,6 +117,10 @@ setup: git-ignore
 	$(call go_install_cmd,git-diff-go-format)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
-.PHONY: cognitive
+.PHONY: go-cognitive
 cognitive: setup
 	go-cognitive
+
+.PHONY: format
+format: setup
+	go-format

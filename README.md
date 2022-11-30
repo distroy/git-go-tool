@@ -75,7 +75,7 @@ variables:
 
 请在项目的根目录执行以下命令
 
-```shell
+```bash
 git submodule add https://github.com/distroy/git-go-tool.git git-go-tool
 ```
 
@@ -83,7 +83,7 @@ git submodule add https://github.com/distroy/git-go-tool.git git-go-tool
 
 请在项目的根目录执行以下命令
 
-```shell
+```bash
 git submodule init
 git submodule update
 git config core.hooksPath "git-go-tool/git-hook"
@@ -95,7 +95,7 @@ git config core.hooksPath "git-go-tool/git-hook"
 
 请进入到项目的git-go-tool目录执行
 
-```shell
+```bash
 git pull
 ```
 
@@ -177,7 +177,7 @@ go-format:
 
 ## Installation
 
-```shell
+```bash
 go install github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive@latest
 go install github.com/distroy/git-go-tool/cmd/git-diff-go-coverage@latest
 go install github.com/distroy/git-go-tool/cmd/git-diff-go-format@latest

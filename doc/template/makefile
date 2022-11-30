@@ -191,6 +191,10 @@ setup: git-ignore
 	@$(call go_install_cmd,git-diff-go-format)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
-.PHONY: cognitive
-cognitive: setup
-	go-cognitive -over 20 -top 10 -exclude '\.microkit\.go$$'
+.PHONY: go-cognitive
+go-cognitive: setup
+	go-cognitive
+
+.PHONY: go-format
+go-format: setup
+	go-format
