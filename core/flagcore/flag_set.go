@@ -250,6 +250,9 @@ func (s *FlagSet) addFlag(f *Flag) {
 
 	if f.Default == "" {
 		f.Default = v.String()
+		if vv, _ := val.Interface().(valueWithDefault); vv != nil {
+			f.Default = vv.Default()
+		}
 	}
 
 	s.command.Var(v, f.Name, f.Usage)
@@ -303,6 +306,9 @@ func (s *FlagSet) parseStruct(lvl int, val reflect.Value) {
 		fVal := val.Field(i)
 
 		if _, ok := fVal.Interface().(Value); ok {
+			if fVal.Kind() == reflect.Ptr && fVal.IsNil() {
+				fVal.Set(reflect.New(fVal.Type().Elem()))
+			}
 			s.parseFieldFlag(lvl, fVal, field)
 			continue
 		}

@@ -23,13 +23,14 @@ func MustGetConfigPath() string {
 	return path.Join(gitRoot, ".git-go-tool/config.yaml")
 }
 
-func MustParse(cfg, flags any, fieldName string) {
+func MustParse(cfg any, fieldName string) {
+	typ := reflect.TypeOf(cfg)
+
+	flags := reflect.New(typ.Elem()).Interface()
 	flagcore.EnableDefault(false)
 	flagcore.MustParse(flags)
 
-	typ := reflect.TypeOf(cfg)
 	tmp := reflect.New(typ.Elem()).Interface()
-
 	ok := mustUnmarshalFileWithField(tmp, fieldName)
 	if ok {
 		mergecore.Merge(cfg, tmp)

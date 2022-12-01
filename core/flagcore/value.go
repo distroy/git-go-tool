@@ -18,6 +18,12 @@ type Value interface {
 	flag.Value
 }
 
+type valueWithDefault interface {
+	Value
+
+	Default() string
+}
+
 func mustMarshalJson(v interface{}) string {
 	b := bytes.NewBuffer(nil)
 	e := json.NewEncoder(b)

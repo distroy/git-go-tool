@@ -26,11 +26,7 @@ func parseFlags() *Flags {
 		GoFormat: config.DefaultGoFormat,
 	}
 
-	flags := &Flags{
-		Filter: config.DefaultFilter,
-	}
-
-	configservice.MustParse(cfg, flags, "go-format")
+	configservice.MustParse(cfg, "go-format")
 	if len(cfg.Pathes) == 0 {
 		cfg.Pathes = []string{"."}
 	}

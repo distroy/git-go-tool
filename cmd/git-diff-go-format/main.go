@@ -31,11 +31,7 @@ func parseFlags() *Flags {
 		GoFormat: config.DefaultGoFormat,
 	}
 
-	flags := &Flags{
-		Filter: config.DefaultFilter,
-	}
-
-	configservice.MustParse(cfg, flags, "go-format")
+	configservice.MustParse(cfg, "go-format")
 	return cfg
 }
 
