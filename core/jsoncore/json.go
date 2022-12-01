@@ -20,7 +20,12 @@ func Marshal(v any) ([]byte, error) {
 	if err := e.Encode(v); err != nil {
 		return nil, err
 	}
-	return b.Bytes(), nil
+
+	s := b.Bytes()
+	if l := len(s) - 1; l >= 0 && s[l] == '\n' {
+		s = s[:l]
+	}
+	return s, nil
 }
 
 func MarshalToString(v any) (string, error) {

@@ -36,12 +36,7 @@ func parseFlags() *Flags {
 		GoCognitive: config.DefaultGoCognitive,
 	}
 
-	flags := &Flags{
-		Filter: config.DefaultFilter,
-	}
-
-	configservice.MustParse(cfg, flags, "go-cognitive")
-
+	configservice.MustParse(cfg, "go-cognitive")
 	if len(cfg.Pathes) == 0 {
 		cfg.Pathes = []string{"."}
 	}

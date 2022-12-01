@@ -31,11 +31,7 @@ func parseFlags() *Flags {
 		Coverage: config.DefaultCoverage,
 	}
 
-	flags := &Flags{
-		Filter: config.DefaultFilter,
-	}
-
-	configservice.MustParse(cfg, flags, "go-coverage")
+	configservice.MustParse(cfg, "go-coverage")
 	return cfg
 }
 
