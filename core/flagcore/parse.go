@@ -161,14 +161,26 @@ func isFlagDefaultZero(f *Flag) bool {
 	value := f.Value
 	defaultValue := f.Default
 
+	if defaultValue == "" {
+		return true
+	}
+
 	val := f.val
 	if val.Kind() == reflect.Ptr {
 		typ := val.Type()
 		v := reflect.New(typ).Elem()
 		v.Set(reflect.New(typ.Elem()))
 		// v := reflect.New(typ.Elem())
-		z := fillFlagFuncMap[typ](v)
+
+		z, _ := v.Interface().(Value)
+		if z == nil {
+			z = fillFlagFuncMap[typ](v)
+		}
 		return defaultValue == z.String()
+	}
+
+	if val.Kind() == reflect.Slice {
+		return defaultValue == "null" || defaultValue == "[]"
 	}
 
 	// Build a zero value of the flag's Value type, and see if the

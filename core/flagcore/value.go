@@ -5,11 +5,13 @@
 package flagcore
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/distroy/git-go-tool/core/strcore"
 )
 
 type Value interface {
@@ -17,11 +19,17 @@ type Value interface {
 }
 
 func mustMarshalJson(v interface{}) string {
-	b := &strings.Builder{}
+	b := bytes.NewBuffer(nil)
 	e := json.NewEncoder(b)
 	e.SetEscapeHTML(false)
 	e.Encode(v)
-	return b.String()
+
+	s := b.Bytes()
+	if l := len(s) - 1; l >= 0 && s[l] == '\n' {
+		s = s[:l]
+	}
+
+	return strcore.BytesToStrUnsafe(s)
 }
 
 // duration
