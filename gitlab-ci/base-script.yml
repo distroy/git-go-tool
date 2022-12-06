@@ -37,7 +37,11 @@
     # 我们已经把import的依赖，放到了vendor，不需要下载了
     - |
       if [[ "$_GO_INSTALL_DIR" == "" ]]; then
-        _GO_INSTALL_DIR="$CI_PROJECT_DIR/.."
+        # 兼容 go1.14 版本
+        # go1.14 版本需要在 go mod 目录下安装工具
+        _GO_INSTALL_DIR="$(mktemp -d)"
+        cd "$_GO_INSTALL_DIR"
+        go mod init main
       fi
     - cd "$_GO_INSTALL_DIR"
     - |
