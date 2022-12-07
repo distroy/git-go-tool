@@ -115,7 +115,7 @@ setup: git-ignore
 	$(call go_install_cmd,git-diff-go-cognitive)
 	$(call go_install_cmd,git-diff-go-coverage)
 	$(call go_install_cmd,git-diff-go-format)
-	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
+	@echo '\033[32;1m'"setup succ"'\033[0m'
 
 .PHONY: go-cognitive
 cognitive: setup
