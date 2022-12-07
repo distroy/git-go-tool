@@ -79,13 +79,16 @@ go_install = \
 
 go_install_cmd =  ( \
 	_work_dir="$$PWD"; \
-	cd /; \
+	_temp_dir="$$(mktemp -d)"; \
+	cd "$$_temp_dir"; \
+	go mod init main >/dev/null 2>/dev/null; \
 	echo go install github.com/distroy/git-go-tool/cmd/$(1) \
 		"||" go install github.com/distroy/git-go-tool/cmd/$(1)@latest; \
 	go install github.com/distroy/git-go-tool/cmd/$(1) \
 		|| go install github.com/distroy/git-go-tool/cmd/$(1)@latest; \
 	cd "$$_work_dir"; \
-	)
+	rm -rf "$$_temp_dir"; \
+	);
 
 git_ignore_service = ( \
 	_ignore_file="$(PROJECT_ROOT)/.gitignore"; \
@@ -189,7 +192,7 @@ setup: git-ignore
 	@$(call go_install_cmd,git-diff-go-cognitive)
 	@$(call go_install_cmd,git-diff-go-coverage)
 	@$(call go_install_cmd,git-diff-go-format)
-	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
+	@echo '\033[32;1m'"setup succ"'\033[0m'
 
 .PHONY: go-cognitive
 go-cognitive: setup
