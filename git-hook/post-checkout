@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+
+# This hook is called with the following parameters:
+# $1 -- the ref of the previous HEAD
+# $2 -- the ref of the new HEAD (which may or may not have changed)
+# $3 -- a flag indicating whether the checkout was a branch checkout or a file checkout
+#       0: retrieving a file from the index
+#       1: changing branches
+
+prev_ref="$1"
+new_ref="$2"
+flag="$3"
+
+# echo "$@"
+# echo "prev ref: $prev_ref"
+# echo "new ref: $new_ref"
+# echo "flag: $flag"
+
+function _echo_and_run() {
+    echo "$@"
+    "$@"
+    return $?
+}
+
+
+if [[ "$flag" == "1" && "$prev_ref" != "$new_ref" ]]; then
+    _echo_and_run git submodule init
+    _echo_and_run git submodule update
+fi
+
+# exit 1
