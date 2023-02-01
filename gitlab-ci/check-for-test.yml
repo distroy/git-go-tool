@@ -19,7 +19,7 @@
         fi
 
         echo_msgr "found the keyword: \"$FOR_TEST_KEYWORD\""
-        echo_and_run grep -r -i -E -n "$FOR_TEST_KEYWORD" .
+        echo_and_run grep --exclude-dir={.git,.svn} -r -i -E -n "$FOR_TEST_KEYWORD" .
         return 1
       }
     - |
