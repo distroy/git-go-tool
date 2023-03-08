@@ -15,6 +15,8 @@ var DefaultGoFormat = &GoFormatConfig{
 	Formated: ptrcore.NewBool(true),
 	Package:  ptrcore.NewBool(true),
 
+	JsonLabel: ptrcore.NewBool(true),
+
 	FuncInputNum:               ptrcore.NewInt(3),
 	FuncOutputNum:              ptrcore.NewInt(3),
 	FuncNamedOutput:            ptrcore.NewBool(true),
@@ -30,6 +32,8 @@ type GoFormatConfig struct {
 	Import   *bool `yaml:"import"    flag:"default:true; usage:enable/disable check import"`
 	Formated *bool `yaml:"formated"  flag:"default:true; usage:enable/disable check file formated"`
 	Package  *bool `yaml:"package"   flag:"default:true; usage:enable/disable check package name"`
+
+	JsonLabel *bool `yaml:"json-label" flag:"default:true; usage:check json label if be valid"`
 
 	FuncInputNum               *int  `yaml:"func-input-num"                 flag:"default:3; usage:func input num limit. 0=disable"`
 	FuncOutputNum              *int  `yaml:"func-output-num"                flag:"default:3; usage:func output num limit. 0=disable"`
@@ -47,6 +51,8 @@ func (c *GoFormatConfig) ToConfig() *goformat.Config {
 		Import:   *c.Import,
 		Formated: *c.Formated,
 		Package:  *c.Package,
+
+		JsonLabel: *c.JsonLabel,
 
 		FuncInputNum:               *c.FuncInputNum,
 		FuncOutputNum:              *c.FuncOutputNum,
