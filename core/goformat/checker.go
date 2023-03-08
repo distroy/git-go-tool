@@ -11,19 +11,21 @@ type Checker interface {
 }
 
 type Config struct {
-	FileLine int  `flag:"default:1000; usage:file line limit. 0=disable"`
-	Import   bool `flag:"default:true; usage:enable/disable check import"`
-	Formated bool `flag:"default:true; usage:enable/disable check file formated"`
-	Package  bool `flag:"default:true; usage:enable/disable check package name"`
+	FileLine int
+	Import   bool
+	Formated bool
+	Package  bool
 
-	FuncInputNum               int  `flag:"default:3; usage:func input num limit. 0=disable"`
-	FuncOutputNum              int  `flag:"default:3; usage:func output num limit. 0=disable"`
-	FuncNamedOutput            bool `flag:"default:true; usage:check func output param if need be named"`
-	FuncInputNumWithoutContext bool `flag:"default:true; usage:func input num limit if without context"`
-	FuncOutputNumWithoutError  bool `flag:"default:true; usage:func output num limit if without error"`
-	FuncContextFirst           bool `flag:"default:true; usage:context should be the firsr input parameter"`
-	FuncErrorLast              bool `flag:"default:true; usage:error should be the last output parameter"`
-	FuncContextErrorMatch      bool `flag:"bool; usage:context and error should both be standard, or both not be"`
+	JsonLabel bool
+
+	FuncInputNum               int
+	FuncOutputNum              int
+	FuncNamedOutput            bool
+	FuncInputNumWithoutContext bool
+	FuncOutputNumWithoutError  bool
+	FuncContextFirst           bool
+	FuncErrorLast              bool
+	FuncContextErrorMatch      bool
 }
 
 func BuildChecker(cfg *Config) Checker {
@@ -33,6 +35,7 @@ func BuildChecker(cfg *Config) Checker {
 	checkers = append(checkers, PackageChecker(cfg.Package))
 	checkers = append(checkers, ImportChecker(cfg.Import))
 	checkers = append(checkers, FormatChecker(cfg.Formated))
+	checkers = append(checkers, JsonLabelChecker(cfg.JsonLabel))
 	checkers = append(checkers, FuncParamsChecker(&FuncParamsConfig{
 		InputNum:               cfg.FuncInputNum,
 		OutputNum:              cfg.FuncOutputNum,

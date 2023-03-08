@@ -5,6 +5,8 @@
 package goformat
 
 import (
+	"log"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -12,6 +14,11 @@ import (
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/strcore"
 )
+
+func TestMain(m *testing.M) {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	os.Exit(m.Run())
+}
 
 func testIssuesString(issues []*Issue) string {
 	buf := &strings.Builder{}
