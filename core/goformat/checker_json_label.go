@@ -51,9 +51,13 @@ func (c jsonLabelChecker) checkStructJsonLabel(x *Context, st *ast.StructType) E
 	labels := make(map[string]*ast.Field, len(st.Fields.List))
 
 	for _, field := range st.Fields.List {
-		label := c.parseStructFieldTagName(x, field)
-		if label == "" {
+		label, ok := c.parseStructFieldTagName(x, field)
+		if !ok {
+			continue
+
+		} else if label == "" {
 			break
+
 		} else if label == "-" {
 			continue
 		}
@@ -91,20 +95,20 @@ func (c jsonLabelChecker) checkStructJsonLabel(x *Context, st *ast.StructType) E
 	return nil
 }
 
-func (c jsonLabelChecker) parseStructFieldTagName(x *Context, field *ast.Field) string {
+func (c jsonLabelChecker) parseStructFieldTagName(x *Context, field *ast.Field) (string, bool) {
 	// log.Printf("field name. field:%s", c.fieldName(field))
 
 	// 内嵌field
 	if len(field.Names) == 0 {
-		return "-"
+		return "-", true
 	}
 
 	if !field.Names[0].IsExported() {
-		return "-"
+		return "-", true
 	}
 
 	if field.Tag == nil {
-		return c.fieldName(x, field)
+		return c.fieldName(x, field), true
 	}
 
 	// log.Printf("field tag. field:%s, tag:%s", c.fieldName(field), field.Tag.Value)
@@ -112,24 +116,34 @@ func (c jsonLabelChecker) parseStructFieldTagName(x *Context, field *ast.Field) 
 	tag, err := strconv.Unquote(field.Tag.Value)
 	if err != nil {
 		// log.Printf("unable to read struct tag %s", field.Tag.Value)
-		return ""
+		fPos := x.Position(field.Pos())
+		fEnd := x.Position(field.End())
+		x.AddIssue(&Issue{
+			Filename:  x.Name,
+			BeginLine: fPos.Line,
+			EndLine:   fEnd.Line,
+			Level:     LevelError,
+			Description: fmt.Sprintf(`unquote json label of struct field "%s" fail`,
+				c.fieldName(x, field)),
+		})
+		return "", false
 	}
 
 	// log.Printf("field tag 2. field:%s, tag:%s", c.fieldName(field), tag)
 
 	jsonTag := reflect.StructTag(tag).Get("json")
 	if jsonTag == "" {
-		return c.fieldName(x, field)
+		return c.fieldName(x, field), true
 	}
 
 	// log.Printf("field json tag. field:%s, json tag:%s", c.fieldName(field), jsonTag)
 
 	arr := strings.Split(jsonTag, ",")
 	if len(arr) > 0 && arr[0] != "" {
-		return arr[0]
+		return arr[0], true
 	}
 
-	return c.fieldName(x, field)
+	return c.fieldName(x, field), true
 }
 
 func (c jsonLabelChecker) fieldName(x *Context, field *ast.Field) string {
