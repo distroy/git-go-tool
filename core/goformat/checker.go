@@ -35,7 +35,9 @@ func BuildChecker(cfg *Config) Checker {
 	checkers = append(checkers, PackageChecker(cfg.Package))
 	checkers = append(checkers, ImportChecker(cfg.Import))
 	checkers = append(checkers, FormatChecker(cfg.Formated))
-	checkers = append(checkers, JsonLabelChecker(cfg.JsonLabel))
+	checkers = append(checkers, LabelChecker(&LabelConfig{
+		JsonLabel: cfg.JsonLabel,
+	}))
 	checkers = append(checkers, FuncParamsChecker(&FuncParamsConfig{
 		InputNum:               cfg.FuncInputNum,
 		OutputNum:              cfg.FuncOutputNum,

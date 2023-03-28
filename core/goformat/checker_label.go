@@ -12,26 +12,32 @@ import (
 	"strings"
 )
 
-func JsonLabelChecker(enable bool) Checker {
-	if !enable {
-		return checkerNil{}
-	}
-	return jsonLabelChecker{}
+type LabelConfig struct {
+	JsonLabel bool
 }
 
-type jsonLabelChecker struct {
+func LabelChecker(cfg *LabelConfig) Checker {
+	return labelChecker{cfg: cfg}
+}
+
+type labelChecker struct {
 	// A int `json:"a"`
 	// B int `json:"a"`
+	cfg *LabelConfig
 }
 
-func (c jsonLabelChecker) Check(x *Context) Error {
+func (c labelChecker) Check(x *Context) Error {
 	file := x.MustParse()
 
 	var err Error
 	ast.Inspect(file, func(n ast.Node) bool {
 		switch nn := n.(type) {
 		case *ast.StructType:
-			err = c.checkStructJsonLabel(x, nn)
+			if nn.Fields == nil {
+				return true
+			}
+
+			err = c.checkJsonLabel(x, nn)
 		}
 
 		return err == nil
@@ -40,8 +46,8 @@ func (c jsonLabelChecker) Check(x *Context) Error {
 	return err
 }
 
-func (c jsonLabelChecker) checkStructJsonLabel(x *Context, st *ast.StructType) Error {
-	if st.Fields == nil {
+func (c labelChecker) checkJsonLabel(x *Context, st *ast.StructType) Error {
+	if !c.cfg.JsonLabel {
 		return nil
 	}
 
@@ -95,7 +101,7 @@ func (c jsonLabelChecker) checkStructJsonLabel(x *Context, st *ast.StructType) E
 	return nil
 }
 
-func (c jsonLabelChecker) parseStructFieldTagName(x *Context, field *ast.Field) (string, bool) {
+func (c labelChecker) parseStructFieldTagName(x *Context, field *ast.Field) (string, bool) {
 	// log.Printf("field name. field:%s", c.fieldName(field))
 
 	// 内嵌field
@@ -146,7 +152,7 @@ func (c jsonLabelChecker) parseStructFieldTagName(x *Context, field *ast.Field) 
 	return c.fieldName(x, field), true
 }
 
-func (c jsonLabelChecker) fieldName(x *Context, field *ast.Field) string {
+func (c labelChecker) fieldName(x *Context, field *ast.Field) string {
 	// for i, name := range field.Names {
 	// 	log.Printf("field name. index:%d, name:%s", i, name.String())
 	// }

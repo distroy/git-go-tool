@@ -15,7 +15,7 @@ import (
 	"github.com/distroy/git-go-tool/core/strcore"
 )
 
-func Test_jsonLabelChecker_Check(t *testing.T) {
+func Test_labelChecker_Check(t *testing.T) {
 	filename := "test.go"
 
 	type args struct {
@@ -98,7 +98,10 @@ func Test_jsonLabelChecker_Check(t *testing.T) {
 			name := testGetSubName(t, i)
 			// t.Run(tt.name, func(t *testing.T) {
 			convey.Convey(name, func() {
-				c := JsonLabelChecker(true)
+				c := LabelChecker(&LabelConfig{
+					JsonLabel: true,
+				})
+
 				f := filecore.NewTestFile(filename, strcore.StrToBytesUnsafe(tt.args.data))
 				x := NewContext(f)
 
