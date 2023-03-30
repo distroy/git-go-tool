@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/distroy/git-go-tool/core/tagcore"
 )
 
 type LabelConfig struct {
@@ -17,13 +19,32 @@ type LabelConfig struct {
 }
 
 func LabelChecker(cfg *LabelConfig) Checker {
-	return labelChecker{cfg: cfg}
+	c := labelChecker{
+		cfg:            cfg,
+		checkFieldList: make([]labelCheckField, 0, 4),
+	}
+
+	c.checkFieldList = append(c.checkFieldList, labelCheckField{
+		TagName:  "json",
+		Function: c.checkJsonField,
+	})
+	c.checkFieldList = append(c.checkFieldList, labelCheckField{
+		TagName:  "gorm",
+		Function: c.checkGormField,
+	})
+
+	return c
+}
+
+type labelCheckField struct {
+	TagName  string
+	Function func(x *Context, st *ast.Field, tagName, tabValue string) (string, bool)
 }
 
 type labelChecker struct {
-	// A int `json:"a"`
-	// B int `json:"a"`
 	cfg *LabelConfig
+
+	checkFieldList []labelCheckField
 }
 
 func (c labelChecker) Check(x *Context) Error {
@@ -37,7 +58,7 @@ func (c labelChecker) Check(x *Context) Error {
 				return true
 			}
 
-			err = c.checkJsonLabel(x, nn)
+			err = c.checkLabels(x, nn)
 		}
 
 		return err == nil
@@ -46,10 +67,20 @@ func (c labelChecker) Check(x *Context) Error {
 	return err
 }
 
-func (c labelChecker) checkJsonLabel(x *Context, st *ast.StructType) Error {
-	if !c.cfg.JsonLabel {
-		return nil
+func (c labelChecker) checkLabels(x *Context, st *ast.StructType) Error {
+	for _, field := range c.checkFieldList {
+		err := c.loopCheckFields(x, st, field.TagName, field.Function)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (c labelChecker) loopCheckFields(
+	x *Context, st *ast.StructType, tagName string,
+	fn func(x *Context, field *ast.Field, tagName, tabValue string) (string, bool),
+) Error {
 
 	sPos := x.Position(st.Pos())
 	sEnd := x.Position(st.End())
@@ -57,29 +88,21 @@ func (c labelChecker) checkJsonLabel(x *Context, st *ast.StructType) Error {
 	labels := make(map[string]*ast.Field, len(st.Fields.List))
 
 	for _, field := range st.Fields.List {
-		label, ok := c.parseStructFieldTagName(x, field)
-		if !ok {
+		label := ""
+
+		tabValue, ok := c.getStructFieldTag(x, field, tagName)
+		if !ok || tabValue == "-" {
 			continue
 
-		} else if label == "" {
-			break
+		} else if tabValue == "" {
+			label = c.fieldName(x, field)
 
-		} else if label == "-" {
-			continue
-		}
-
-		if strings.Contains(label, ";") {
-			fPos := x.Position(field.Pos())
-			fEnd := x.Position(field.End())
-			x.AddIssue(&Issue{
-				Filename:  x.Name,
-				BeginLine: fPos.Line,
-				EndLine:   fEnd.Line,
-				Level:     LevelError,
-				Description: fmt.Sprintf(`struct field "%s" has invalid json label "%s"`,
-					c.fieldName(x, field), label),
-			})
-			return nil
+		} else {
+			var ok bool
+			label, ok = fn(x, field, tagName, tabValue)
+			if !ok {
+				continue
+			}
 		}
 
 		if _, ok := labels[label]; ok {
@@ -89,8 +112,8 @@ func (c labelChecker) checkJsonLabel(x *Context, st *ast.StructType) Error {
 				BeginLine: sPos.Line,
 				EndLine:   sEnd.Line,
 				Level:     LevelError,
-				Description: fmt.Sprintf(`struct field "%s" has duplicate json label "%s"`,
-					c.fieldName(x, field), label),
+				Description: fmt.Sprintf(`struct field "%s" has duplicate %s label "%s"`,
+					c.fieldName(x, field), tagName, label),
 			})
 			return nil
 		}
@@ -101,7 +124,7 @@ func (c labelChecker) checkJsonLabel(x *Context, st *ast.StructType) Error {
 	return nil
 }
 
-func (c labelChecker) parseStructFieldTagName(x *Context, field *ast.Field) (string, bool) {
+func (c labelChecker) getStructFieldTag(x *Context, field *ast.Field, tagName string) (string, bool) {
 	// log.Printf("field name. field:%s", c.fieldName(field))
 
 	// 内嵌field
@@ -114,10 +137,10 @@ func (c labelChecker) parseStructFieldTagName(x *Context, field *ast.Field) (str
 	}
 
 	if field.Tag == nil {
-		return c.fieldName(x, field), true
+		return "", true
 	}
 
-	// log.Printf("field tag. field:%s, tag:%s", c.fieldName(field), field.Tag.Value)
+	// log.Printf("field tag. field:%s, tag:%s", c.fieldName(x, field), field.Tag.Value)
 
 	tag, err := strconv.Unquote(field.Tag.Value)
 	if err != nil {
@@ -129,27 +152,30 @@ func (c labelChecker) parseStructFieldTagName(x *Context, field *ast.Field) (str
 			BeginLine: fPos.Line,
 			EndLine:   fEnd.Line,
 			Level:     LevelError,
-			Description: fmt.Sprintf(`unquote json label of struct field "%s" fail`,
-				c.fieldName(x, field)),
+			Description: fmt.Sprintf(`unquote "%s" label of struct field "%s" fail`,
+				tagName, c.fieldName(x, field)),
 		})
 		return "", false
 	}
 
-	// log.Printf("field tag 2. field:%s, tag:%s", c.fieldName(field), tag)
+	// log.Printf("field tag 2. field:%s, tag:%s", c.fieldName(x, field), tag)
 
-	jsonTag := reflect.StructTag(tag).Get("json")
-	if jsonTag == "" {
-		return c.fieldName(x, field), true
+	tagValue, ok := reflect.StructTag(tag).Lookup(tagName)
+	if ok && tagValue == "" {
+		// fPos := x.Position(field.Pos())
+		// fEnd := x.Position(field.End())
+		// x.AddIssue(&Issue{
+		// 	Filename:  x.Name,
+		// 	BeginLine: fPos.Line,
+		// 	EndLine:   fEnd.Line,
+		// 	Level:     LevelError,
+		// 	Description: fmt.Sprintf(`invalid "%s" label of struct field "%s"`,
+		// 		tagName, c.fieldName(x, field)),
+		// })
+		// return "", false
 	}
 
-	// log.Printf("field json tag. field:%s, json tag:%s", c.fieldName(field), jsonTag)
-
-	arr := strings.Split(jsonTag, ",")
-	if len(arr) > 0 && arr[0] != "" {
-		return arr[0], true
-	}
-
-	return c.fieldName(x, field), true
+	return tagValue, true
 }
 
 func (c labelChecker) fieldName(x *Context, field *ast.Field) string {
@@ -162,4 +188,59 @@ func (c labelChecker) fieldName(x *Context, field *ast.Field) string {
 	}
 
 	return ""
+}
+
+func (c labelChecker) checkJsonField(x *Context, field *ast.Field, tagName, tabValue string) (string, bool) {
+	var label string
+
+	arr := strings.Split(tabValue, ",")
+	if len(arr) > 0 && arr[0] != "" {
+		label = arr[0]
+	}
+
+	if label == "" {
+		label = c.fieldName(x, field)
+	}
+
+	if strings.Contains(label, ";") {
+		fPos := x.Position(field.Pos())
+		fEnd := x.Position(field.End())
+		x.AddIssue(&Issue{
+			Filename:  x.Name,
+			BeginLine: fPos.Line,
+			EndLine:   fEnd.Line,
+			Level:     LevelError,
+			Description: fmt.Sprintf(`struct field "%s" has invalid json label "%s"`,
+				c.fieldName(x, field), label),
+		})
+		return "", false
+	}
+
+	return label, true
+}
+
+func (c labelChecker) checkGormField(x *Context, field *ast.Field, tagName, tagValue string) (string, bool) {
+	var label string
+
+	if tagValue == "" {
+		label = c.fieldName(x, field)
+	}
+
+	tags := tagcore.Parse(tagValue)
+
+	if column := tags.Get("column"); column == "" {
+		fPos := x.Position(field.Pos())
+		fEnd := x.Position(field.End())
+		x.AddIssue(&Issue{
+			Filename:  x.Name,
+			BeginLine: fPos.Line,
+			EndLine:   fEnd.Line,
+			Level:     LevelError,
+			Description: fmt.Sprintf(`struct field "%s" has invalid column in gorm label`,
+				c.fieldName(x, field)),
+		})
+		return "", false
+	}
+
+	return label, true
 }
