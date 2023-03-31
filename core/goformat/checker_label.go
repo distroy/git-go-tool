@@ -16,6 +16,7 @@ import (
 
 type LabelConfig struct {
 	JsonLabel bool
+	GormLabel bool
 }
 
 func LabelChecker(cfg *LabelConfig) Checker {
@@ -25,10 +26,12 @@ func LabelChecker(cfg *LabelConfig) Checker {
 	}
 
 	c.checkFieldList = append(c.checkFieldList, labelCheckField{
+		Enable:   cfg.JsonLabel,
 		TagName:  "json",
 		Function: c.checkJsonField,
 	})
 	c.checkFieldList = append(c.checkFieldList, labelCheckField{
+		Enable:   cfg.GormLabel,
 		TagName:  "gorm",
 		Function: c.checkGormField,
 	})
@@ -37,6 +40,7 @@ func LabelChecker(cfg *LabelConfig) Checker {
 }
 
 type labelCheckField struct {
+	Enable   bool
 	TagName  string
 	Function func(x *Context, st *ast.Field, tagName, tabValue string) (string, bool)
 }
@@ -68,8 +72,12 @@ func (c labelChecker) Check(x *Context) Error {
 }
 
 func (c labelChecker) checkLabels(x *Context, st *ast.StructType) Error {
-	for _, field := range c.checkFieldList {
-		err := c.loopCheckFields(x, st, field.TagName, field.Function)
+	for _, labelType := range c.checkFieldList {
+		if !labelType.Enable {
+			continue
+		}
+
+		err := c.loopCheckFields(x, st, labelType.TagName, labelType.Function)
 		if err != nil {
 			return err
 		}

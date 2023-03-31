@@ -116,6 +116,7 @@ func Test_labelChecker_Check(t *testing.T) {
 			convey.Convey(name, func() {
 				c := LabelChecker(&LabelConfig{
 					JsonLabel: true,
+					GormLabel: true,
 				})
 
 				f := filecore.NewTestFile(filename, strcore.StrToBytesUnsafe(tt.args.data))

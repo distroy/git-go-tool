@@ -17,6 +17,7 @@ type Config struct {
 	Package  bool
 
 	JsonLabel bool
+	GormLabel bool
 
 	FuncInputNum               int
 	FuncOutputNum              int
@@ -37,6 +38,7 @@ func BuildChecker(cfg *Config) Checker {
 	checkers = append(checkers, FormatChecker(cfg.Formated))
 	checkers = append(checkers, LabelChecker(&LabelConfig{
 		JsonLabel: cfg.JsonLabel,
+		GormLabel: cfg.GormLabel,
 	}))
 	checkers = append(checkers, FuncParamsChecker(&FuncParamsConfig{
 		InputNum:               cfg.FuncInputNum,
