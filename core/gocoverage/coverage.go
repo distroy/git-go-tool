@@ -63,6 +63,7 @@ func ParseFile(filePath string) ([]*Coverage, error) {
 
 func ParseReader(reader io.Reader) ([]*Coverage, error) {
 	modPrefix := gocore.MustGetModPrefix()
+	// log.Printf("mod prefix: %s", modPrefix)
 	return parseReader(modPrefix, reader)
 }
 
@@ -84,9 +85,11 @@ func parseReader(prefix string, reader io.Reader) ([]*Coverage, error) {
 			return nil, fmt.Errorf("invalid coverage line. line:%s", line)
 
 		} else if c == nil {
+			// log.Printf("parse line fail. prefix:%s, line:%s", prefix, line)
 			continue
 		}
 
+		// log.Printf("parse line succ. line:%s, obj:%v", line, c)
 		res = append(res, c)
 	}
 }
