@@ -5,6 +5,7 @@
 package gocore
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,6 +49,7 @@ func GetModPrefix() (string, error) {
 	}
 
 	cmd := exec.Command("grep", "module", goModFile)
+	// cmd := exec.Command("grep", "-w", "^module", goModFile)
 	out, err := cmd.Output()
 	if err != nil {
 		switch v := err.(type) {
@@ -59,8 +61,13 @@ func GetModPrefix() (string, error) {
 		return "", fmt.Errorf("exec command fail. cmd:%s, err:%v", getCommandString(cmd), err.Error())
 	}
 
+	if idx := bytes.Index(out, []byte("\n")); idx >= 0 {
+		out = out[:idx]
+	}
+
 	prefix := strings.Split(string(out), " ")[1]
 	prefix = strings.TrimSpace(prefix)
+	// log.Printf("get mod prefix : %s", prefix)
 
 	return prefix, nil
 }
