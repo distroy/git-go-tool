@@ -13,15 +13,19 @@ import (
 
 	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/gocoverage"
+	"github.com/distroy/git-go-tool/core/ptrcore"
 	"github.com/distroy/git-go-tool/core/termcolor"
+	"github.com/distroy/git-go-tool/obj/resultobj"
 	"github.com/distroy/git-go-tool/service/configservice"
 	"github.com/distroy/git-go-tool/service/modeservice"
+	"github.com/distroy/git-go-tool/service/resultservice"
 )
 
 type Flags struct {
 	GitDiff  *config.GitDiffConfig  `yaml:"git-diff"`
 	Filter   *config.FilterConfig   `yaml:",inline"`
 	Coverage *config.CoverageConfig `yaml:",inline"`
+	Push     *config.PushConfig     `yaml:"push"`
 }
 
 func parseFlags() *Flags {
@@ -29,6 +33,7 @@ func parseFlags() *Flags {
 		GitDiff:  config.DefaultGitDiff,
 		Filter:   config.DefaultFilter,
 		Coverage: config.DefaultCoverage,
+		Push:     config.DefaultPush,
 	}
 
 	configservice.MustParse(cfg, "go-coverage")
@@ -109,4 +114,26 @@ func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
 	}
 	fmt.Fprint(w, termcolor.Reset)
 	os.Exit(1)
+}
+
+func pushResult(flags *Flags, coverages gocoverage.Files) {
+	push := flags.Push
+	if push == nil {
+		return
+	}
+
+	count := coverages.GetCount()
+	resultservice.Push(push.PushUrl, &resultobj.Result{
+		Mode:         ptrcore.GetString(flags.GitDiff.Mode),
+		Type:         resultobj.TypeGoCoverage,
+		ProjectUrl:   push.ProjectUrl,
+		TargetBranch: push.TargetBranch,
+		SourceBranch: push.SourceBranch,
+		Data: &resultobj.GoCoverageData{
+			Threshold:            ptrcore.GetFloat64(flags.Coverage.Rate),
+			Rate:                 count.GetRate(),
+			CoverageLineCount:    count.Coverages,
+			NonCoverageLineCount: count.NonCoverages,
+		},
+	})
 }

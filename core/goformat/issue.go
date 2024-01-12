@@ -4,37 +4,32 @@
 
 package goformat
 
-type Level int
+type Level string
 
 const (
-	LevelError Level = iota
-	LevelWarning
-	LevelInfo
+	LevelError   Level = "error"
+	LevelWarning Level = "warning"
+	LevelInfo    Level = "info"
 )
 
 func (l Level) String() string {
-	switch l {
-	case LevelError:
+	if l == "" {
 		return "error"
-	case LevelWarning:
-		return "warning"
-	case LevelInfo:
-		return "info"
 	}
-	return "error"
+	return string(l)
 }
 
 type Issue struct {
-	Filename    string
-	BeginLine   int
-	EndLine     int
-	Level       Level
-	Description string
+	Filename    string `json:"file_name"`
+	BeginLine   int    `json:"begin_line"`
+	EndLine     int    `json:"end_line"`
+	Level       Level  `json:"level"`
+	Description string `json:"description"`
 	// Code        []string
 }
 
 type Count struct {
-	Error   int
-	Warning int
-	Info    int
+	Error   int `json:"error"`
+	Warning int `json:"warning"`
+	Info    int `json:"info"`
 }

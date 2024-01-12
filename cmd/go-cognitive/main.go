@@ -60,7 +60,7 @@ func main() {
 
 	out := os.Stdout
 
-	sort.Sort(gocognitive.Complexites(res))
+	sort.Sort(gocognitive.Complexities(res))
 	isOver := writeResult(out, res, flags)
 
 	if flags.Avg {

@@ -19,6 +19,7 @@ type IssueWriter interface {
 
 	WriteIssues(issues []*Issue)
 	Count() Count
+	Issues() []*Issue
 }
 
 func WrapWriter(w IssueOnlyWriter) IssueWriter {
@@ -34,13 +35,16 @@ func WrapWriter(w IssueOnlyWriter) IssueWriter {
 
 type writerWrapper struct {
 	writer IssueOnlyWriter
+	issues []*Issue
 	count  Count
 }
 
-func (w *writerWrapper) Count() Count { return w.count }
+func (w *writerWrapper) Count() Count     { return w.count }
+func (w *writerWrapper) Issues() []*Issue { return w.issues }
 
 func (w *writerWrapper) Write(issues *Issue) {
 	w.writer.Write(issues)
+	w.issues = append(w.issues, issues)
 
 	switch issues.Level {
 	default:
