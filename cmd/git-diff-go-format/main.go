@@ -83,7 +83,7 @@ func pushResult(flags *Flags, writer goformat.IssueWriter) {
 	}
 	resultservice.Push(push.PushUrl, &resultobj.Result{
 		Mode:         ptrcore.GetString(flags.GitDiff.Mode),
-		Type:         resultobj.TypeGoCognitive,
+		Type:         resultobj.TypeGoFormat,
 		ProjectUrl:   push.ProjectUrl,
 		TargetBranch: push.TargetBranch,
 		SourceBranch: push.SourceBranch,
