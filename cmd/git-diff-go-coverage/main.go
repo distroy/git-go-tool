@@ -74,6 +74,7 @@ func main() {
 	})
 
 	printResult(os.Stdout, flags, coverages)
+	pushResult(flags, coverages)
 }
 
 func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
