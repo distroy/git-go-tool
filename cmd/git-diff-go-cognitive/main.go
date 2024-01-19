@@ -113,7 +113,7 @@ func main() {
 	}
 
 	printOldOvers(os.Stdout, flags, overs)
-	pushResult(flags, overs)
+	pushResult(flags, newOvers)
 }
 
 func printForGitNews(w io.Writer, flags *Flags, cplxes []*gocognitive.Complexity) {
