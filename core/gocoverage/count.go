@@ -4,8 +4,6 @@
 
 package gocoverage
 
-import "math"
-
 type Count struct {
 	Coverages    int
 	NonCoverages int
@@ -18,7 +16,7 @@ func (c Count) IsZero() bool {
 func (c Count) GetRate() float64 {
 	total := c.Coverages + c.NonCoverages
 	if total == 0 {
-		return math.Inf(1)
+		return 1
 	}
 
 	return float64(c.Coverages) / float64(total)
