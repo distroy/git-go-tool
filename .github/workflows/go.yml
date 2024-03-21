@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-go@v2
         # name: go-setup
         with:
-          go-version: "1.12.17"
+          go-version: "1.17.13"
       - run: make build-test
 
   go-format-job:
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: "1.12.17"
+          go-version: "1.17.13"
       - run: make setup
       - run: |
           git-diff-go-format
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: "1.12.17"
+          go-version: "1.17.13"
       - run: make cognitive
 
   go-test-job:
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: "1.12.17"
+          go-version: "1.17.13"
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0

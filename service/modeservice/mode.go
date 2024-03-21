@@ -5,7 +5,8 @@
 package modeservice
 
 const (
-	ModeAll = "all"
+	ModeDefault = "diff"
+	ModeAll     = "all"
 )
 
 type WalkFunc = func(file string, begin, end int)

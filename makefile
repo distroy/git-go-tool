@@ -62,7 +62,7 @@ git_ignore_service = ( \
 	);
 
 .PHONY: all
-all: setup $(COMMANDS)
+all: $(COMMANDS)
 
 .PHONY: $(COMMANDS)
 $(COMMANDS): git-ignore
@@ -73,7 +73,7 @@ clean: git-ignore
 	@$(foreach service, $(COMMANDS), $(call rm_command,$(service)))
 
 .PHONY: dep
-dep: setup
+dep:
 	$(GO) mod tidy
 	# $(GO) mod vendor
 
