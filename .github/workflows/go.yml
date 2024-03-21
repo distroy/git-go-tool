@@ -50,18 +50,6 @@ jobs:
 
   go-test-job:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: "1.12.17"
-      - run: go mod download
-      - run: make go-test
-
-  go-test-coverage-job:
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -75,7 +63,7 @@ jobs:
           git checkout "$GITHUB_HEAD_REF"
       - run: go mod download
       - run: make setup
-      - run: make go-test-coverage
+      - run: make go-test
       - uses: actions/upload-artifact@v3
         if: always()
         with:
