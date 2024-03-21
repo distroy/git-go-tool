@@ -84,8 +84,8 @@ build-test: $(COMMANDS) clean
 go-test-report-dir:
 	mkdir $(GO_TEST_REPORT_DIR) -pv
 
-.PHONY: go-test-coverage
-go-test-coverage: go-test-report-dir
+.PHONY: go-test
+go-test: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
 		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out"
 	$(GO) tool cover -html $(GO_TEST_REPORT_DIR)/go-coverage.out \
@@ -98,10 +98,6 @@ go-test-report: go-test-report-dir
 		-json > "$(GO_TEST_REPORT_DIR)/go-test.json"
 	$(GO) tool cover -html $(GO_TEST_REPORT_DIR)/go-coverage.out \
 		-o $(GO_TEST_REPORT_DIR)/go-coverage.html
-
-.PHONY: go-test
-go-test:
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./...
 
 .PHONY: git-ignore
 git-ignore:
