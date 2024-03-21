@@ -16,12 +16,18 @@ const (
 )
 
 type Result struct {
-	Mode         string      `json:"mode"`
-	Type         string      `json:"type"`
-	ProjectUrl   string      `json:"project_url"`   // env: CI_MERGE_REQUEST_PROJECT_URL
-	TargetBranch string      `json:"target_branch"` // env: CI_MERGE_REQUEST_TARGET_BRANCH_NAME
-	SourceBranch string      `json:"source_branch"` // env: CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-	Data         interface{} `json:"data"`
+	Mode           string      `json:"mode"`
+	Type           string      `json:"type"`
+	PipelineId     string      `json:"pipeline_id"`      // env: CI_PIPELINE_ID
+	PipelineUrl    string      `json:"pipeline_url"`     // env: CI_PIPELINE_URL
+	JobId          string      `json:"job_id"`           // env: CI_JOB_ID
+	JobUrl         string      `json:"job_url"`          // env: CI_JOB_URL
+	ProjectId      string      `json:"project_id"`       // env: CI_MERGE_REQUEST_PROJECT_ID
+	MergeRequestId string      `json:"merge_request_id"` // env: CI_MERGE_REQUEST_IID
+	ProjectUrl     string      `json:"project_url"`      // env: CI_MERGE_REQUEST_PROJECT_URL
+	TargetBranch   string      `json:"target_branch"`    // env: CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+	SourceBranch   string      `json:"source_branch"`    // env: CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+	Data           interface{} `json:"data"`
 }
 
 type GoComplexityData struct {

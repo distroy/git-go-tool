@@ -6,32 +6,44 @@ package validate
 
 import (
 	"os"
+	"reflect"
 
 	"github.com/distroy/git-go-tool/obj/resultobj"
 	"github.com/distroy/git-go-tool/service/modeservice"
 )
 
+func checkZeraAndAssignStr(p *string, def string) {
+	if *p == "" {
+		*p = def
+	}
+}
+
 func Result(p *resultobj.Result) bool {
-	if p.Type == "" || p.Data == nil {
+	if p == nil {
 		return false
 	}
 
-	if p.Mode == "" {
-		p.Mode = modeservice.ModeDefault
-	}
+	checkZeraAndAssignStr(&p.Mode, modeservice.ModeDefault)
 
-	if p.ProjectUrl == "" {
-		p.ProjectUrl = os.Getenv("CI_MERGE_REQUEST_PROJECT_URL")
-	}
-	if p.TargetBranch == "" {
-		p.TargetBranch = os.Getenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME")
-	}
-	if p.SourceBranch == "" {
-		p.SourceBranch = os.Getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
-	}
+	checkZeraAndAssignStr(&p.PipelineId, os.Getenv("CI_PIPELINE_ID"))
+	checkZeraAndAssignStr(&p.PipelineUrl, os.Getenv("CI_PIPELINE_URL"))
 
-	if p.ProjectUrl == "" || p.TargetBranch == "" || p.SourceBranch == "" {
-		return false
+	checkZeraAndAssignStr(&p.JobId, os.Getenv("CI_JOB_ID"))
+	checkZeraAndAssignStr(&p.JobUrl, os.Getenv("CI_JOB_URL"))
+
+	checkZeraAndAssignStr(&p.ProjectId, os.Getenv("CI_MERGE_REQUEST_PROJECT_ID"))
+	checkZeraAndAssignStr(&p.MergeRequestId, os.Getenv("CI_MERGE_REQUEST_IID"))
+
+	checkZeraAndAssignStr(&p.ProjectUrl, os.Getenv("CI_MERGE_REQUEST_PROJECT_URL"))
+	checkZeraAndAssignStr(&p.TargetBranch, os.Getenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME"))
+	checkZeraAndAssignStr(&p.SourceBranch, os.Getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"))
+
+	v := reflect.ValueOf(p).Elem()
+	for i, n := 0, v.NumField(); i < n; i++ {
+		f := v.Field(i)
+		if f.IsZero() {
+			return false
+		}
 	}
 
 	return true
