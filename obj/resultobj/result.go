@@ -31,7 +31,8 @@ type Result struct {
 }
 
 type GoBaseData struct {
-	ExecError string `json:"exec_error,omitempty"`
+	ExecError        string   `json:"exec_error,omitempty"`
+	ExecErrorDetails []string `json:"exec_error_details,omitempty"`
 }
 
 type GoComplexityData struct {

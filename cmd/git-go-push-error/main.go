@@ -16,8 +16,10 @@ import (
 )
 
 type Flags struct {
-	Type    string                `yaml:"-" flag:"name:type; usage:required"`
-	Error   string                `yaml:"-" flag:"name:error; usage:required"`
+	Type    string   `yaml:"-" flag:"name:type; usage:required"`
+	Error   string   `yaml:"-" flag:"name:error; usage:error message"`
+	Details []string `yaml:"-" flag:"name:details; usage:error details"`
+
 	GitDiff *config.GitDiffConfig `yaml:"git-diff" flag:"-"`
 	Push    *config.PushConfig    `yaml:"push"`
 }
@@ -36,7 +38,7 @@ func parseFlags() *Flags {
 
 func main() {
 	flags := parseFlags()
-	if flags.Type == "" || flags.Error == "" {
+	if flags.Type == "" {
 		flagcore.PrintUsage()
 		os.Exit(1)
 	}
@@ -49,7 +51,8 @@ func main() {
 		TargetBranch: push.TargetBranch,
 		SourceBranch: push.SourceBranch,
 		Data: &resultobj.GoBaseData{
-			ExecError: flags.Error,
+			ExecError:        flags.Error,
+			ExecErrorDetails: flags.Details,
 		},
 	})
 	if err != nil {
