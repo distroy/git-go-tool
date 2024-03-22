@@ -24,6 +24,13 @@
         "$@"
         return $?
       }
+      function echo_and_run_and_push() {
+        local r
+        echo_and_run "$@"
+        r=$?
+        git-go-push-error -type $PUSH_JOB_TYPE -error "exec command fail. cmd: $@"
+        return $r
+      }
 
 .go-install-tools:
   script:
@@ -50,9 +57,18 @@
           || echo_and_run go install github.com/distroy/git-go-tool/cmd/$1@latest
         return $?
       }
-    - go_install git-diff-go-cognitive
-    - go_install git-diff-go-coverage
-    - go_install git-diff-go-format
+      function go_install_and_push {
+        local r
+        echo_and_run go install github.com/distroy/git-go-tool/cmd/$1 \
+          || echo_and_run go install github.com/distroy/git-go-tool/cmd/$1@latest
+        r=$?
+        git-go-push-error -type $PUSH_JOB_TYPE -error "go install $1 fail"
+        return $r
+      }
+    - go_install git-go-push-error
+    - go_install_and_push git-diff-go-cognitive
+    - go_install_and_push git-diff-go-coverage
+    - go_install_and_push git-diff-go-format
     - cd "$CI_PROJECT_DIR"
 
 .checkout-all-commits:
@@ -61,8 +77,8 @@
     # 需要拉取所有的commit
     - cd "$CI_PROJECT_DIR/.."
     - rm -rf "$CI_PROJECT_DIR"
-    - echo_and_run git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
+    - echo_and_run_and_push git clone "$CI_MERGE_REQUEST_PROJECT_URL" "$(basename "$CI_PROJECT_DIR")"
     - cd "$CI_PROJECT_DIR"
     # checkout 2 个分支
-    - echo_and_run git checkout "$GIT_MERGE_TARGET"
-    - echo_and_run git checkout "$GIT_MERGE_SOURCE"
+    - echo_and_run_and_push git checkout "$GIT_MERGE_TARGET"
+    - echo_and_run_and_push git checkout "$GIT_MERGE_SOURCE"

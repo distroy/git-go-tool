@@ -8,8 +8,10 @@
     variables:
       - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
   script:
+    - PUSH_JOB_TYPE="check-for-test"
     - !reference [.color-message, script]
     - !reference [.echo-and-run, script]
+    - !reference [.go-install-tools, script]
     - |
       function check_for_test() {
         local count=$(grep --exclude-dir={.git,.svn} -r -i -E -n "$FOR_TEST_KEYWORD" . | wc -l)
@@ -20,6 +22,7 @@
 
         echo_msgr "found the keyword: \"$FOR_TEST_KEYWORD\""
         echo_and_run grep --exclude-dir={.git,.svn} -r -i -E -n "$FOR_TEST_KEYWORD" .
+        git-go-push-error -type $PUSH_JOB_TYPE -error "there is the test keyword. keyword:$FOR_TEST_KEYWORD"
         return 1
       }
     - |
@@ -28,3 +31,4 @@
       else
         check_for_test
       fi
+    - git-go-push-error -type $PUSH_JOB_TYPE -error ""

@@ -14,6 +14,7 @@
     paths:
       - "$GO_COVERAGE_HTML"
   script:
+    - PUSH_JOB_TYPE="go-coverage"
     - !reference [.echo-and-run, script]
     - |
       GIT_MERGE_TARGET="$GO_COVERAGE_DIFF_TARGET"
@@ -25,8 +26,8 @@
     - mkdir -pv "$(dirname "$GO_COVERAGE_HTML")"
     # 检查单元测试是否都可以通过
     - |
-      echo_and_run go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
-    - echo_and_run env GOFLAGS="${GO_FLAGS}" go tool cover -html "$GO_COVERAGE_FILE" -o "$GO_COVERAGE_HTML"
+      echo_and_run_and_push go test -v ${GO_FLAGS} ${GO_TEST_FLAGS} -p ${GO_TEST_PROCESSOR} ./... -coverprofile="$GO_COVERAGE_FILE"
+    - echo_and_run_and_push env GOFLAGS="${GO_FLAGS}" go tool cover -html "$GO_COVERAGE_FILE" -o "$GO_COVERAGE_HTML"
     - |
       if [[ "$GO_COVERAGE_EXCLUDES" == "" ]]; then
         GO_COVERAGE_EXCLUDES="$GO_EXCLUDE_OPTIONS"

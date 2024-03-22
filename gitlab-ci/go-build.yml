@@ -8,6 +8,7 @@
     changes:
       - "**/**.go"
   script:
+    - PUSH_JOB_TYPE="go-build"
     - !reference [.color-message, script]
     - !reference [.echo-and-run, script]
     # 检查服务 build 是否都可以成功

@@ -8,6 +8,7 @@
     # changes:
     #   - "**/**.go"
   script:
+    - PUSH_JOB_TYPE="go-cognitive"
     - !reference [.echo-and-run, script]
     - |
       GIT_MERGE_TARGET="$GO_COGNITIVE_DIFF_TARGET"
