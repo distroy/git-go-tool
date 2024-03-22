@@ -27,3 +27,4 @@
           echo_and_run_and_push go build ${GO_FLAGS} -o "$_service_name" || exit $?
         done
       fi
+    - git-go-push-error -type $PUSH_JOB_TYPE -error ""
