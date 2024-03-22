@@ -11,6 +11,7 @@ import (
 	"github.com/distroy/git-go-tool/config"
 	"github.com/distroy/git-go-tool/core/filecore"
 	"github.com/distroy/git-go-tool/core/goformat"
+	"github.com/distroy/git-go-tool/obj/resultobj"
 	"github.com/distroy/git-go-tool/service/configservice"
 )
 
@@ -26,7 +27,7 @@ func parseFlags() *Flags {
 		GoFormat: config.DefaultGoFormat,
 	}
 
-	configservice.MustParse(cfg, "go-format")
+	configservice.MustParse(cfg, resultobj.TypeGoFormat)
 	if len(cfg.Pathes) == 0 {
 		cfg.Pathes = []string{"."}
 	}

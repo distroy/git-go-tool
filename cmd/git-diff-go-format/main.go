@@ -36,7 +36,7 @@ func parseFlags() *Flags {
 		Push:     config.DefaultPush,
 	}
 
-	configservice.MustParse(cfg, "go-format")
+	configservice.MustParse(cfg, resultobj.TypeGoFormat)
 	return cfg
 }
 

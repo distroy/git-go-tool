@@ -5,16 +5,17 @@
 package resultobj
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/distroy/git-go-tool/core/jsoncore"
 )
 
 func (p *Result) Unmarshal(b []byte) error {
-	if err := json.Unmarshal(b, p); err != nil {
+	if err := jsoncore.Unmarshal(b, p); err != nil {
 		return err
 	}
 
-	dataRaw, err := json.Marshal(p.Data)
+	dataRaw, err := jsoncore.Marshal(p.Data)
 	if err != nil {
 		return err
 	}
@@ -31,7 +32,7 @@ func (p *Result) Unmarshal(b []byte) error {
 		p.Data = &GoFormatData{}
 	}
 
-	if err := json.Unmarshal(dataRaw, p.Data); err != nil {
+	if err := jsoncore.Unmarshal(dataRaw, p.Data); err != nil {
 		return err
 	}
 
