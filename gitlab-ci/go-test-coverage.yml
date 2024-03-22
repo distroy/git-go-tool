@@ -5,10 +5,10 @@
   only:
     refs:
       - merge_requests
-    variables:
-      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
     changes:
       - "**/**.go"
+    variables:
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test|feat)/
   artifacts:
     when: always
     paths:

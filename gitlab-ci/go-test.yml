@@ -9,7 +9,7 @@
       - "**/**.go"
   except:
     variables:
-      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test)/
+      - $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(release|master|feature|test|feat)/
   artifacts:
     when: always
     paths:
