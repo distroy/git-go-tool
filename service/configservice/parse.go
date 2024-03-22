@@ -16,31 +16,33 @@ import (
 	"github.com/distroy/git-go-tool/core/mergecore"
 )
 
-type any interface{}
+const (
+	fieldName_Push = "push"
+)
 
 func MustGetConfigPath() string {
 	gitRoot := git.MustGetRootDir()
 	return path.Join(gitRoot, ".git-go-tool/config.yaml")
 }
 
-func MustParse(cfg any, fieldName string) {
-	typ := reflect.TypeOf(cfg)
+func MustParse(outCfg interface{}, fieldName string) {
+	typ := reflect.TypeOf(outCfg)
 
-	flags := reflect.New(typ.Elem()).Interface()
+	flagCfg := reflect.New(typ.Elem()).Interface()
 	flagcore.EnableDefault(false)
-	flagcore.MustParse(flags)
+	flagcore.MustParse(flagCfg)
 
-	tmp := reflect.New(typ.Elem()).Interface()
-	ok := mustUnmarshalFileWithField(tmp, fieldName)
+	fileCfg := reflect.New(typ.Elem()).Interface()
+	cfgFilePath := MustGetConfigPath()
+	ok := mustUnmarshalFileWithField(fileCfg, cfgFilePath, fieldName)
 	if ok {
-		mergecore.Merge(cfg, tmp)
+		mergecore.Merge(outCfg, fileCfg)
 	}
-	mergecore.Merge(cfg, flags)
+	mergecore.Merge(outCfg, flagCfg)
 	// log.Printf("config: %s", jsoncore.MustMarshal(cfg))
 }
 
-func mustUnmarshalFileWithField(res any, fieldName string) bool {
-	cfgPath := MustGetConfigPath()
+func mustUnmarshalFileWithField(res interface{}, cfgPath, fieldName string) bool {
 	f, err := os.Open(cfgPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -56,12 +58,24 @@ func mustUnmarshalFileWithField(res any, fieldName string) bool {
 		panic(fmt.Errorf("decode config file fail. file:%s, err:%v", cfgPath, err))
 	}
 
-	v, ok := m[fieldName]
-	if !ok {
+	v0, ok0 := m[fieldName]
+	v1, ok1 := m[fieldName_Push]
+	if !ok0 && !ok1 {
 		return false
 	}
 
-	s, _ := yaml.Marshal(v)
+	if v0 == nil {
+		v0 = map[string]interface{}{}
+		m[fieldName] = v0
+	}
+
+	m0 := v0.(map[string]interface{})
+	delete(m0, fieldName_Push)
+	if v1 != nil {
+		m0[fieldName_Push] = v1
+	}
+
+	s, _ := yaml.Marshal(v0)
 
 	if err := yaml.Unmarshal(s, res); err != nil {
 		panic(fmt.Errorf("decode config file fail. file:%s, field:%s, err:%v",

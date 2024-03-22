@@ -6,8 +6,6 @@ go-coverage:
     mode: all
   exclude:
     - '(^|/)3rd/'
-  push:
-    push-url: ""
   rate: 0.5
 
 # go-format:
@@ -28,8 +26,6 @@ go-format:
     mode: all
   exclude:
     - '(^|/)3rd/'
-  push:
-    push-url: ""
   func-context-error-match: true
 
 # go-cognitive:
@@ -40,5 +36,6 @@ go-cognitive:
     mode: all
   exclude:
     - '(^|/)3rd/'
-  push:
-    push-url: ""
+
+push:
+  push-url: ""

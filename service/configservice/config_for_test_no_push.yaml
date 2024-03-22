@@ -1,0 +1,5 @@
+go-coverage:
+  rate: 0.5
+  top: 100
+  push:
+    push-url: https://github.com
