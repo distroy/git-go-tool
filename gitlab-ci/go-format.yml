@@ -8,6 +8,7 @@
     changes:
       - "**/**.go"
   script:
+    - PUSH_JOB_TYPE="go-format"
     - !reference [.echo-and-run, script]
     - |
       GIT_MERGE_TARGET="$GO_FORMAT_DIFF_TARGET"

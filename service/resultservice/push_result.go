@@ -16,11 +16,13 @@ import (
 	"github.com/distroy/git-go-tool/service/resultservice/internal/validate"
 )
 
-func Push(url string, result *resultobj.Result) {
+func Push(url string, result *resultobj.Result) error {
 	err := push(url, result)
 	if err != nil {
 		log.Printf("push result fail. url:%s, err:%v", url, err)
+		return err
 	}
+	return nil
 }
 
 func push(url string, result *resultobj.Result) error {
