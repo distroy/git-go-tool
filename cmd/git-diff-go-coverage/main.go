@@ -36,7 +36,7 @@ func parseFlags() *Flags {
 		Push:     config.DefaultPush,
 	}
 
-	configservice.MustParse(cfg, "go-coverage")
+	configservice.MustParse(cfg, resultobj.TypeGoCoverage)
 	return cfg
 }
 

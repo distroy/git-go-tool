@@ -14,6 +14,7 @@ import (
 	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/gocognitive"
 	"github.com/distroy/git-go-tool/core/termcolor"
+	"github.com/distroy/git-go-tool/obj/resultobj"
 	"github.com/distroy/git-go-tool/service/configservice"
 )
 
@@ -36,7 +37,7 @@ func parseFlags() *Flags {
 		GoCognitive: config.DefaultGoCognitive,
 	}
 
-	configservice.MustParse(cfg, "go-cognitive")
+	configservice.MustParse(cfg, resultobj.TypeGoCognitive)
 	if len(cfg.Pathes) == 0 {
 		cfg.Pathes = []string{"."}
 	}

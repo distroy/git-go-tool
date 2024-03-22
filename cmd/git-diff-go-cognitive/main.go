@@ -42,7 +42,7 @@ func parseFlags() *Flags {
 		Push:        config.DefaultPush,
 	}
 
-	configservice.MustParse(cfg, "go-cognitive")
+	configservice.MustParse(cfg, resultobj.TypeGoCognitive)
 	return cfg
 }
 
