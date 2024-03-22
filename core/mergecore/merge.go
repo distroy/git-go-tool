@@ -11,16 +11,14 @@ import (
 	"github.com/distroy/git-go-tool/core/refcore"
 )
 
-type any interface{}
-
-func valueOf(v any) reflect.Value {
+func valueOf(v interface{}) reflect.Value {
 	if vv, ok := v.(reflect.Value); ok {
 		return vv
 	}
 	return reflect.ValueOf(v)
 }
 
-func Merge(target, source any) error {
+func Merge(target, source interface{}) error {
 	targetV := valueOf(target)
 	sourceV := valueOf(source)
 
