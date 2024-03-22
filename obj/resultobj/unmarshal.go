@@ -5,8 +5,6 @@
 package resultobj
 
 import (
-	"fmt"
-
 	"github.com/distroy/git-go-tool/core/jsoncore"
 )
 
@@ -22,7 +20,7 @@ func (p *Result) Unmarshal(b []byte) error {
 
 	switch p.Type {
 	default:
-		return fmt.Errorf("invalid type: %s", p.Type)
+		p.Data = &GoBaseData{}
 
 	case TypeGoCognitive:
 		p.Data = &GoComplexityData{}
