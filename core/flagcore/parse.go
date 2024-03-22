@@ -17,6 +17,7 @@ const (
 )
 
 var (
+	defaultFlagSet *FlagSet
 	defaultOptions = ([]func(s *FlagSet))(nil)
 )
 
@@ -32,6 +33,7 @@ func newDefaultFlagSet() *FlagSet {
 		opt(s)
 	}
 
+	defaultFlagSet = s
 	return s
 }
 
@@ -52,6 +54,8 @@ func Parse(v interface{}, args ...[]string) error {
 	s.Model(v)
 	return s.Parse(args...)
 }
+
+func PrintUsage() { defaultFlagSet.printUsage() }
 
 func parseFlagName(f reflect.StructField) string {
 	name := f.Name

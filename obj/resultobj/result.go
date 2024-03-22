@@ -30,17 +30,27 @@ type Result struct {
 	Data           interface{} `json:"data"`
 }
 
+type GoBaseData struct {
+	ExecError string `json:"exec_error,omitempty"`
+}
+
 type GoComplexityData struct {
+	GoBaseData `json:",inline"`
+
 	Threshold              int                       `json:"threshold"`
 	FunctionsOverThreshold []*gocognitive.Complexity `json:"functions_over_threshold"`
 }
 
 type GoFormatData struct {
+	GoBaseData `json:",inline"`
+
 	IssueCount goformat.Count    `json:"issue_count"`
 	Issues     []*goformat.Issue `json:"issues"`
 }
 
 type GoCoverageData struct {
+	GoBaseData `json:",inline"`
+
 	Threshold            float64 `json:"threshold"`
 	Rate                 float64 `json:"rate"`
 	CoverageLineCount    int     `json:"coverage_line_count"`

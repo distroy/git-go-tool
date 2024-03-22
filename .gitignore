@@ -30,3 +30,4 @@ temp.*
 /cmd/git-diff-go-format/git-diff-go-format
 /cmd/go-cognitive/go-cognitive
 /cmd/go-format/go-format
+/cmd/git-go-push-error/git-go-push-error

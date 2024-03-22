@@ -369,6 +369,9 @@ func (s *FlagSet) parseStructField(lvl int, fVal reflect.Value, field reflect.St
 	}
 
 	if typ.Kind() == reflect.Struct {
+		if tag, _ := field.Tag.Lookup(tagName); tag == "-" {
+			return
+		}
 		s.parseStruct(lvl+1, val)
 		return
 	}
