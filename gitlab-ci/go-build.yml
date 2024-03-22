@@ -11,6 +11,7 @@
     - PUSH_JOB_TYPE="go-build"
     - !reference [.color-message, script]
     - !reference [.echo-and-run, script]
+    - !reference [.go-install-tools, script]
     # 检查服务 build 是否都可以成功
     - |
       if [[ "$GO_BUILD_TARGET_DIR" == "" ]]; then
@@ -23,6 +24,6 @@
           echo "=== building service: $_service_dir"
           _service_name="$(basename "$_service_dir")"
           cd "$_service_dir"
-          echo_and_run go build ${GO_FLAGS} -o "$_service_name" || exit $?
+          echo_and_run_and_push go build ${GO_FLAGS} -o "$_service_name" || exit $?
         done
       fi

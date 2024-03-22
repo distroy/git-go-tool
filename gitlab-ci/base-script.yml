@@ -28,7 +28,9 @@
         local r
         echo_and_run "$@"
         r=$?
-        git-go-push-error -type $PUSH_JOB_TYPE -error "exec command fail. cmd: $@"
+        if (( r != 0 )); then
+          git-go-push-error -type $PUSH_JOB_TYPE -error "exec command fail. cmd: $@"
+        fi
         return $r
       }
 
@@ -59,10 +61,11 @@
       }
       function go_install_and_push {
         local r
-        echo_and_run go install github.com/distroy/git-go-tool/cmd/$1 \
-          || echo_and_run go install github.com/distroy/git-go-tool/cmd/$1@latest
+        go_install "$1"
         r=$?
-        git-go-push-error -type $PUSH_JOB_TYPE -error "go install $1 fail"
+        if (( r != 0 )); then
+          git-go-push-error -type $PUSH_JOB_TYPE -error "go install $1 fail"
+        fi
         return $r
       }
     - go_install git-go-push-error
