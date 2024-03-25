@@ -73,27 +73,30 @@ func main() {
 		})
 	})
 
+	err := printResult(os.Stdout, flags, coverages)
 	pushResult(flags, coverages)
-	printResult(os.Stdout, flags, coverages)
+	if err != nil {
+		os.Exit(1)
+	}
 }
 
-func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
+func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) error {
 	count := coverages.GetCount()
 	if count.IsZero() {
 		fmt.Fprintf(w, "coverage rate: -, coverages:0, non coverages:0\n")
-		return
+		return nil
 	}
 
 	rate := count.GetRate()
 	if rate >= *flags.Coverage.Rate {
 		fmt.Fprintf(w, "coverage rate: %.04g, coverages:%d, non coverages:%d\n",
 			rate, count.Coverages, count.NonCoverages)
-		return
+		return nil
 	}
 
 	files := getTopNonCoverageFiles(coverages, *flags.Coverage.Top)
 
-	fmt.Fprintf(w, "%smust improve coverage rate. rate:%.04g, threshold:%g coverages:%d, non coverages:%d%s\n",
+	fmt.Fprintf(w, "%sshould improve coverage rate. rate:%.04g, threshold:%g coverages:%d, non coverages:%d%s\n",
 		termcolor.Red, rate, *flags.Coverage.Rate, count.Coverages, count.NonCoverages, termcolor.Reset)
 
 	fmt.Fprint(w, termcolor.Red)
@@ -114,7 +117,9 @@ func printResult(w io.Writer, flags *Flags, coverages gocoverage.Files) {
 		fmt.Fprintf(w, "\n")
 	}
 	fmt.Fprint(w, termcolor.Reset)
-	os.Exit(1)
+
+	return fmt.Errorf("coverage rate is not enough")
+	// os.Exit(1)
 }
 
 func pushResult(flags *Flags, coverages gocoverage.Files) {
