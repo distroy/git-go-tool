@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/distroy/git-go-tool/core/refcore"
 	"github.com/distroy/git-go-tool/obj/resultobj"
 	"github.com/distroy/git-go-tool/service/modeservice"
 )
@@ -41,7 +42,7 @@ func Result(p *resultobj.Result) bool {
 	v := reflect.ValueOf(p).Elem()
 	for i, n := 0, v.NumField(); i < n; i++ {
 		f := v.Field(i)
-		if f.IsZero() {
+		if refcore.IsValZero(f) {
 			return false
 		}
 	}
