@@ -7,7 +7,7 @@ package resultservice
 import (
 	"bytes"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -52,7 +52,7 @@ func push(url string, result *resultobj.Result) error {
 		return fmt.Errorf("read http response body fail. url:%s, err:%v", url, err)
 	}
 
-	rspBody, err := io.ReadAll(rsp.Body)
+	rspBody, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return err
 		// return fmt.Errorf("read http response body fail. url:%s, err:%v", url, err)
