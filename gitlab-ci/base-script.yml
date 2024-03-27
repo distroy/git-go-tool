@@ -20,14 +20,14 @@
   script:
     - |
       function echo_and_run() {
+        local r=0
         echo "$@"
-        "$@"
-        return $?
+        "$@" || r=$?
+        return $r
       }
       function echo_and_run_and_push() {
-        local r
-        echo_and_run "$@"
-        r=$?
+        local r=0
+        echo_and_run "$@" || r=$?
         if (( r != 0 )); then
           git-go-push-error -type $PUSH_JOB_TYPE -error "exec command fail. cmd: $@"
         fi
@@ -55,14 +55,15 @@
     - cd "$_GO_INSTALL_DIR"
     - |
       function go_install {
+        local r=0
         echo_and_run go install github.com/distroy/git-go-tool/cmd/$1 \
-          || echo_and_run go install github.com/distroy/git-go-tool/cmd/$1@latest
-        return $?
+          || echo_and_run go install github.com/distroy/git-go-tool/cmd/$1@latest \
+          || r=$?
+        return $r
       }
       function go_install_and_push {
-        local r
-        go_install "$1"
-        r=$?
+        local r=0
+        go_install "$1" || r=$?
         if (( r != 0 )); then
           git-go-push-error -type $PUSH_JOB_TYPE -error "go install $1 fail"
         fi
