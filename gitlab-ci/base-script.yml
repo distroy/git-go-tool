@@ -29,7 +29,7 @@
         local r=0
         echo_and_run "$@" || r=$?
         if (( r != 0 )); then
-          git-go-push-error -type $PUSH_JOB_TYPE -error "exec command fail. cmd: $@"
+          git-go-push-error -type $PUSH_JOB_TYPE -error "exec command fail. cmd: $*"
         fi
         return $r
       }
