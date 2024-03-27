@@ -34,6 +34,7 @@ func Result(p *resultobj.Result) bool {
 
 	checkZeraAndAssignStr(&p.ProjectId, os.Getenv("CI_MERGE_REQUEST_PROJECT_ID"))
 	checkZeraAndAssignStr(&p.MergeRequestId, os.Getenv("CI_MERGE_REQUEST_IID"))
+	checkZeraAndAssignStr(&p.MergeRequestTitle, os.Getenv("CI_MERGE_REQUEST_TITLE"))
 
 	checkZeraAndAssignStr(&p.ProjectUrl, os.Getenv("CI_MERGE_REQUEST_PROJECT_URL"))
 	checkZeraAndAssignStr(&p.TargetBranch, os.Getenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME"))
