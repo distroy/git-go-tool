@@ -85,7 +85,36 @@ func mergePtr(target, source reflect.Value) error {
 		return nil
 	}
 
-	return merge(target.Elem(), source.Elem())
+	// return merge(target.Elem(), source.Elem())
+	target = target.Elem()
+	source = source.Elem()
+	switch target.Kind() {
+	case reflect.Ptr:
+		return mergePtr(target, source)
+
+	case reflect.Interface, reflect.Func:
+		return mergeInterface(target, source)
+
+	case reflect.Slice:
+		return mergeSlice(target, source)
+
+	case reflect.Map:
+		return mergeMap(target, source)
+
+	case reflect.Struct:
+		return mergeStruct(target, source)
+
+	case reflect.Bool, reflect.String,
+		reflect.Float32, reflect.Float64,
+		reflect.Complex64, reflect.Complex128,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Uintptr, reflect.UnsafePointer:
+
+		target.Set(source)
+		// return mergeBaseType(target, source)
+	}
+	return nil
 }
 
 func mergeInterface(target, source reflect.Value) error {
