@@ -12,6 +12,7 @@ import (
 	"reflect"
 
 	"github.com/distroy/git-go-tool/3rd/yaml"
+	"github.com/distroy/git-go-tool/core/clonecore"
 	"github.com/distroy/git-go-tool/core/flagcore"
 	"github.com/distroy/git-go-tool/core/git"
 	"github.com/distroy/git-go-tool/core/jsoncore"
@@ -30,23 +31,39 @@ func MustGetConfigPath() string {
 func MustParse(outCfg interface{}, fieldName string) {
 	typ := reflect.TypeOf(outCfg)
 
-	flagCfg := reflect.New(typ.Elem()).Interface()
-	flagcore.EnableDefault(false)
-	flagcore.MustParse(flagCfg)
+	printf := func(fmt string, args ...interface{}) {
+		if false {
+			log.Printf(fmt, args...)
+		}
+	}
+
+	defCfg := reflect.New(typ.Elem()).Interface()
+	mergecore.Merge(defCfg, outCfg)
+
+	merge := func(target, source interface{}) {
+		tmp := clonecore.DeepClone(target)
+		mergecore.Merge(tmp, source)
+		reflect.ValueOf(source).Elem().Set(reflect.ValueOf(tmp).Elem())
+	}
 
 	fileCfg := reflect.New(typ.Elem()).Interface()
 	cfgFilePath := MustGetConfigPath()
-	ok := mustUnmarshalFileWithField(fileCfg, cfgFilePath, fieldName)
-	if ok {
-		mergecore.Merge(outCfg, fileCfg)
-	}
-	mergecore.Merge(outCfg, flagCfg)
+	mustUnmarshalFileWithField(fileCfg, cfgFilePath, fieldName)
+	printf("file config: %s", jsoncore.MustMarshal(fileCfg))
 
-	if false {
-		log.Printf("file config: %s", jsoncore.MustMarshal(fileCfg))
-		log.Printf("flag config: %s", jsoncore.MustMarshal(flagCfg))
-		log.Printf("out config: %s", jsoncore.MustMarshal(outCfg))
-	}
+	flagCfg := reflect.New(typ.Elem()).Interface()
+	flagcore.EnableDefault(false)
+	flagcore.MustParse(flagCfg)
+	printf("flag config: %s", jsoncore.MustMarshal(flagCfg))
+
+	merge(fileCfg, defCfg)
+	printf("merge file config: %s", jsoncore.MustMarshal(defCfg))
+
+	merge(flagCfg, defCfg)
+	printf("merge flag config: %s", jsoncore.MustMarshal(defCfg))
+
+	reflect.ValueOf(outCfg).Elem().Set(reflect.ValueOf(defCfg).Elem())
+	printf("out config: %s", jsoncore.MustMarshal(outCfg))
 }
 
 func mustUnmarshalFileWithField(res interface{}, cfgPath, fieldName string) bool {
