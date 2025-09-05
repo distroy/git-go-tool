@@ -23,9 +23,12 @@ const (
 	fieldName_Push = "push"
 )
 
-func MustGetConfigPath() string {
+func mustGetConfigPathes() []string {
 	gitRoot := git.MustGetRootDir()
-	return path.Join(gitRoot, ".git-go-tool/config.yaml")
+	return []string{
+		path.Join(gitRoot, ".ggt/config.yaml"),
+		path.Join(gitRoot, ".git-go-tool/config.yaml"),
+	}
 }
 
 func MustParse(outCfg interface{}, fieldName string) {
@@ -47,8 +50,14 @@ func MustParse(outCfg interface{}, fieldName string) {
 	}
 
 	fileCfg := reflect.New(typ.Elem()).Interface()
-	cfgFilePath := MustGetConfigPath()
-	mustUnmarshalFileWithField(fileCfg, cfgFilePath, fieldName)
+	cfgFilePathes := mustGetConfigPathes()
+	for _, path := range cfgFilePathes {
+		ok := mustUnmarshalFileWithField(fileCfg, path, fieldName)
+		if ok {
+			printf("cfg path: %s", path)
+			break
+		}
+	}
 	printf("file config: %s", jsoncore.MustMarshal(fileCfg))
 
 	flagCfg := reflect.New(typ.Elem()).Interface()
